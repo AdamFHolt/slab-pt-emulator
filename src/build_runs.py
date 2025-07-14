@@ -4,11 +4,12 @@
 # -------------------------------------------
 import numpy as np, json, os, pathlib, re
 from rheology_utils import prefactors
+from input_geometry import make_plate_inputs     
 
 LHS_FILE      = "../data/params-list.npy"
 TEMPLATE_FILE = "../data/model_template.prm"   # tokenised .prm
-OUT_DIR       = pathlib.Path("model_runs")
-PLATE_THICK_M = 125_000.0             # *** fixed plate thickness ***
+OUT_DIR       = pathlib.Path("../subd-model-runs")
+PLATE_THICK_M = 125000.0             # *** fixed plate thickness ***
 
 COLS = [
     "v_conv","age_SP","age_OP","dip_int",
@@ -23,6 +24,10 @@ with open(TEMPLATE_FILE) as f:
     tmpl = f.read()
 token_pat = re.compile(r"\$\$(\w+)\$\$")
 
+# -- make folder for input structures (i.e. temp and comp text files)
+input_dir = OUT_DIR / "initial-structures"
+input_dir.mkdir(parents=True, exist_ok=True)
+
 # -- loop & write ------------------------------------------------
 for idx, row in enumerate(rows):
 
@@ -32,15 +37,24 @@ for idx, row in enumerate(rows):
     # compute viscous flow prefactors
     visc_prefactors = prefactors(eta_um=row["eta_UM"], eps_trans=row["eps_trans"])
 
+    # make plate inputs
+    temp_name, comp_name = make_plate_inputs(
+        dip=row["dip_int"],
+        age_sp=row["age_SP"],
+        age_op=row["age_OP"],
+        plate_thick=PLATE_THICK_M,
+        out_dir=input_dir,
+    )
+
     text = tmpl
     for tok in token_pat.findall(tmpl):
 
         if tok == "MODELNAME":
             text = text.replace(f"$${tok}$$", "run_{idx:03d}")
         elif tok == "TEMPINPUTNAME":
-            print(tok) # to do 
+            text = text.replace(f"$${tok}$$", temp_name)
         elif tok == "COMPINPUTNAME":
-            print(tok) # to do
+            text = text.replace(f"$${tok}$$", comp_name)
         elif tok == "CONVRATE":
             text = text.replace(f"$${tok}$$", str(row["v_conv"]))
         elif tok == "ANG_FRICTION":
@@ -69,8 +83,7 @@ for idx, row in enumerate(rows):
             print(tok)
             raise KeyError(f"Token {tok} not in design columns")
 
-
-print(text)
+    exit()
 
     # with open(run_dir/"model.prm", "w") as f:
     #     f.write(text)

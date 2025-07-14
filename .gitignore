@@ -8,5 +8,6 @@ misc/
 .ipynb_checkpoints/
 # Heavy outputs are tracked by DVC or stay off-git
 subd-model-outputs/
+subd-model-runs/initial-structures
 *.h5
 *.nc
