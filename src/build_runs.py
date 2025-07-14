@@ -3,6 +3,7 @@
 # Expand LHS rows into template-based run dirs
 # -------------------------------------------
 import numpy as np, json, os, pathlib, re
+from rheology_utils import prefactors
 
 LHS_FILE      = "../data/params-list.npy"
 TEMPLATE_FILE = "../data/model_template.prm"   # tokenised .prm
@@ -24,11 +25,13 @@ token_pat = re.compile(r"\$\$(\w+)\$\$")
 
 # -- loop & write ------------------------------------------------
 for idx, row in enumerate(rows):
-    print(idx,row)
+
     run_dir = OUT_DIR / f"run_{idx:03d}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    # -- substitute tokens in .prm ------------------------------
+    # compute viscous flow prefactors
+    visc_prefactors = prefactors(eta_um=row["eta_UM"], eps_trans=row["eps_trans"])
+
     text = tmpl
     for tok in token_pat.findall(tmpl):
 
@@ -51,19 +54,23 @@ for idx, row in enumerate(rows):
             val = row["eta_int"] - 1.e17
             text = text.replace(f"$${tok}$$", str(val))
         elif tok == "ETAINT2":
-            val = row["eta_int"] - 1.e17
+            val = row["eta_int"] + 1.e17
             text = text.replace(f"$${tok}$$", str(val))
         elif tok == "ADISLCREEP":
-            print(tok) # to do
+            val = visc_prefactors["Adisl"]
+            text = text.replace(f"$${tok}$$", str(val))
         elif tok == "ADIFFCREEP":
-            print(tok) # to do
+            val = visc_prefactors["Adiff"]
+            text = text.replace(f"$${tok}$$", str(val))            
         elif tok == "ADIFFCREEP_LM":
-            print(tok) # to do
+            val = visc_prefactors["Adiff_lm"]
+            text = text.replace(f"$${tok}$$", str(val))
         else:
             print(tok)
             raise KeyError(f"Token {tok} not in design columns")
 
-    exit()
+
+print(text)
 
     # with open(run_dir/"model.prm", "w") as f:
     #     f.write(text)
