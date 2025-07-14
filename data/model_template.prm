@@ -1,7 +1,7 @@
 set Dimension                              = 2
 set Use years in output instead of seconds = true
 set End time                               = 10e6
-set Output directory                       = outputs/$MODELNAME$
+set Output directory                       = outputs/$$MODELNAME$$
 set Resume computation			   = auto
 set Maximum time step                      = 2e5
 
@@ -70,7 +70,7 @@ subsection Initial temperature model
    
    subsection Ascii data model
      set Data directory = /work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/text_files/
-     set Data file name = $TEMPINPUTNAME$
+     set Data file name = $$TEMPINPUTNAME$$
    end
 end
 
@@ -84,7 +84,7 @@ subsection Initial composition model
   
    subsection Ascii data model
      set Data directory = /work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/text_files/
-     set Data file name = $COMPINPUTNAME$
+     set Data file name = $$COMPINPUTNAME$$
    end
 end
 #-------------------------------------
@@ -102,7 +102,7 @@ end
 
 subsection Boundary velocity model
   set Tangential velocity boundary indicators = left, right, bottom, top
-  set Convergence rate = $CONVRATE$
+  set Convergence rate = $$CONVRATE$$
 end
 #-------------------------------------
 
@@ -125,8 +125,8 @@ subsection Material model
     set Phase transition Clapeyron slopes =   background: 0,       ocrust: 0,        stiffends: 0
     
     # Viscosity cut offs
-    set Minimum viscosity   =   background: 2.5e18|2.5e18,  ocrust: $ETAINT1$|2.5e18,  stiffends: 2.5e18|2.5e18
-    set Maximum viscosity   =   background: 2.5e23|2.5e23,  ocrust: $ETAINT2$|2.5e23,  stiffends: 2.5e24|2.5e24
+    set Minimum viscosity   =   background: 2.5e18|2.5e18,  ocrust: $$ETAINT1$$|2.5e18,  stiffends: 2.5e18|2.5e18
+    set Maximum viscosity   =   background: 2.5e23|2.5e23,  ocrust: $$ETAINT2$$|2.5e23,  stiffends: 2.5e24|2.5e24
 
     # Thermal parameters 
     set Thermal diffusivities  =   1.e-6
@@ -143,19 +143,19 @@ subsection Material model
     # dislocation creep (effectively just z < 660 km), 
     set Stress exponents for dislocation creep    = 3.5
     set Activation energies for dislocation creep = 530.e3
-    set Prefactors for dislocation creep          = background: $ADISLCREEP$|1e-40,    ocrust: $ADISLCREEP$|1e-40,     stiffends: $ADISLCREEP$|1e-40
+    set Prefactors for dislocation creep          = background: $$ADISLCREEP$$|1e-40,    ocrust: $$ADISLCREEP$$|1e-40,     stiffends: $$ADISLCREEP$$|1e-40
     set Activation volumes for dislocation creep  = background: 18e-6|0.0,          ocrust: 18e-6|0.0,           stiffends: 18e-6|0.0
 
     # diffusion creep (lm/um viscosity >= 20)
     set Stress exponents for diffusion creep      = 1
     set Grain size exponents for diffusion creep  = 0
     set Activation energies for diffusion creep   = 375e3
-    set Prefactors for diffusion creep            = background: $ADIFFCREEP$|$ADIFFCREEP_LM$, ocrust: $ADIFFCREEP$|$ADIFFCREEP_LM$,    stiffends: $ADIFFCREEP$|$ADIFFCREEP_LM$
+    set Prefactors for diffusion creep            = background: $$ADIFFCREEP$$|$$ADIFFCREEP_LM$$, ocrust: $$ADIFFCREEP$$|$$ADIFFCREEP_LM$$,    stiffends: $$ADIFFCREEP$$|$$ADIFFCREEP_LM$$
     set Activation volumes for diffusion creep    = background: 4e-6|4e-6,           ocrust: 4e-6|4e-6,              stiffends: 4e-6|4e-6
     
     # Plasticity parameters using drucker-prager
-    set Cohesions                   =   background: 10.e6|10.e6,   ocrust:  20.e6|20.e6,   stiffends:  1.e10|1.e10
-    set Angles of internal friction =   background: $ANG_FRICTION$|$ANG_FRICTION$,         ocrust:  $ANG_FRICTION$|$ANG_FRICTION$,  stiffends:  $ANG_FRICTION$|$ANG_FRICTION$
+    set Cohesions                   =   background: $$COHESION$$|$$COHESION$$,   ocrust:  1e10|1e10,   stiffends:  1.e10|1.e10
+    set Angles of internal friction =   background: $$ANG_FRICTION$$|$$ANG_FRICTION$$,         ocrust:  $$ANG_FRICTION$$|$$ANG_FRICTION$$,  stiffends:  $$ANG_FRICTION$$|$$ANG_FRICTION$$
     set Maximum yield stress        =   1.e10
 
   end
