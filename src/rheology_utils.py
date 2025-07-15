@@ -25,6 +25,7 @@ mid_jump       = 20                # viscosity jump at 660 km
 
 def prefactors(eta_um: float, eps_trans: float) -> dict:
     """Return dislocation, diffusion, diffusion-LM prefactors."""
+
     # ---- Reference point in upper mantle ---------------------
     depth_ref  = 330e3                  # m
     T_ref      = 1673 + depth_ref*1e-3*adiabat

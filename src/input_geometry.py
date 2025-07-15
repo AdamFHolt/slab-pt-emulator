@@ -27,13 +27,17 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
     cfile = out_dir / f"comp_{base}.txt"
     pfile = out_dir / f"{base}.png"
 
+    if tfile.exists() and cfile.exists():
+        print(f"[geom] found existing files: {tfile}, {cfile}")
+        return tfile.name, cfile.name  # Exit the function early if files exist
+
     # box dimensions (i.e. "extent" in ASPECT input)
     xmin=0;xmax=4000.e3 # [m]
     ymin=0;ymax=1000.e3
 
     # number of cells in input geometry
-    xnum= 2000
-    ynum= 500
+    xnum= 1600
+    ynum= 400
 
     # basic parameters
     depth_full_crust = plate_thick + 15e3
@@ -44,7 +48,7 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
     k = 1e-6 					# [m^2/s]
     Tmax = 1400.  				# [deg C]
     Tmin = 0 					# [deg C]
-    stiff_thick = 100e3 			# [m] thickness of stiff ends of plates
+    stiff_thick = 100e3 		# [m] thickness of stiff ends of plates
     stiff_length = 500e3 		# [m] length of stiff ends of plates
 
     # empty array to store geometry
@@ -244,6 +248,8 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
     plt.tight_layout()
     plt.savefig(pfile, dpi=100)
 
-    print(f"[geom] wrote {tfile.name}  {cfile.name}")
+    print(f"[geom] wrote {tfile}")
+    print(f"[geom] wrote {cfile}")
+
     return tfile.name, cfile.name      # return *just file names* for template
 
