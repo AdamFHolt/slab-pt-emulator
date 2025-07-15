@@ -22,15 +22,14 @@ SEED      = 42
 
 # rounding rules
 ROUND_RULE = {
-    "age_SP"  :  lambda x: np.round(x, 1),  # round to one dp
+    "age_SP"  :  lambda x: np.round(x, 1),  
     "age_OP"  :  lambda x: np.round(x, 1),  
     "dip_int" :  lambda x: np.round(x, 1),  
-    "v_conv"  :  lambda x: np.round(x, 4),  # round to three dp
-    "mu_lith" :  lambda x: np.round(x, 4),  # round to two dp
-    "eta_int" :  lambda x: np.round(x, 0),  # round to zero dp
-    "eta_UM"  :  lambda x: np.round(x, 0),  # round to zero dp
-    "eps_trans": lambda x: np.round(x, 0),  # round to zero dp
-
+    "v_conv"  :  lambda x: np.round(x, 4), 
+    "eta_int" :  lambda x: np.vectorize(lambda y: '{:0.5e}'.format(y))(x),
+    "mu_lith" :  lambda x: np.round(x, 4),
+    "eta_UM"  :  lambda x: np.vectorize(lambda y: '{:0.5e}'.format(y))(x),
+    "eps_trans": lambda x: np.vectorize(lambda y: '{:0.5e}'.format(y))(x),
 }
 
 # 2.  Generate unit-cube Latin-hypercube 
