@@ -33,7 +33,7 @@ input_dir.mkdir(parents=True, exist_ok=True)
 # -- loop & write ------------------------------------------------
 for idx, row in enumerate(rows):
 
-    print(f"########### Writing run_{idx:03d} ...#################################")
+    print(f"########### Writing run_{idx:03d} ... #################################")
     print(f"  {row['v_conv']:.2f} cm/yr, "
           f"{row['age_SP']:.2f} Ma SP, "
           f"{row['age_OP']:.2f} Ma OP, "
@@ -59,7 +59,7 @@ for idx, row in enumerate(rows):
     for tok in token_pat.findall(tmpl):
 
         if tok == "MODELNAME":
-            text = text.replace(f"$${tok}$$", "run_{idx:03d}")
+            text = text.replace(f"$${tok}$$", f"run_{idx:03d}")
         elif tok == "TEMPINPUTNAME":
             text = text.replace(f"$${tok}$$", temp_name)
         elif tok == "COMPINPUTNAME":

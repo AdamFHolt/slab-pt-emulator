@@ -12,7 +12,7 @@
 set Dimension                              = 2
 set Use years in output instead of seconds = true
 set End time                               = 10e6
-set Output directory                       = outputs/run_{idx:03d}
+set Output directory                       = outputs/run_007
 set Resume computation			   = auto
 set Maximum time step                      = 2e5
 
@@ -25,11 +25,11 @@ set CFL number                             = 0.5
 # linear solver stuff 
 subsection Solver parameters
   subsection Stokes solver parameters
-    set Linear solver tolerance  		= 1.0e-4
+    set Linear solver tolerance  		= 5.0e-5
     set Number of cheap Stokes solver steps     = 200
   end
-  set Temperature solver tolerance        = 1e-11
-  set Composition solver tolerance        = 1e-11
+  set Temperature solver tolerance        = 1e-12
+  set Composition solver tolerance        = 1e-12
 end
 subsection Discretization
   set Temperature polynomial degree       = 2
@@ -53,7 +53,7 @@ subsection Mesh refinement
   set Initial global refinement                = 6
   set Initial adaptive refinement              = 3
   set Time steps between mesh refinement       = 1
-  set Refinement fraction                      = 0.2
+  set Refinement fraction                      = 0.3
   set Coarsening fraction  		       = 0.3
   set Strategy                                 = temperature, composition threshold, minimum refinement function
   set Refinement criteria scaling factors      = 1, 1.5, 1.5

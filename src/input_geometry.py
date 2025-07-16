@@ -247,6 +247,7 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
 
     plt.tight_layout()
     plt.savefig(pfile, dpi=100)
+    plt.close()          
 
     print(f"[geom] wrote {tfile}")
     print(f"[geom] wrote {cfile}")
