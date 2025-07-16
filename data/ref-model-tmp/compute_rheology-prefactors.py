@@ -2,8 +2,9 @@
 import numpy as np
 
 ### conditions for ref. visc ###
-visc_ref   = 5.e20
-strain_ref = 5e-15
+# checking prefactors in run_400.prm
+visc_ref   = 2.0*1.64217e+21 #5.e20
+strain_ref = 3.1552e-15  #5e-15
 ################################
 depth_ref  = 330e3 
 temp_ref_0 = 1673

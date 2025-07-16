@@ -154,14 +154,14 @@ subsection Material model
     # dislocation creep (effectively just z < 660 km), 
     set Stress exponents for dislocation creep    = 3.5
     set Activation energies for dislocation creep = 530.e3
-    set Prefactors for dislocation creep          = background: 2.5476096009952197e-19|1e-40,    ocrust: 2.5476096009952197e-19|1e-40,     stiffends: 2.5476096009952197e-19|1e-40
+    set Prefactors for dislocation creep          = background: 2.251790030849593e-20|1e-40,    ocrust: 2.251790030849593e-20|1e-40,     stiffends: 2.251790030849593e-20|1e-40
     set Activation volumes for dislocation creep  = background: 18e-6|0.0,          ocrust: 18e-6|0.0,           stiffends: 18e-6|0.0
 
     # diffusion creep (lm/um viscosity >= 20)
     set Stress exponents for diffusion creep      = 1
     set Grain size exponents for diffusion creep  = 0
     set Activation energies for diffusion creep   = 375e3
-    set Prefactors for diffusion creep            = background: 9.592619149011116e-10|4.7963095745055573e-11, ocrust: 9.592619149011116e-10|4.7963095745055573e-11,    stiffends: 9.592619149011116e-10|4.7963095745055573e-11
+    set Prefactors for diffusion creep            = background: 4.796309574505558e-10|2.3981547872527787e-11, ocrust: 4.796309574505558e-10|2.3981547872527787e-11,    stiffends: 4.796309574505558e-10|2.3981547872527787e-11
     set Activation volumes for diffusion creep    = background: 4e-6|4e-6,           ocrust: 4e-6|4e-6,              stiffends: 4e-6|4e-6
     
     # Plasticity parameters using drucker-prager

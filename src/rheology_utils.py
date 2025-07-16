@@ -31,14 +31,17 @@ def prefactors(eta_um: float, eps_trans: float) -> dict:
     T_ref      = 1673 + depth_ref*1e-3*adiabat
     P_ref      = 3300.0*9.81*depth_ref
 
+    eta_individual = 2.0 * eta_um   # so that the effective viscosity 
+                                    # is the same as the input eta_um   
+
     # Dislocation prefactor
-    Adisl = ((eta_um)**(-ndis)) / (
+    Adisl = ((eta_individual)**(-ndis)) / (
         0.5**(-ndis) * eps_trans**(ndis-1) *
         np.exp(-(Edisl + P_ref*Vdisl) / (R*T_ref))
     )
 
     # Diffusion prefactor (upper mantle)
-    Adiff = ((eta_um)**(-ndiff)) / (
+    Adiff = ((eta_individual)**(-ndiff)) / (
         0.5**(-ndiff) * eps_trans**(ndiff-1) *
         np.exp(-(Ediff + P_ref*Vdiff) / (R*T_ref))
     )
