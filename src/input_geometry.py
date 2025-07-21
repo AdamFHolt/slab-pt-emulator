@@ -95,7 +95,7 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
             # flat portion of SP
             if x <= (x_SP-radius_outer) and y > (ymax - plate_thick):
                     T_term2 = 0
-                    for n in range(1,5):
+                    for n in range(1,8):
                         T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * age_sp * Ma_to_sec)/(plate_thick**2))
                     T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 
@@ -107,21 +107,21 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
                 # curved part
                 if ((x-x1)**2 + (y-y1)**2) < radius_outer**2 and (y-y1) > 0:
                     T_term2 = 0
-                    for n in range(1,5):
+                    for n in range(1,8):
                         T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * age_sp * Ma_to_sec)/(plate_thick**2))
                     T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 
                 elif ((x-x1)**2 + (y-y1)**2) >= radius_outer**2 and (y-y1) > 0:
 
                     T_term2 = 0
-                    for n in range(1,5):
+                    for n in range(1,8):
                         T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * age_op * Ma_to_sec)/(plate_thick**2))
                     T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 
                 elif (x-x1) <= radius_outer and (y-y1) <= 0:
 
                     T_term2 = 0
-                    for n in range(1,5):
+                    for n in range(1,8):
                         T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * age_sp * Ma_to_sec)/(plate_thick**2))
                     T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 
@@ -132,14 +132,14 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
                 if x >= top_x and y < (top_y - (x - top_x) * np.tan(np.radians(dip))):
 
                     T_term2 = 0
-                    for n in range(1,5):
+                    for n in range(1,8):
                         T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * age_sp * Ma_to_sec)/(plate_thick**2))
                     T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 
                 elif x >= top_x and y >= (top_y - (x - top_x) * np.tan(np.radians(dip))):
 
                     T_term2 = 0
-                    for n in range(1,5):
+                    for n in range(1,8):
                         T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * age_op * Ma_to_sec)/(plate_thick**2))
                     T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 
@@ -147,7 +147,7 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
             elif x >= (x_SP + (300e3)/np.tan(np.radians(dip))) and y > (ymax - plate_thick):
 
                 T_term2 = 0
-                for n in range(1,5):
+                for n in range(1,8):
                     T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * age_op * Ma_to_sec)/(plate_thick**2))
                 T[ind,2]='%.5f'  %   (T_term1 + T_term2)
             
@@ -169,7 +169,7 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
                             C[ind,2]=1
                 elif ((x-x1)**2 + (y-y1)**2) >= radius_outer**2 and y > (ymax - stiff_thick):
                     angle=np.arctan((y-y1)/(x-x1))
-                    if angle > np.radians(90. - dip_crust):
+                    if angle > np.radians(90. - dip):
                         C[ind,4]=1
 
                 # dipping portion
@@ -183,14 +183,14 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
                     y_max_depth = ymax - depth_full_crust + (x - (bott_x + x_to_tip)) * np.tan(np.radians(90-dip))
                     if y > y_max_depth:
                         C[ind,2]=1
-                elif x >= bott_x and y >= (bott_y - (x - bott_x) * np.tan(np.radians(dip_crust))) and y > (ymax - stiff_thick):
+                elif x >= bott_x and y >= (bott_y - (x - bott_x) * np.tan(np.radians(dip))) and y > (ymax - stiff_thick):
                     C[ind,4]=1               
                     
                 # trim off top of linear-curved transition
                 if y >= top_y and ((x-x1)**2 + (y-y1)**2) >= radius_outer**2:
                     C[ind,2]=0
 
-            elif x >= (x_SP + (300e3)/np.tan(np.radians(dip_crust))) and x <= (xmax - stiff_length):
+            elif x >= (x_SP + (300e3)/np.tan(np.radians(dip))) and x <= (xmax - stiff_length):
                 if y > (ymax - stiff_thick):
                     C[ind,4]=1
 

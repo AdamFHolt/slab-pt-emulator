@@ -75,7 +75,7 @@ for j in range(ynum + 1):
 		# flat portion of SP
 		if x <= (x_SP-radius_outer) and y > (ymax - plate_thick):
 				T_term2 = 0
-				for n in range(1,5):
+				for n in range(1,8):
 					T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * sp_age * Ma_to_sec)/(plate_thick**2))
 				T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 
@@ -87,21 +87,21 @@ for j in range(ynum + 1):
 			# curved part
 			if ((x-x1)**2 + (y-y1)**2) < radius_outer**2 and (y-y1) > 0:
 				T_term2 = 0
-				for n in range(1,5):
+				for n in range(1,8):
 					T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * sp_age * Ma_to_sec)/(plate_thick**2))
 				T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 
 			elif ((x-x1)**2 + (y-y1)**2) >= radius_outer**2 and (y-y1) > 0:
 
 				T_term2 = 0
-				for n in range(1,5):
+				for n in range(1,8):
 					T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * op_age * Ma_to_sec)/(plate_thick**2))
 				T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 
 			elif (x-x1) <= radius_outer and (y-y1) <= 0:
 
 				T_term2 = 0
-				for n in range(1,5):
+				for n in range(1,8):
 					T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * sp_age * Ma_to_sec)/(plate_thick**2))
 				T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 
@@ -112,14 +112,14 @@ for j in range(ynum + 1):
 			if x >= top_x and y < (top_y - (x - top_x) * np.tan(np.radians(dip_crust))):
 
 				T_term2 = 0
-				for n in range(1,5):
+				for n in range(1,8):
 					T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * sp_age * Ma_to_sec)/(plate_thick**2))
 				T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 
 			elif x >= top_x and y >= (top_y - (x - top_x) * np.tan(np.radians(dip_crust))):
 
 				T_term2 = 0
-				for n in range(1,5):
+				for n in range(1,8):
 					T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * op_age * Ma_to_sec)/(plate_thick**2))
 				T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 
@@ -128,7 +128,7 @@ for j in range(ynum + 1):
 		elif x >= (x_SP + (300e3)/np.tan(np.radians(dip_crust))) and y > (ymax - plate_thick):
 
 			T_term2 = 0
-			for n in range(1,5):
+			for n in range(1,8):
 				T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * op_age * Ma_to_sec)/(plate_thick**2))
 			T[ind,2]='%.5f'  %   (T_term1 + T_term2)
 		
