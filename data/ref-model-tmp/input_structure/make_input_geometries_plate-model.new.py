@@ -146,11 +146,17 @@ for j in range(ynum + 1):
 		elif x > (x_SP - radius_outer) and x < (x_SP + (300e3)/np.tan(np.radians(dip_crust))):
 			x1 = x_SP - radius_outer; 
 			y1 = ymax - radius_outer; 
+
 			if ((x-x1)**2 + (y-y1)**2) < radius_outer**2 and y > (ymax - radius_outer):
 				angle=np.arctan((y-y1)/(x-x1))
 				if ((x-x1)**2 + (y-y1)**2) > (radius_outer-y_crust)**2:
 					if angle > np.radians(90. - dip_crust):
 						C[ind,2]=1
+						
+			elif ((x-x1)**2 + (y-y1)**2) >= radius_outer**2 and y > (ymax - stiff_thick):
+				angle=np.arctan((y-y1)/(x-x1))
+				if angle > np.radians(90. - dip_crust):
+					C[ind,4]=1
 
 			# dipping portion
 			bott_x = x1 + (radius_outer-y_crust) * np.sin(np.radians(dip_crust))
@@ -163,10 +169,16 @@ for j in range(ynum + 1):
 				y_max_depth = ymax - depth_full_crust + (x - (bott_x + x_to_tip)) * np.tan(np.radians(90-dip_crust))
 				if y > y_max_depth:
 					C[ind,2]=1
+			elif x >= bott_x and y >= (bott_y - (x - bott_x) * np.tan(np.radians(dip_crust))) and y > (ymax - stiff_thick):
+				C[ind,4]=1
 			
 			# trim off top of linear-curved transition
 			if y >= top_y and ((x-x1)**2 + (y-y1)**2) >= radius_outer**2:
 				C[ind,2]=0
+
+		elif x >= (x_SP + (300e3)/np.tan(np.radians(dip_crust))) and x <= (xmax - stiff_length):
+			if y > (ymax - stiff_thick):
+				C[ind,4]=1
 
 		# stiff ends of plates
 		if y >= (ymax - stiff_thick):
@@ -210,6 +222,8 @@ plt.gca().set_aspect('equal', adjustable='box')
 # Second subplot for composition
 plt.subplot(3, 1, 2)
 sz2 = plt.tricontourf(C[:,0]/1e3, C[:,1]/1e3, C[:,2], levels=20)
+plt.contour(C[:,0].reshape((ynum + 1, xnum + 1))/1e3, C[:,1].reshape((ynum + 1, xnum + 1))/1e3, \
+	 C[:,4].reshape((ynum + 1, xnum + 1)), levels=[0.5], colors='red', linewidths=1.5)
 plt.colorbar(sz2, label='C')
 plt.xlabel('X [km]')
 plt.ylabel('Y [km]')
