@@ -54,7 +54,7 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
     # empty array to store geometry
     No_nodes= (xnum + 1) * (ynum + 1)
     T=np.zeros([No_nodes,3],float)
-    C=np.zeros([No_nodes,4],float)
+    C=np.zeros([No_nodes,5],float)
 
     # vector for y values (refined at top)
     yvecta_length = ynum // 2
@@ -167,6 +167,10 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
                     if ((x-x1)**2 + (y-y1)**2) > (radius_outer-y_crust)**2:
                         if angle > np.radians(90. - dip):
                             C[ind,2]=1
+                elif ((x-x1)**2 + (y-y1)**2) >= radius_outer**2 and y > (ymax - stiff_thick):
+                    angle=np.arctan((y-y1)/(x-x1))
+                    if angle > np.radians(90. - dip_crust):
+                        C[ind,4]=1
 
                 # dipping portion
                 bott_x = x1 + (radius_outer-y_crust) * np.sin(np.radians(dip))
@@ -179,10 +183,16 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
                     y_max_depth = ymax - depth_full_crust + (x - (bott_x + x_to_tip)) * np.tan(np.radians(90-dip))
                     if y > y_max_depth:
                         C[ind,2]=1
-                
+                elif x >= bott_x and y >= (bott_y - (x - bott_x) * np.tan(np.radians(dip_crust))) and y > (ymax - stiff_thick):
+                    C[ind,4]=1               
+                    
                 # trim off top of linear-curved transition
                 if y >= top_y and ((x-x1)**2 + (y-y1)**2) >= radius_outer**2:
                     C[ind,2]=0
+
+            elif x >= (x_SP + (300e3)/np.tan(np.radians(dip_crust))) and x <= (xmax - stiff_length):
+                if y > (ymax - stiff_thick):
+                    C[ind,4]=1
 
             # stiff ends of plates
             if y >= (ymax - stiff_thick):
@@ -203,9 +213,9 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
     
     f= open(cfile,"w+")
     f.write("# POINTS: %s %s\n" % (str(xnum+1),str(ynum+1)))
-    f.write("# Columns: x y composition1 composition2\n")
+    f.write("# Columns: x y composition1 composition2 composition3\n")
     for k in range(0,ind):
-        f.write("%.6f %.6f %.2f %.2f\n" % (C[k,0],C[k,1],C[k,2],C[k,3]))
+        f.write("%.6f %.6f %.2f %.2f %.2f\n" % (C[k,0],C[k,1],C[k,2],C[k,3],C[k,4]))
     f.close()
 
     # PLOT ############################################################################### 
@@ -227,6 +237,8 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
     # Second subplot for composition
     plt.subplot(3, 1, 2)
     sz2 = plt.tricontourf(C[:,0]/1e3, C[:,1]/1e3, C[:,2], levels=20)
+    plt.contour(C[:,0].reshape((ynum + 1, xnum + 1))/1e3, C[:,1].reshape((ynum + 1, xnum + 1))/1e3, \
+        C[:,4].reshape((ynum + 1, xnum + 1)), levels=[0.5], colors='red', linewidths=1.5)
     plt.colorbar(sz2, label='C')
     plt.xlabel('X [km]')
     plt.ylabel('Y [km]')

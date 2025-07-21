@@ -7,14 +7,14 @@ import pandas as pd
 # 1.  Parameter ranges 
 RANGES = {
     # name         (min,   max,  'lin' | 'log')
-    "v_conv"    : (  3.0 ,   8.0 , 'lin'),  # cm/yr  (convergence rate)
-    "age_SP"    : ( 50.0 ,  100.0, 'lin'),  # Myr
-    "age_OP"    : ( 10.0 ,  50.0 , 'lin'),  # Myr
-    "dip_int"   : ( 20.0 ,  60.0 , 'lin'),  # degrees (slab dip angle)
+    "v_conv"    : (  1.0 ,  10.0 , 'lin'),  # cm/yr  (convergence rate)
+    "age_SP"    : ( 50.0 ,  110.0, 'lin'),  # Myr
+    "age_OP"    : ( 5.0 ,  50.0 , 'lin'),  # Myr
+    "dip_int"   : ( 20.0 ,  70.0 , 'lin'),  # degrees (slab dip angle)
     "eta_int"   : ( 1e19 ,  1e21 , 'log'),  # Pa·s  (interface viscosity)
     "mu_lith"   : ( 0.05 ,  0.60 , 'lin'),  # friction coeff.
-    "eta_UM"    : ( 5e19 ,  5e21 , 'log'),  # Pa·s  (upper-mantle reference)
-    "eps_trans" : ( 1e-15,  5e-14, 'log')   # s⁻¹   (transition strain-rate)
+    "eta_UM"    : ( 5e19 ,  1e21 , 'log'),  # Pa·s  (upper-mantle reference)
+    "eps_trans" : ( 1e-15,  1e-13, 'log')   # s⁻¹   (transition strain-rate)
 }
 
 N_SAMPLES = 500         # <- change as needed

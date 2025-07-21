@@ -37,7 +37,7 @@ stiff_length = 500e3 		# [m] length of stiff ends of plates
 # empty array to store geometry
 No_nodes= (xnum + 1) * (ynum + 1)
 T=np.zeros([No_nodes,3],float)
-C=np.zeros([No_nodes,4],float)
+C=np.zeros([No_nodes,5],float)
 
 # vector for y values (refined at top)
 yvecta_length = ynum // 2
@@ -67,8 +67,6 @@ for j in range(ynum + 1):
 		T[ind,2] = Tmax
 		C[ind,0] = x
 		C[ind,1] = y
-		C[ind,2] = 0
-		C[ind,3] = 0
 
 		########## TEMPERATURE ########################################
 
@@ -146,11 +144,17 @@ for j in range(ynum + 1):
 		elif x > (x_SP - radius_outer) and x < (x_SP + (300e3)/np.tan(np.radians(dip_crust))):
 			x1 = x_SP - radius_outer; 
 			y1 = ymax - radius_outer; 
+
 			if ((x-x1)**2 + (y-y1)**2) < radius_outer**2 and y > (ymax - radius_outer):
 				angle=np.arctan((y-y1)/(x-x1))
 				if ((x-x1)**2 + (y-y1)**2) > (radius_outer-y_crust)**2:
 					if angle > np.radians(90. - dip_crust):
 						C[ind,2]=1
+						
+			elif ((x-x1)**2 + (y-y1)**2) >= radius_outer**2 and y > (ymax - stiff_thick):
+				angle=np.arctan((y-y1)/(x-x1))
+				if angle > np.radians(90. - dip_crust):
+					C[ind,4]=1
 
 			# dipping portion
 			bott_x = x1 + (radius_outer-y_crust) * np.sin(np.radians(dip_crust))
@@ -163,10 +167,16 @@ for j in range(ynum + 1):
 				y_max_depth = ymax - depth_full_crust + (x - (bott_x + x_to_tip)) * np.tan(np.radians(90-dip_crust))
 				if y > y_max_depth:
 					C[ind,2]=1
+			elif x >= bott_x and y >= (bott_y - (x - bott_x) * np.tan(np.radians(dip_crust))) and y > (ymax - stiff_thick):
+				C[ind,4]=1
 			
 			# trim off top of linear-curved transition
 			if y >= top_y and ((x-x1)**2 + (y-y1)**2) >= radius_outer**2:
 				C[ind,2]=0
+
+		elif x >= (x_SP + (300e3)/np.tan(np.radians(dip_crust))) and x <= (xmax - stiff_length):
+			if y > (ymax - stiff_thick):
+				C[ind,4]=1
 
 		# stiff ends of plates
 		if y >= (ymax - stiff_thick):
@@ -186,9 +196,9 @@ for k in range(0,ind):
 f.close() 
 f= open(ofile_c,"w+")
 f.write("# POINTS: %s %s\n" % (str(xnum+1),str(ynum+1)))
-f.write("# Columns: x y composition1 composition2\n")
+f.write("# Columns: x y composition1 composition2 composition3\n")
 for k in range(0,ind):
-	f.write("%.6f %.6f %.2f %.2f\n" % (C[k,0],C[k,1],C[k,2],C[k,3]))
+	f.write("%.6f %.6f %.2f %.2f %.2f\n" % (C[k,0],C[k,1],C[k,2],C[k,3],C[k,4]))
 f.close()
 
 # quick and dirty plot to visualize 
@@ -210,6 +220,8 @@ plt.gca().set_aspect('equal', adjustable='box')
 # Second subplot for composition
 plt.subplot(3, 1, 2)
 sz2 = plt.tricontourf(C[:,0]/1e3, C[:,1]/1e3, C[:,2], levels=20)
+plt.contour(C[:,0].reshape((ynum + 1, xnum + 1))/1e3, C[:,1].reshape((ynum + 1, xnum + 1))/1e3, \
+	 C[:,4].reshape((ynum + 1, xnum + 1)), levels=[0.5], colors='red', linewidths=1.5)
 plt.colorbar(sz2, label='C')
 plt.xlabel('X [km]')
 plt.ylabel('Y [km]')
@@ -223,6 +235,8 @@ levels = np.linspace(Tmin+273, 1700, 41)
 sz3 = plt.tricontourf(T[:,0]/1e3, T[:,1]/1e3, T[:,2]+273., levels=levels, cmap='coolwarm')
 plt.contour(C[:,0].reshape((ynum + 1, xnum + 1))/1e3, C[:,1].reshape((ynum + 1, xnum + 1))/1e3, \
 	 C[:,3].reshape((ynum + 1, xnum + 1)), levels=[0.5], colors='black', linewidths=1.5)
+plt.contour(C[:,0].reshape((ynum + 1, xnum + 1))/1e3, C[:,1].reshape((ynum + 1, xnum + 1))/1e3, \
+	 C[:,4].reshape((ynum + 1, xnum + 1)), levels=[0.5], colors='red', linewidths=1.5)
 plt.colorbar(sz3, label='T [K]')
 plt.xlabel('X [km]')
 plt.ylabel('Y [km]')
