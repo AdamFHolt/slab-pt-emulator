@@ -1,7 +1,7 @@
 set Dimension                              = 2
 set Use years in output instead of seconds = true
-set End time                               = 10e6
-set Output directory                       = outputs/ref_linear_open_bottom
+set End time                               = 20e6
+set Output directory                       = ref_model_test 
 set Resume computation			   = auto
 set Maximum time step                      = 2e5
 
@@ -14,7 +14,7 @@ set CFL number                             = 0.5
 # linear solver stuff 
 subsection Solver parameters
   subsection Stokes solver parameters
-    set Linear solver tolerance  		= 1.0e-5
+    set Linear solver tolerance  		= 1.0e-4
     set Number of cheap Stokes solver steps     = 200
   end
   set Temperature solver tolerance        = 1e-11
