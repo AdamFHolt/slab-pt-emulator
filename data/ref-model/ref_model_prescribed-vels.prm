@@ -1,19 +1,20 @@
 set Dimension                              = 2
 set Use years in output instead of seconds = true
-set End time                               = 20e6
-set Output directory                       = ref_model_test
+set End time                               = 10e6
+set Output directory                       = outputs/ref_linear_open_bottom
 set Resume computation			   = auto
+set Maximum time step                      = 2e5
 
 ### SOLVER STUFF
 # non-linear stuff
 set Nonlinear solver scheme                = single Advection, iterated Stokes
 set Nonlinear solver tolerance             = 1.0e-4
-set Max nonlinear iterations               = 50
+set Max nonlinear iterations               = 100
 set CFL number                             = 0.5
 # linear solver stuff 
 subsection Solver parameters
   subsection Stokes solver parameters
-    set Linear solver tolerance  		= 1.0e-4
+    set Linear solver tolerance  		= 1.0e-5
     set Number of cheap Stokes solver steps     = 200
   end
   set Temperature solver tolerance        = 1e-11
@@ -38,13 +39,14 @@ end
 
 subsection Mesh refinement
 
-  set Initial global refinement                = 4
+  set Initial global refinement                = 6
   set Initial adaptive refinement              = 3
   set Time steps between mesh refinement       = 1
-  set Refinement fraction                      = 0.3
+  set Refinement fraction                      = 0.2
+  set Coarsening fraction  		       = 0.3
   set Strategy                                 = temperature, composition threshold, minimum refinement function
-  set Refinement criteria scaling factors      = 1, 1, 1
-  set Refinement criteria merge stiffendseration      = max
+  set Refinement criteria scaling factors      = 1, 1.5, 1.5
+  set Refinement criteria merge operation      = max
   set Run postprocessors on initial refinement = false 
 
   subsection Composition threshold
@@ -54,8 +56,9 @@ subsection Mesh refinement
   subsection Minimum refinement function
     set Coordinate system   = cartesian
     set Variable names      = x, y
-    set Function constants  = lthick=200e3, ymax=1750e3, xtrench=2000e3
-    set Function expression = if(y>(yd-lthick) && x>(xtrench-100e3) && x<(xtrench+350e3), 6, 2)
+    set Function constants  = lthick=200e3, yd=1000e3, xt=2000e3
+    set Function expression = if((y>=(yd-lthick) && x>=(xt-500e3) && x<=(xt+500e3)), 7, \
+                              if((y>=(yd-670.e3) && y<=(yd-650.e3)), 6, 3 ))
   end
 
 end
@@ -66,8 +69,8 @@ subsection Initial temperature model
   set Model name = ascii data
    
    subsection Ascii data model
-     set Data directory = /work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/text_files/
-     set Data file name = temp_crust-dip45.0_sp-age100.0_stiffends-age50.0_plate-thick125000.0.txt
+     set Data directory = /home/vturino/PhD/projects/Adam_ML/txt_files/
+     set Data file name = temp_crust-dip45.0_sp-age100.0_op-age50.0_plate-thick125000.0.txt
    end
 end
 
@@ -80,26 +83,44 @@ subsection Initial composition model
   set Model name = ascii data
   
    subsection Ascii data model
-     set Data directory = /work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/text_files/
-     set Data file name = comp_crust-dip45.0_sp-age100.0_stiffends-age50.0_plate-thick125000.0.txt
+     set Data directory = /home/vturino/PhD/projects/Adam_ML/txt_files/
+     set Data file name = comp_crust-dip45.0_sp-age100.0_op-age50.0_plate-thick125000.0.txt
    end
 end
 #-------------------------------------
 
-#------- boundary conditions -------------
+#------- boundary conditions -------------/scratch/04714/adamholt/aspect_work
 subsection Boundary temperature model
-  set Fixed temperature boundary indicators = tstiffends, bottom
+  set Fixed temperature boundary indicators = top, bottom
   set List of model names = box
 
   subsection Box
     set Bottom temperature = 1673
-    set Tstiffends temperature = 273
+    set Top temperature = 273
   end
 end
 
 subsection Boundary velocity model
-  set Tangential velocity boundary indicators = left, right, bottom, tstiffends
+  set Tangential velocity boundary indicators = top
+  set Prescribed velocity boundary indicators = left: function, right: function
+  subsection Function
+    set Function constants  = vc=0.05, ymax=1000.e3, lith=100.e3, p=300.e3, sp=0.5, op=0.5
+    set Function expression = if(x==0 && y>=(ymax - lith),                               sp*vc, \
+                              if(x==0 && y<(ymax - lith) && y>=(ymax - p),               sp*vc*(1 + (y-ymax+lith)/(p-lith)), \
+                              if(x==4000.e3 && y>=(ymax - lith),                         -op*vc, \
+                              if(x==4000.e3 && y<(ymax - lith) && y>=(ymax - p),         -op*vc*(1 + (y-ymax+lith)/(p-lith)), 0)))); \
+                              0
+    set Variable names      = x,y,t
+  end
 end
+
+subsection Boundary traction model
+  set Prescribed traction boundary indicators = bottom: initial lithostatic pressure
+  subsection Initial lithostatic pressure
+    set Representative point = 2000.e3, 0.e3
+  end
+end
+
 #-------------------------------------
 
 #-------- material model -------------
@@ -183,9 +204,9 @@ subsection Postprocess
   set List of postprocessors = visualization
 
   subsection Visualization
-    set List of output variables = viscosity, strain rate, shear stress,density
+    set List of output variables = material properties, strain rate
     set Output format                 = vtu
-    set Time between graphical output = 0.5e6
+    set Time steps between graphical output = 5
     set Interpolate output = true
     set Number of grouped files = 1
   end
