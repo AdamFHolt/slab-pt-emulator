@@ -1,7 +1,7 @@
 set Dimension                              = 2
 set Use years in output instead of seconds = true
 set End time                               = 10e6
-set Output directory                       = outputs/ref_model_push5
+set Output directory                       = outputs/ref_model_push-final
 
 #set Resume computation			   = auto
 

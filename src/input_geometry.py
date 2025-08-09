@@ -40,7 +40,7 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, crust_thick, out_dir)
     ynum= 400
 
     # basic parameters
-    depth_full_crust = plate_thick + 15e3
+    depth_full_crust = plate_thick 
     x_SP  = 2000.e3				# [m]
     radius_outer = 50e3 		# [m]
     Ma_to_sec = 3.15576e13 		# [s/Ma]
