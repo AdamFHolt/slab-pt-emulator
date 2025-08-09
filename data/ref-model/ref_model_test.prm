@@ -8,7 +8,7 @@ set Resume computation			   = auto
 # non-linear stuff
 set Nonlinear solver scheme                = single Advection, iterated Stokes
 set Nonlinear solver tolerance             = 1.0e-4
-set Max nonlinear iterations               = 50
+set Max nonlinear iterations               = 100
 set CFL number                             = 0.5
 # linear solver stuff 
 subsection Solver parameters
@@ -43,8 +43,8 @@ subsection Mesh refinement
   set Time steps between mesh refinement       = 1
   set Refinement fraction                      = 0.3
   set Strategy                                 = temperature, composition threshold, minimum refinement function
-  set Refinement criteria scaling factors      = 1, 1, 1
-  set Refinement criteria merge stiffendseration      = max
+  set Refinement criteria scaling factors      = 1, 1.5, 1.5
+  set Refinement criteria merge operation      = max
   set Run postprocessors on initial refinement = false 
 
   subsection Composition threshold
@@ -88,12 +88,12 @@ end
 
 #------- boundary conditions -------------
 subsection Boundary temperature model
-  set Fixed temperature boundary indicators = tstiffends, bottom
+  set Fixed temperature boundary indicators = top, bottom
   set List of model names = box
 
   subsection Box
     set Bottom temperature = 1673
-    set Tstiffends temperature = 273
+    set Top temperature = 273
   end
 end
 

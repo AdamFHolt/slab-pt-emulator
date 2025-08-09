@@ -89,12 +89,12 @@ subsection Initial composition model
 end
 #-------------------------------------
 
-#------- boundary conditions -------------/scratch/04714/adamholt/aspect_work
+#------- boundary conditions -------------
 subsection Boundary temperature model
   set Fixed temperature boundary indicators = top, bottom
   set List of model names = box
 
-  subsection Boxstiffends
+  subsection Box
     set Bottom temperature = 1673
     set Top temperature = 273
   end
