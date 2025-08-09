@@ -70,7 +70,7 @@ subsection Initial temperature model
    
    subsection Ascii data model
      set Data directory = /work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/text_files/
-     set Data file name = temp_crust-dip45.0_sp-age100.0_op-age6.0_plate-thick125000.0.txt 
+     set Data file name = temp_crust-dip45.0_sp-age100.0_op-age50.0_plate-thick125000.0.txt 
    end
 end
 
@@ -84,7 +84,7 @@ subsection Initial composition model
   
    subsection Ascii data model
      set Data directory = /work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/text_files/
-     set Data file name = comp_crust-dip45.0_sp-age100.0_op-age6.0_plate-thick125000.0.txt
+     set Data file name = comp_crust-dip45.0_sp-age100.0_op-age50.0_plate-thick125000.0.txt
    end
 end
 #-------------------------------------

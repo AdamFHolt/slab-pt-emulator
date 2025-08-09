@@ -81,7 +81,7 @@ subsection Initial temperature model
    
    subsection Ascii data model
      set Data directory = /work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/text_files/
-     set Data file name = temp_crust-dip65.9_sp-age107.6_op-age43.2_plate-thick125000.txt
+     set Data file name = temp_crust-dip65.9_sp-age107.6_op-age43.2_plate-thick125000_crust-thick6000.txt
    end
 end
 
@@ -95,17 +95,17 @@ subsection Initial composition model
   
    subsection Ascii data model
      set Data directory = /work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/text_files/
-     set Data file name = comp_crust-dip65.9_sp-age107.6_op-age43.2_plate-thick125000.txt
+     set Data file name = comp_crust-dip65.9_sp-age107.6_op-age43.2_plate-thick125000_crust-thick6000.txt
    end
 end
 #-------------------------------------
 
-#------- boundary conditions -------------/scratch/04714/adamholt/aspect_work
+#------- boundary conditions -------------
 subsection Boundary temperature model
   set Fixed temperature boundary indicators = top, bottom
   set List of model names = box
 
-  subsection Boxstiffends
+  subsection Box
     set Bottom temperature = 1673
     set Top temperature = 273
   end

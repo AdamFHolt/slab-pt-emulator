@@ -12,6 +12,7 @@ TEMPLATE_FILE = "../data/model_template.prm"   # tokenised .prm
 OUT_DIR       = pathlib.Path("../subd-model-runs")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 PLATE_THICK_M = 125000.0                       # fixed plate thickness for thermal model [m]
+CRUST_THICK_M = 6000.0                         # fixed crust thickness for composition [m]
 
 COLS = [
     "v_conv","age_SP","age_OP","dip_int",
@@ -52,7 +53,8 @@ for idx, row in enumerate(rows):
         age_sp=row["age_SP"],
         age_op=row["age_OP"],
         plate_thick=PLATE_THICK_M,
-        out_dir=input_dir,
+        crust_thick=CRUST_THICK_M,
+        out_dir=input_dir
     )
 
     text = tmpl

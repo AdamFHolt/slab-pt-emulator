@@ -15,13 +15,13 @@ import matplotlib.pyplot as plt
 import scipy.special as sp
 from pathlib import Path
 
-def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
+def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, crust_thick, out_dir):
 
     """Write temp & comp .txt (and a .png quick-look) into out_dir."""
     out_dir.mkdir(parents=True, exist_ok=True)
 
     base = (f"crust-dip{dip}_sp-age{age_sp}_"
-            f"op-age{age_op}_plate-thick{int(plate_thick):d}")
+            f"op-age{age_op}_plate-thick{int(plate_thick):d}_crust-thick{int(crust_thick):d}")
 
     tfile = out_dir / f"temp_{base}.txt"
     cfile = out_dir / f"comp_{base}.txt"
@@ -42,7 +42,6 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
     # basic parameters
     depth_full_crust = plate_thick + 15e3
     x_SP  = 2000.e3				# [m]
-    y_crust = 7.5e3				# [m]
     radius_outer = 50e3 		# [m]
     Ma_to_sec = 3.15576e13 		# [s/Ma]
     k = 1e-6 					# [m^2/s]
@@ -155,7 +154,7 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
             ########## COMPOSITION ########################################
 
             # crust along top of flat portion of SP
-            if x <= (x_SP-radius_outer) and y > (ymax - y_crust):
+            if x <= (x_SP-radius_outer) and y > (ymax - crust_thick):
                 C[ind,2]=1
 
             # curved portion of crust ("notch")
@@ -164,7 +163,7 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
                 y1 = ymax - radius_outer; 
                 if ((x-x1)**2 + (y-y1)**2) < radius_outer**2 and y > (ymax - radius_outer):
                     angle=np.arctan((y-y1)/(x-x1))
-                    if ((x-x1)**2 + (y-y1)**2) > (radius_outer-y_crust)**2:
+                    if ((x-x1)**2 + (y-y1)**2) > (radius_outer-crust_thick)**2:
                         if angle > np.radians(90. - dip):
                             C[ind,2]=1
                 elif ((x-x1)**2 + (y-y1)**2) >= radius_outer**2 and y > (ymax - stiff_thick):
@@ -173,11 +172,11 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, out_dir):
                         C[ind,4]=1
 
                 # dipping portion
-                bott_x = x1 + (radius_outer-y_crust) * np.sin(np.radians(dip))
-                bott_y = y1 + (radius_outer-y_crust) * np.cos(np.radians(dip))
+                bott_x = x1 + (radius_outer-crust_thick) * np.sin(np.radians(dip))
+                bott_y = y1 + (radius_outer-crust_thick) * np.cos(np.radians(dip))
                 top_y = y1 + radius_outer * np.cos(np.radians(dip))
                 if x >= bott_x and y > (bott_y - (x - bott_x) * np.tan(np.radians(dip))) \
-                    and y < (bott_y - (x - bott_x) * np.tan(np.radians(dip)) + (y_crust/np.cos(np.radians(dip)))):
+                    and y < (bott_y - (x - bott_x) * np.tan(np.radians(dip)) + (crust_thick/np.cos(np.radians(dip)))):
                     y_to_tip = depth_full_crust - (ymax - bott_y)
                     x_to_tip = y_to_tip / np.tan(np.radians(dip))
                     y_max_depth = ymax - depth_full_crust + (x - (bott_x + x_to_tip)) * np.tan(np.radians(90-dip))

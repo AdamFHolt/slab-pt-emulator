@@ -9,10 +9,11 @@ dip_crust = float(sys.argv[1]) 		# [degrees]
 sp_age = float(sys.argv[2]) 		# [Ma]
 op_age = float(sys.argv[3]) 		# [Ma]
 plate_thick = float(sys.argv[4]) 	# [m]
+y_crust = float(sys.argv[5])            # [m]
 
-ofile_t = f"outputs/temp_crust-dip{dip_crust}_sp-age{sp_age}_op-age{op_age}_plate-thick{plate_thick}.txt"
-ofile_c = f"outputs/comp_crust-dip{dip_crust}_sp-age{sp_age}_op-age{op_age}_plate-thick{plate_thick}.txt"
-oplot   = f"outputs/crust-dip{dip_crust}_sp-age{sp_age}_op-age{op_age}_plate-thick{plate_thick}.png"
+ofile_t = f"outputs/temp_crust-dip{dip_crust}_sp-age{sp_age}_op-age{op_age}_plate-thick{plate_thick}_crust-thick{y_crust}.txt"
+ofile_c = f"outputs/comp_crust-dip{dip_crust}_sp-age{sp_age}_op-age{op_age}_plate-thick{plate_thick}_crust-thick{y_crust}.txt"
+oplot   = f"outputs/crust-dip{dip_crust}_sp-age{sp_age}_op-age{op_age}_plate-thick{plate_thick}_crust-thick{y_crust}.png"
 
 # box dimensions (i.e. "extent" in ASPECT input)
 xmin=0;xmax=4000.e3 # [m]
@@ -25,7 +26,6 @@ ynum= 500
 # basic parameters
 depth_full_crust = plate_thick + 15e3
 x_SP  = 2000.e3				# [m]
-y_crust = 7.5e3				# [m]
 radius_outer = 50e3 		# [m]
 Ma_to_sec = 3.15576e13 		# [s/Ma]
 k = 1e-6 					# [m^2/s]
