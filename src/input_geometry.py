@@ -152,9 +152,8 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, crust_thick, out_dir)
             
 
             ########## COMPOSITION ########################################
-
             # crust along top of flat portion of SP
-            if x <= (x_SP-radius_outer) and y > (ymax - crust_thick):
+            if x >= stiff_length and x <= (x_SP-radius_outer) and y > (ymax - crust_thick):
                 C[ind,2]=1
 
             # curved portion of crust ("notch")

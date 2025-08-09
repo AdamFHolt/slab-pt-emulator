@@ -137,7 +137,7 @@ for j in range(ynum + 1):
 		########## COMPOSITION ########################################
 
 		# crust along top of flat portion of SP
-		if x <= (x_SP-radius_outer) and y > (ymax - y_crust):
+		if x >= stiff_length and x <= (x_SP-radius_outer) and y > (ymax - y_crust):
 			C[ind,2]=1
 
 		# curved portion of crust ("notch")
