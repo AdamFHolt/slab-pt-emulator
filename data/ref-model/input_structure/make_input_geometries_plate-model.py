@@ -26,7 +26,7 @@ ynum= 500
 # basic parameters
 depth_full_crust = plate_thick 
 x_SP  = 2000.e3				# [m]
-radius_outer = 50e3 		# [m]
+radius_outer = 125e3 		# [m]
 Ma_to_sec = 3.15576e13 		# [s/Ma]
 k = 1e-6 					# [m^2/s]
 Tmax = 1400.  				# [deg C]
