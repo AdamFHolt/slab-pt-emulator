@@ -154,7 +154,7 @@ subsection Material model
     set Activation volumes for diffusion creep    = background: 4e-6|4e-6,           ocrust: 4e-6|4e-6,              stiffends: 4e-6|4e-6,              op: 4e-6|4e-6
     
     # Plasticity parameters using drucker-prager
-    set Cohesions                   =   background: $$COHESION$$|$$COHESION$$,   ocrust:  1e10|1e10,   stiffends:  1.e10|1.e10,   op:  1.e10|1.e10
+    set Cohesions                   =   background: $$COHESION$$|$$COHESION$$,                 ocrust:  1e10|1e10,                          stiffends:  1.e10|1.e10,                        op:  1.e10|1.e10
     set Angles of internal friction =   background: $$ANG_FRICTION$$|$$ANG_FRICTION$$,         ocrust:  $$ANG_FRICTION$$|$$ANG_FRICTION$$,  stiffends:  $$ANG_FRICTION$$|$$ANG_FRICTION$$,  op:  $$ANG_FRICTION$$|$$ANG_FRICTION$$
     set Maximum yield stress        =   1.e10
 

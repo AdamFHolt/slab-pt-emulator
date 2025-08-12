@@ -1,7 +1,7 @@
 set Dimension                              = 2
 set Use years in output instead of seconds = true
 set End time                               = 10e6
-set Output directory                       = outputs/ref-model_top-bcsE
+set Output directory                       = outputs/$$MODELNAME$$
 
 #set Resume computation			   = auto
 
@@ -17,8 +17,8 @@ subsection Solver parameters
     set Linear solver tolerance  		= 1.0e-4
     set Number of cheap Stokes solver steps     = 200
   end
-  set Temperature solver tolerance        = 1e-8
-  set Composition solver tolerance        = 1e-8
+  set Temperature solver tolerance        = 1e-9
+  set Composition solver tolerance        = 1e-9
 end
 subsection Discretization
   set Temperature polynomial degree       = 2
@@ -71,7 +71,7 @@ subsection Initial temperature model
    
    subsection Ascii data model
      set Data directory = /work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/text_files/
-     set Data file name = temp_crust-dip60.0_sp-age50.0_op-age100.0_plate-thick125000.0_crust-thick6000.0_w-ridge.txt 
+     set Data file name = $$TEMPINPUTNAME$$
    end
 end
 
@@ -86,7 +86,7 @@ subsection Initial composition model
   
    subsection Ascii data model
      set Data directory = /work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/text_files/
-     set Data file name = comp_crust-dip60.0_sp-age50.0_op-age100.0_plate-thick125000.0_crust-thick6000.0_w-ridge.txt
+     set Data file name = $$COMPINPUTNAME$$
    end
 end
 #-------------------------------------
@@ -106,7 +106,7 @@ subsection Boundary velocity model
   set Tangential velocity boundary indicators = left, right, bottom
   set Prescribed velocity boundary indicators = top: function
   subsection Function
-    set Function constants = vc=0.05, xmid=1880.e3
+    set Function constants = vc=$$CONVRATE$$, xmid=1880.e3
     set Variable names    = x,y,t
     set Function expression = if(x <= xmid, vc, 0); 0
   end
@@ -132,8 +132,8 @@ subsection Material model
     set Phase transition Clapeyron slopes =   background: 0,       ocrust: 0|0,          op: 0
     
     # Viscosity cut offs
-    set Minimum viscosity   =   background: 2.5e18|2.5e18,  ocrust: 0.999e20|2.5e18|2.5e18,  op: 2.5e18|2.5e18  
-    set Maximum viscosity   =   background: 2.5e23|2.5e23,  ocrust: 1.001e20|2.5e23|2.5e23,  op: 2.5e23|2.5e23
+    set Minimum viscosity   =   background: 2.5e18|2.5e18,  ocrust: $$ETAINT1$$|2.5e18|2.5e18,  op: 2.5e18|2.5e18  
+    set Maximum viscosity   =   background: 2.5e23|2.5e23,  ocrust: $$ETAINT2$$|2.5e23|2.5e23,  op: 2.5e23|2.5e23
 
     # Thermal parameters 
     set Thermal diffusivities  =   1.e-6
@@ -150,14 +150,14 @@ subsection Material model
     # dislocation creep (effectively just z < 660 km), 
     set Stress exponents for dislocation creep    = 3.5
     set Activation energies for dislocation creep = 530.e3
-    set Prefactors for dislocation creep          = background: 3.508e-16|1e-40,    ocrust: 3.508e-16|3.508e-16|1e-40,    op: 3.508e-16|1e-40
-    set Activation volumes for dislocation creep  = background: 18e-6|0.0,          ocrust: 18e-6|18e-6|0.0,              op: 18e-6|0.0
+    set Prefactors for dislocation creep          = background: $$ADISLCREEP$$|1e-40,    ocrust: $$ADISLCREEP$$|$$ADISLCREEP$$|1e-40,    op: $$ADISLCREEP$$|1e-40
+    set Activation volumes for dislocation creep  = background: 18e-6|0.0,               ocrust: 18e-6|18e-6|0.0,                        op: 18e-6|0.0
 
     # diffusion creep (lm/um viscosity >= 20)
     set Stress exponents for diffusion creep      = 1
     set Grain size exponents for diffusion creep  = 0
     set Activation energies for diffusion creep   = 375e3
-    set Prefactors for diffusion creep            = background: 2.062e-09|1.031e-10, ocrust: 2.062e-09|2.062e-09|1.031e-10,    op: 2.062e-09|1.031e-10
+    set Prefactors for diffusion creep            = background: $$ADIFFCREEP$$|$$ADIFFCREEP_LM$$, ocrust: $$ADIFFCREEP$$|$$ADIFFCREEP$$|$$ADIFFCREEP_LM$$,    op: $$ADIFFCREEP$$|$$ADIFFCREEP_LM$$
     set Activation volumes for diffusion creep    = background: 4e-6|4e-6,           ocrust: 4e-6|4e-6|4e-6,                   op: 4e-6|4e-6
     
     # Plasticity parameters using drucker-prager
