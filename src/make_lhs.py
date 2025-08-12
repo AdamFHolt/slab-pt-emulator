@@ -6,13 +6,13 @@ import pandas as pd
 
 # 1.  Parameter ranges 
 RANGES = {
-    # name         (min,   max,  'lin' | 'log')
-    "v_conv"    : (  1.0 ,  10.0 , 'lin'),  # cm/yr  (convergence rate)
+    # name         (min,    max,   'lin' | 'log')
+    "v_conv"    : ( 1.0 ,   10.0 , 'lin'),  # cm/yr  (convergence rate)
     "age_SP"    : ( 50.0 ,  110.0, 'lin'),  # Myr
-    "age_OP"    : ( 5.0 ,  50.0 , 'lin'),  # Myr
-    "dip_int"   : ( 20.0 ,  70.0 , 'lin'),  # degrees (slab dip angle)
-    "eta_int"   : ( 1e19 ,  1e21 , 'log'),  # Pa·s  (interface viscosity)
-    "eta_UM"    : ( 5e19 ,  1e21 , 'log'),  # Pa·s  (upper-mantle reference)
+    "age_OP"    : ( 5.0 ,   110.0, 'lin'),  # Myr
+    "dip_int"   : ( 20.0 ,  70.0,  'lin'),  # degrees (slab dip angle)
+    "eta_int"   : ( 1e19 ,  1e21,  'log'),  # Pa·s  (interface viscosity)
+    "eta_UM"    : ( 5e19 ,  1e21,  'log'),  # Pa·s  (upper-mantle reference)
     "eps_trans" : ( 1e-15,  1e-13, 'log')   # s⁻¹   (transition strain-rate)
 }
 
@@ -21,10 +21,10 @@ SEED      = 42
 
 # rounding rules
 ROUND_RULE = {
+    "v_conv"  :  lambda x: np.round(x, 4), 
     "age_SP"  :  lambda x: np.round(x, 1),  
     "age_OP"  :  lambda x: np.round(x, 1),  
     "dip_int" :  lambda x: np.round(x, 1),  
-    "v_conv"  :  lambda x: np.round(x, 4), 
     "eta_int" :  lambda x: np.vectorize(lambda y: '{:0.5e}'.format(y))(x),
     "eta_UM"  :  lambda x: np.vectorize(lambda y: '{:0.5e}'.format(y))(x),
     "eps_trans": lambda x: np.vectorize(lambda y: '{:0.5e}'.format(y))(x),
