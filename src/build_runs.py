@@ -16,7 +16,7 @@ CRUST_THICK_M = 6000.0                         # fixed crust thickness for compo
 
 COLS = [
     "v_conv","age_SP","age_OP","dip_int",
-    "eta_int","mu_lith","eta_UM","eps_trans",
+    "eta_int","eta_UM","eps_trans",
 ]
 
 # -- load design -------------------------------------------------
@@ -40,7 +40,6 @@ for idx, row in enumerate(rows):
           f"{row['age_OP']:.2f} Ma OP, "
           f"{row['dip_int']:.1f} deg dip, "
           f"{row['eta_int']:.2e} Pas Int, "
-          f"{row['mu_lith']:.2f} coeff. fric.,"
           f"{row['eta_UM']:.2e} Pas UM, "
           f"{row['eps_trans']:.2e} strain rate")
 
@@ -68,9 +67,6 @@ for idx, row in enumerate(rows):
             text = text.replace(f"$${tok}$$", comp_name)
         elif tok == "CONVRATE":
             text = text.replace(f"$${tok}$$", str(row["v_conv"]))
-        elif tok == "ANG_FRICTION":
-            ang = np.arcsin(row["mu_lith"]) # rads
-            text = text.replace(f"$${tok}$$", str(np.rad2deg(ang)))
         elif tok == "COHESION":
             ang = np.arcsin(row["mu_lith"]) # rads
             fixed_cohesion = 10e6  # Pa

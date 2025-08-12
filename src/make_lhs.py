@@ -12,12 +12,11 @@ RANGES = {
     "age_OP"    : ( 5.0 ,  50.0 , 'lin'),  # Myr
     "dip_int"   : ( 20.0 ,  70.0 , 'lin'),  # degrees (slab dip angle)
     "eta_int"   : ( 1e19 ,  1e21 , 'log'),  # Pa·s  (interface viscosity)
-    "mu_lith"   : ( 0.05 ,  0.60 , 'lin'),  # friction coeff.
     "eta_UM"    : ( 5e19 ,  1e21 , 'log'),  # Pa·s  (upper-mantle reference)
     "eps_trans" : ( 1e-15,  1e-13, 'log')   # s⁻¹   (transition strain-rate)
 }
 
-N_SAMPLES = 500         # <- change as needed
+N_SAMPLES = 400
 SEED      = 42
 
 # rounding rules
@@ -27,7 +26,6 @@ ROUND_RULE = {
     "dip_int" :  lambda x: np.round(x, 1),  
     "v_conv"  :  lambda x: np.round(x, 4), 
     "eta_int" :  lambda x: np.vectorize(lambda y: '{:0.5e}'.format(y))(x),
-    "mu_lith" :  lambda x: np.round(x, 4),
     "eta_UM"  :  lambda x: np.vectorize(lambda y: '{:0.5e}'.format(y))(x),
     "eps_trans": lambda x: np.vectorize(lambda y: '{:0.5e}'.format(y))(x),
 }
