@@ -8,7 +8,7 @@ set Output directory                       = outputs/$$MODELNAME$$
 ### SOLVER STUFF
 # non-linear stuff
 set Nonlinear solver scheme                = single Advection, iterated Stokes
-set Nonlinear solver tolerance             = 2.5e-4
+set Nonlinear solver tolerance             = 5.0e-4
 set Max nonlinear iterations               = 200
 set CFL number                             = 0.25
 # linear solver stuff 
@@ -70,7 +70,7 @@ subsection Initial temperature model
   set Model name = ascii data
    
    subsection Ascii data model
-     set Data directory = /work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/text_files/
+     set Data directory = inputs/
      set Data file name = $$TEMPINPUTNAME$$
    end
 end
@@ -85,7 +85,7 @@ subsection Initial composition model
   set Model name = ascii data
   
    subsection Ascii data model
-     set Data directory = /work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/text_files/
+     set Data directory = inputs/
      set Data file name = $$COMPINPUTNAME$$
    end
 end
