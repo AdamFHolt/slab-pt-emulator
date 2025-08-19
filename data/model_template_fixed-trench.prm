@@ -3,7 +3,7 @@ set Use years in output instead of seconds = true
 set End time                               = 10e6
 set Output directory                       = outputs/$$MODELNAME$$
 
-#set Resume computation			   = auto
+set Resume computation			   = auto
 
 ### SOLVER STUFF
 # non-linear stuff
@@ -204,9 +204,7 @@ end
 #-------------------------------------
 
 #--------- checkpointing -------------
-#subsection Checkpointing
-#  set Steps between checkpoint = 25
-#end
+subsection Checkpointing
+  set Steps between checkpoint = 30
+end
 #-------------------------------------
-
-
