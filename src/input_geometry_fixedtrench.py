@@ -27,7 +27,15 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, crust_thick, out_dir)
     cfile = out_dir / f"comp_{base}.txt"
     pfile = out_dir / f"{base}.png"
 
-    if tfile.exists() and cfile.exists():
+    # if tfile.exists() and cfile.exists():
+    #     print(f"[geom] found existing files: {tfile}, {cfile}")
+    #     return tfile.name, cfile.name  # Exit the function early if files exist
+
+    direct = Path("../subd-model-runs/initial-structures")
+    tfile_tmp = direct / f"temp_{base}.txt"
+    cfile_tmp = direct / f"comp_{base}.txt"
+    print(tfile_tmp, cfile_tmp)
+    if tfile_tmp.exists() and cfile_tmp.exists():
         print(f"[geom] found existing files: {tfile}, {cfile}")
         return tfile.name, cfile.name  # Exit the function early if files exist
 
@@ -152,7 +160,7 @@ def make_plate_inputs(*, dip, age_sp, age_op, plate_thick, crust_thick, out_dir)
                 for n in range(1,8):
                     T_term2 += ((2*Tmax)/(n*np.pi))*np.sin(n*np.pi*(ymax-y)/plate_thick)*np.exp((-1.* n**2 * (np.pi)**2 * k * age_op * Ma_to_sec)/(plate_thick**2))
                 T[ind,2]='%.5f'  %   (T_term1 + T_term2)
-            
+            pfile
 
             ########## COMPOSITION ########################################
 

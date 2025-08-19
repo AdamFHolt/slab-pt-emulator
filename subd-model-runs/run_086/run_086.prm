@@ -13,7 +13,7 @@ set Use years in output instead of seconds = true
 set End time                               = 10e6
 set Output directory                       = outputs/run_086
 
-#set Resume computation			   = auto
+set Resume computation			   = auto
 
 ### SOLVER STUFF
 # non-linear stuff
@@ -24,7 +24,7 @@ set CFL number                             = 0.25
 # linear solver stuff 
 subsection Solver parameters
   subsection Stokes solver parameters
-    set Linear solver tolerance  		= 1.0e-4
+    set Linear solver tolerance  		= 2.5e-4
     set Number of cheap Stokes solver steps     = 200
   end
   set Temperature solver tolerance        = 1e-9
@@ -214,9 +214,7 @@ end
 #-------------------------------------
 
 #--------- checkpointing -------------
-#subsection Checkpointing
-#  set Steps between checkpoint = 25
-#end
+subsection Checkpointing
+  set Steps between checkpoint = 30
+end
 #-------------------------------------
-
-
