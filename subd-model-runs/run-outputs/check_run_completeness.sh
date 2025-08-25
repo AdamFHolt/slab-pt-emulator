@@ -1,21 +1,33 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
+
+TARGET_STEP="${1:-00010}"           # step to check for (zero-padded)
+
+printf "%-10s %-8s %-14s %s\n" "RUN" "HAS_TGT" "MAX_PVTU_STEP" "SOLUTION_DIR"
+
 shopt -s nullglob
+for run_dir in ./run_*; do
+  run=$(basename "$run_dir")
+  sol="$run_dir/outputs/$run/solution"
+  [[ -d "$sol" ]] || continue
 
-ROOT="${1:-$PWD}"   # directory containing run_* folders
-INDEX="00010"       # change if you want a different step
+  has="no"
+  steps=()
 
-missing=()
-total=0
+  for f in "$sol"/solution-*.pvtu; do
+    fname=${f##*/}              # solution-00009.pvtu
+    step=${fname#solution-}     # 00009.pvtu
+    step=${step%.pvtu}          # 00009
+    steps+=("$step")
+    [[ "$step" == "$TARGET_STEP" ]] && has="yes"
+  done
 
-for d in "$ROOT"/run_*; do
-  [[ -d "$d" ]] || continue
-  run_name="$(basename "$d")"
-  target="$d/outputs/$run_name/solution/solution-$INDEX.pvtu"
-  if [[ ! -f "$target" ]]; then
-    echo "MISSING: $run_name  (expected: $target)"
-    missing+=("$run_name")
+  # Only report “didn’t finish”
+  if [[ "$has" == "no" ]]; then
+    max="none"
+    if ((${#steps[@]})); then
+      max=$(printf "%s\n" "${steps[@]}" | sort -n | tail -1)
+    fi
+    printf "%-10s %-8s %-14s %s\n" "$run" "$has" "$max" "$sol"
   fi
 done
-
