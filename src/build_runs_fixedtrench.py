@@ -4,7 +4,7 @@
 # Expand LHS rows into template-based run dirs
 # -------------------------------------------
 import numpy as np, json, os, pathlib, re
-from rheology_utils import prefactors
+from utils_rheology import prefactors
 from input_geometry_fixedtrench import make_plate_inputs     
 
 LHS_FILE      = "../data/params-list.npy"
