@@ -11,38 +11,60 @@ TIMESTEP2  = int(sys.argv[3])
 IN_DIR  = '../subd-model-runs/run-outputs/'
 OUT_DIR = pathlib.Path(f'../subd-model-runs/run-outputs/analysis/run_{MOD_NAME}')
 OUT_DIR.mkdir(parents=True, exist_ok=True)
-
+print("CSVs-------------------------------------------------")
 ofull1, t_yr1 = extract_csv(IN_DIR, OUT_DIR, MOD_NAME, TIMESTEP1)
 ofull2, t_yr2 = extract_csv(IN_DIR, OUT_DIR, MOD_NAME, TIMESTEP2)
-print(f"[csv] run_{MOD_NAME} t={TIMESTEP1} → {ofull1} (t={t_yr1/1e6:.3f} Myr)")
-print(f"[csv] run_{MOD_NAME} t={TIMESTEP2} → {ofull2} (t={t_yr2/1e6:.3f} Myr)")
+
 
 # 2) Slab-top P–T extraction (pure Python script)
 template = str(OUT_DIR / "{}.csv")
 slabtop_pt = str(pathlib.Path(__file__).with_name("slabtop_pt.py"))  # robust path
+print("PT paths---------------------------------------------")
 
 def run_pt_once(tstep: int):
     pt_csv = OUT_DIR / f"slabtop_PT_{tstep}.csv"
     if pt_csv.exists():
         print(f"[pt] exists, skipping: {pt_csv}")
         return
+
     cmd = [
         "python3", slabtop_pt,
         "--template", template,
         "--tmin", str(tstep), "--tmax", str(tstep),
         "--outdir", str(OUT_DIR),
         "--grid-res-m", "1000",
-        "--xy-filter", "59", "--pt-filter", "101",
+        "--xy-filter", "11", "--pt-filter", "21",
     ]
-    print("[pt] Running:", " ".join(cmd))
-    res = subprocess.run(cmd, capture_output=True, text=True)
-    if res.returncode != 0:
-        print(f"[pt][fail] t={tstep} (exit {res.returncode})")
-        if res.stdout: print(res.stdout)
-        if res.stderr: print(res.stderr)
-        sys.exit(res.returncode)
-    print(f"[pt][ok] wrote {pt_csv}")
 
-# de-dup in case TIMESTEP1==TIMESTEP2
+    subprocess.run(cmd, check=True)  
+
+    # verify it wrote the output
+    if not pt_csv.exists():
+        raise RuntimeError(f"[pt][fail] expected output missing: {pt_csv}")
+
 for t in sorted({TIMESTEP1, TIMESTEP2}):
     run_pt_once(t)
+
+# 3) Make a simple plot (2 panels)
+print("Plotting---------------------------------------------")
+plot_script = str(pathlib.Path(__file__).with_name("plot_slabtop_and_field.py"))
+field1 = str(OUT_DIR / f"{TIMESTEP1}.csv")
+field2 = str(OUT_DIR / f"{TIMESTEP2}.csv")
+png_out = str(OUT_DIR / f"slabtop_PT_compare_{TIMESTEP1}_{TIMESTEP2}.png")
+
+cmd_plot = [
+    "python3", plot_script,
+    "--field-csv", field1,
+    "--field2-csv", field2,
+    "--pt1", str(OUT_DIR / f"slabtop_PT_{TIMESTEP1}.csv"),
+    "--pt2", str(OUT_DIR / f"slabtop_PT_{TIMESTEP2}.csv"),
+    "--out", png_out,
+    "--grid-res-km", "1",
+    "--xmin-km", "1600", "--xmax-km", "2300", "--ymax-km", "1000",
+    "--depth-max-km", "180",
+    "--cmap", "coolwarm",
+    "--interp", "nearest",
+    "--y-origin", "bottom",
+    # "--show-sample",  # uncomment to sanity-check points
+]
+subprocess.run(cmd_plot, check=True)
