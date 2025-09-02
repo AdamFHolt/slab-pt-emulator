@@ -18,7 +18,7 @@ def extract_csv(IN_DIR, OUT_DIR, MOD_NAME, TIMESTEP):
         sys.exit(1)
 
     t_yr = times[TIMESTEP]
-    ofull = OUT_DIR / f'{TIMESTEP}.csv'
+    ofull = OUT_DIR / f't{TIMESTEP}.csv'
 
     if ofull.exists():
         print(f"[csv] exists, skipping: {ofull}")

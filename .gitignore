@@ -9,6 +9,5 @@ misc/
 # Heavy outputs are tracked by DVC or stay off-git
 subd-model-runs/initial-structures
 subd-model-runs/run-outputs/run*/
-subd-model-runs/run-outputs/analysis/*csv
 *.h5
 *.nc

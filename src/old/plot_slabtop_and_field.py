@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 """
-Make either:
-  - 2 panels (field + PT), or
-  - 3 panels when --field2-csv is given (field @ t1, field @ t2, PT)
-
 Usage example:
   python3 plot_slabtop_and_field.py \
     --field-csv /path/to/2.csv \
@@ -175,7 +171,7 @@ def main():
     overlay_path(axes_field[2], pt2, "-", "slab-top t2")
 
     # --- field 2, C ---
-    im3 = axes_field[3].pcolormesh(X2, Z2, GC2, shading="auto", cmap=args.cmap, vmin=0, vmax=1)
+    im3 = axes_field[3].pcolor (e.g., 100 km)mesh(X2, Z2, GC2, shading="auto", cmap=args.cmap, vmin=0, vmax=1)
     axes_field[3].set_title("Comp. field (t2)")
     axes_field[3].set_ylabel("Depth (km)")
     axes_field[3].set_xlabel("Distance (km)")
@@ -185,11 +181,6 @@ def main():
     # enforce 1:1 km aspect on the fields
     for ax in axes_field:
         ax.set_aspect('equal', adjustable='box')
-
-    # # one shared colorbar for the left column 
-    # cbar_src = im1 if args.field2_csv else im0
-    # cbar = fig.colorbar(cbar_src, ax=axes_field, location="right", fraction=0.046, pad=0.02)
-    # cbar.set_label("Temperature (°C)")
 
     # --- PT panel (right column) ---
     if pt1: ax_pt.plot(pt1["T_C"], pt1["P_GPa"], "-",  lw=2, label="t1")

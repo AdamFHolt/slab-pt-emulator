@@ -1,70 +1,78 @@
 #!/home/holt/software/ParaView-5.11.1-MPI-Linux-Python3.9-x86_64/bin/pvpython
-# Extract two CSVs via ParaView, then run slab-top P–T extraction for both.
-import sys, pathlib, subprocess
-from utils_postprocessing import extract_csv
+
+import sys, pathlib, subprocess, csv
+
+ROOT = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))  
+
+from utils.model_processing import extract_csv
 
 MOD_NAME   = str(sys.argv[1])
 TIMESTEP1  = int(sys.argv[2])
 TIMESTEP2  = int(sys.argv[3])
+DEPTHS_ARG = str(sys.argv[4])              # e.g. "25,50,75"
+DEPTHS_KM  = [float(s) for s in DEPTHS_ARG.split(",")]
 
-# 1) CSV extraction via ParaView
+DT_script   = str(ROOT / "utils" / "compute_slab_cooling.py")
+plot_script = str(ROOT / "utils" / "plot_T_and_C_fields.py")
+
 IN_DIR  = '../subd-model-runs/run-outputs/'
-OUT_DIR = pathlib.Path(f'../subd-model-runs/run-outputs/analysis/run_{MOD_NAME}')
-OUT_DIR.mkdir(parents=True, exist_ok=True)
-print("CSVs-------------------------------------------------")
-ofull1, t_yr1 = extract_csv(IN_DIR, OUT_DIR, MOD_NAME, TIMESTEP1)
-ofull2, t_yr2 = extract_csv(IN_DIR, OUT_DIR, MOD_NAME, TIMESTEP2)
+OUTCSV_DIR = pathlib.Path(f'../subd-model-runs/run-outputs/run_{MOD_NAME}')
+OUTCSV_DIR.mkdir(parents=True, exist_ok=True)
 
+print("1: CSVs-------------------------------------------------")
+ofull1, t_yr1 = extract_csv(IN_DIR, OUTCSV_DIR, MOD_NAME, TIMESTEP1)
+ofull2, t_yr2 = extract_csv(IN_DIR, OUTCSV_DIR, MOD_NAME, TIMESTEP2)
 
-# 2) Slab-top P–T extraction (pure Python script)
-template = str(OUT_DIR / "{}.csv")
-slabtop_pt = str(pathlib.Path(__file__).with_name("slabtop_pt.py"))  # robust path
-print("PT paths---------------------------------------------")
+print("2: Extracting DT------------------------------------------")
+template    = str(OUTCSV_DIR / "t{}.csv")
+OUTDT_DIR   = pathlib.Path(f'../subd-model-runs/run-outputs/analysis')
+OUTDT_DIR.mkdir(parents=True, exist_ok=True)
+OUTDT        = str(OUTDT_DIR / f"run_{MOD_NAME}.DT_{TIMESTEP1}_{TIMESTEP2}.csv")
 
-def run_pt_once(tstep: int):
-    pt_csv = OUT_DIR / f"slabtop_PT_{tstep}.csv"
-    if pt_csv.exists():
-        print(f"[pt] exists, skipping: {pt_csv}")
-        return
+cmd_slab_DT = [
+    "python3", DT_script,
+    "--template", template,
+    "--t1", str(TIMESTEP1), "--t2", str(TIMESTEP2),
+    "--depths-km", *[str(d) for d in DEPTHS_KM],
+    "--out", OUTDT,
+    "--grid-res-km", "1",
+    "--c-thresh", "0.5",
+    "--x-min-km", "1600"
+]
+subprocess.run(cmd_slab_DT, check=True)
 
-    cmd = [
-        "python3", slabtop_pt,
-        "--template", template,
-        "--tmin", str(tstep), "--tmax", str(tstep),
-        "--outdir", str(OUT_DIR),
-        "--grid-res-m", "1000",
-        "--xy-filter", "11", "--pt-filter", "21",
-    ]
+dt_Myr = (t_yr2 - t_yr1) / 1e6 
+print("(depth_km, x1_km, T1_C, x2_km, T2_C, dT_C, dt_Myr, dTdt_C_per_Myr)")
+with open(OUTDT, "r", newline="") as f:
+    r = csv.DictReader(f)
+    for row in r:
+        d   = float(row["depth_km"])
+        x1  = float(row["x1_km"])
+        t1  = float(row["T1_C"])
+        x2  = float(row["x2_km"])
+        t2  = float(row["T2_C"])
+        dT  = t2 - t1
+        rate = (dT / dt_Myr) if dt_Myr > 0 else float("nan")
+        print(f"{d:6.1f}, {x1:8.1f}, {t1:8.1f}, {x2:8.1f}, {t2:8.1f}, {dT:8.1f}, {dt_Myr:6.3f}, {rate:9.3f}")
 
-    subprocess.run(cmd, check=True)  
-
-    # verify it wrote the output
-    if not pt_csv.exists():
-        raise RuntimeError(f"[pt][fail] expected output missing: {pt_csv}")
-
-for t in sorted({TIMESTEP1, TIMESTEP2}):
-    run_pt_once(t)
-
-# 3) Make a simple plot (2 panels)
-print("Plotting---------------------------------------------")
-plot_script = str(pathlib.Path(__file__).with_name("plot_slabtop_and_field.py"))
-field1 = str(OUT_DIR / f"{TIMESTEP1}.csv")
-field2 = str(OUT_DIR / f"{TIMESTEP2}.csv")
-png_out = str(OUT_DIR / f"slabtop_PT_compare_{TIMESTEP1}_{TIMESTEP2}.png")
+# 4) Plot fields + markers
+print("3: Plotting------------------------------------------------")
+field1 = str(OUTCSV_DIR / f"t{TIMESTEP1}.csv")
+field2 = str(OUTCSV_DIR / f"t{TIMESTEP2}.csv")
+png_out = str(OUTDT_DIR / f"run_{MOD_NAME}.DT_{TIMESTEP1}_{TIMESTEP2}.png")
 
 cmd_plot = [
     "python3", plot_script,
     "--field-csv", field1,
     "--field2-csv", field2,
-    "--pt1", str(OUT_DIR / f"slabtop_PT_{TIMESTEP1}.csv"),
-    "--pt2", str(OUT_DIR / f"slabtop_PT_{TIMESTEP2}.csv"),
     "--out", png_out,
+    "--markers", OUTDT,
     "--grid-res-km", "1",
     "--xmin-km", "1600", "--xmax-km", "2300", "--ymax-km", "1000",
     "--depth-max-km", "180",
     "--cmap", "coolwarm",
     "--interp", "nearest",
     "--y-origin", "bottom",
-    # "--show-sample",  # uncomment to sanity-check points
 ]
 subprocess.run(cmd_plot, check=True)
