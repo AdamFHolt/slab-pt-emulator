@@ -5,6 +5,12 @@ import numpy as np, pandas as pd
 from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
 
+import matplotlib as mpl
+mpl.rcParams['pdf.compression'] = 9     # max stream compression
+mpl.rcParams['pdf.fonttype']   = 42     # TrueType fonts (Illustrator-editable)
+mpl.rcParams['ps.fonttype']    = 42
+
+
 def read_field_csv(path: Path):
     df = pd.read_csv(path)
     xcol = next(c for c in df.columns if c.lower().startswith("points:0"))
@@ -40,6 +46,7 @@ def main():
     ap.add_argument("--field-csv", required=True)
     ap.add_argument("--field2-csv", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--out2", required=False)  # optional PDF output
     ap.add_argument("--markers", required=True)   
     ap.add_argument("--grid-res-km", type=float, default=10.0)
     ap.add_argument("--xmin-km", type=float, default=0)
@@ -54,6 +61,7 @@ def main():
     xmin_km = float(args.xmin_km); xmax_km = float(args.xmax_km)
     ymax_km = float(args.ymax_km)
     depth_max = float(args.depth_max_km) if args.depth_max_km else ymax_km
+    iso_levels = np.arange(200, 1401, 200) 
 
     x1,y1,T1,C1 = read_field_csv(Path(args.field_csv))
     X1,Z1,GT1,GC1 = grid_field(x1,y1,T1,C1,args.grid_res_km,xmin_km,xmax_km,ymax_km,args.interp)
@@ -71,18 +79,32 @@ def main():
     axes = [fig.add_subplot(gs[i,0]) for i in range(4)]
 
     # T1
-    axes[0].pcolormesh(X1, Z1, np.ma.masked_invalid(GT1), shading="auto", cmap=args.cmap, vmin=vmin, vmax=vmax)
+    im0 = axes[0].pcolormesh(X1, Z1, np.ma.masked_invalid(GT1), shading="auto", cmap=args.cmap, vmin=vmin, vmax=vmax)
+    axes[0].contour(X1, Z1, GC1, levels=[0.5], colors="k", linewidths=1.2)
+    cs_iso0 = axes[0].contour(X1, Z1, GT1, levels=iso_levels,
+                                    colors="k", linestyles="--", linewidths=1, alpha=0.6)
+    axes[0].clabel(cs_iso0, fmt="%d", fontsize=8, inline=True)
     axes[0].set_title("Temperature (t1)")
+    cbar = fig.colorbar(im0, ax=axes[0], location="right", fraction=0.05, pad=0.02)
+    cbar.set_label("Temperature (°C)")
+
     # C1
-    axes[1].pcolormesh(X1, Z1, GC1, shading="auto", cmap="viridis", vmin=0, vmax=1)
+    im1 = axes[1].pcolormesh(X1, Z1, GC1, shading="auto", cmap="viridis", vmin=0, vmax=1)
     axes[1].set_title("ocrust (t1)")
 
     # T2
-    axes[2].pcolormesh(X2, Z2, np.ma.masked_invalid(GT2), shading="auto", cmap=args.cmap, vmin=vmin, vmax=vmax)
+    im2  = axes[2].pcolormesh(X2, Z2, np.ma.masked_invalid(GT2), shading="auto", cmap=args.cmap, vmin=vmin, vmax=vmax)
+    axes[2].contour(X2, Z2, GC2, levels=[0.5], colors="k", linewidths=1.2)
+    cs_iso2 = axes[2].contour(X2, Z2, GT2, levels=iso_levels,
+                                    colors="k", linestyles="--", linewidths=1, alpha=0.6)
+    axes[2].clabel(cs_iso2, fmt="%d", fontsize=8, inline=True)
     axes[2].set_title("Temperature (t2)")
     # C2
-    axes[3].pcolormesh(X2, Z2, GC2, shading="auto", cmap="viridis", vmin=0, vmax=1)
+    im3 = axes[3].pcolormesh(X2, Z2, GC2, shading="auto", cmap="viridis", vmin=0, vmax=1)
     axes[3].set_title("ocrust (t2)")
+
+    for im in (im0, im1, im2, im3):
+        im.set_rasterized(True)
 
     for ax in axes:
         ax.set_xlim(xmin_km, xmax_km)
@@ -93,16 +115,22 @@ def main():
     axes[-1].set_xlabel("Distance (km)")
 
     # overlay markers as stars, t1
-    axes[0].plot(DT_markers[:,0], DT_markers[:,2], marker="*", linestyle="None", markersize=9, color="k", zorder=5)
-    axes[1].plot(DT_markers[:,0], DT_markers[:,2], marker="*", linestyle="None", markersize=9, color="k", zorder=5)
+    axes[0].plot(DT_markers[:,0], DT_markers[:,2], marker="*", linestyle="None", markersize=15, color="k", zorder=5)
+    axes[1].plot(DT_markers[:,0], DT_markers[:,2], marker="*", linestyle="None", markersize=15, color="k", zorder=5)
     # t2
-    axes[2].plot(DT_markers[:,1], DT_markers[:,2], marker="*", linestyle="None", markersize=9, color="k", zorder=5)
-    axes[3].plot(DT_markers[:,1], DT_markers[:,2], marker="*", linestyle="None", markersize=9, color="k", zorder=5)
+    axes[2].plot(DT_markers[:,1], DT_markers[:,2], marker="*", linestyle="None", markersize=15, color="k", zorder=5)
+    axes[3].plot(DT_markers[:,1], DT_markers[:,2], marker="*", linestyle="None", markersize=15, color="k", zorder=5)
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=200)
     print(f"[plot]: wrote {out}")
+    if args.out2:
+        out2 = Path(args.out2)
+        out2.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out2, dpi=250, bbox_inches="tight")
+        print(f"[plot]: wrote {out2}")
+
 
 if __name__ == "__main__":
     main()

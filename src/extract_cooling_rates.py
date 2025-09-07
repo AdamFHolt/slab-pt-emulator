@@ -61,15 +61,17 @@ print("3: Plotting------------------------------------------------")
 field1 = str(OUTCSV_DIR / f"t{TIMESTEP1}.csv")
 field2 = str(OUTCSV_DIR / f"t{TIMESTEP2}.csv")
 png_out = str(OUTDT_DIR / f"run_{MOD_NAME}.DT_{TIMESTEP1}_{TIMESTEP2}.png")
+pdf_out = str(OUTDT_DIR / f"run_{MOD_NAME}.DT_{TIMESTEP1}_{TIMESTEP2}.pdf")
 
 cmd_plot = [
     "python3", plot_script,
     "--field-csv", field1,
     "--field2-csv", field2,
     "--out", png_out,
+    # "--out2", pdf_out,
     "--markers", OUTDT,
     "--grid-res-km", "1",
-    "--xmin-km", "1600", "--xmax-km", "2300", "--ymax-km", "1000",
+    "--xmin-km", "1700", "--xmax-km", "2300", "--ymax-km", "1000",
     "--depth-max-km", "180",
     "--cmap", "coolwarm",
     "--interp", "nearest",
