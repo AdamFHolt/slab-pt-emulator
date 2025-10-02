@@ -10,5 +10,6 @@ misc/
 subd-model-runs/initial-structures
 subd-model-runs/run-outputs/run*/
 subd-model-runs/run-outputs/analysis/figs
+subd-model-runs/run-outputs/analysis/run*
 *.h5
 *.nc
