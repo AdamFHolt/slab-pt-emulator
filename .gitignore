@@ -13,3 +13,4 @@ subd-model-runs/run-outputs/analysis/figs
 subd-model-runs/run-outputs/analysis/run*
 *.h5
 *.nc
+*.csv
