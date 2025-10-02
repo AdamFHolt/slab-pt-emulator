@@ -1,0 +1,14 @@
+-----------------------------------------------------------------------------
+-- This is ASPECT, the Advanced Solver for Problems in Earth's ConvecTion.
+--     . version 2.5.0 (aspect-2.5, 8a783e420)
+--     . using deal.II 9.5.1
+--     .       with 64 bit indices and vectorization level 3 (512 bits)
+--     . using Trilinos 15.0.0
+--     . using p4est 2.8.5
+--     . running in OPTIMIZED mode
+--     . running with 48 MPI processes
+-----------------------------------------------------------------------------
+
+
+   Loading Ascii data initial file inputs/temp_crust-dip25.1_sp-age95.1_op-age107.7_plate-thick125000_crust-thick6000.txt.
+

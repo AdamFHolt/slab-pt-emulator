@@ -38,6 +38,8 @@ def main():
     ap.add_argument("--template", required=True)         # e.g. ".../analysis/run_010/{}.csv"
     ap.add_argument("--t1", type=int, required=True)
     ap.add_argument("--t2", type=int, required=True)
+    ap.add_argument("--t1-yr", type=float, required=True)
+    ap.add_argument("--t2-yr", type=float, required=True)
     ap.add_argument("--depths-km", type=float, nargs="+", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--grid-res-km", type=float, default=1.0)
@@ -65,13 +67,21 @@ def main():
     for d in args.depths_km:
         x1_km, t1_C = pick_rightmost_x_at_depth(X, Z, GC1, GT1, d, args.c_thresh, args.x_min_km)
         x2_km, t2_C = pick_rightmost_x_at_depth(X, Z, GC2, GT2, d, args.c_thresh, args.x_min_km)
-        rows.append(dict(depth_km=d, x1_km=x1_km, T1_C=t1_C, x2_km=x2_km, T2_C=t2_C, dT_C=(t2_C - t1_C)))
+        rows.append(dict(
+            depth_km      = round(d, 3),
+            x1_km         = round(x1_km, 3),
+            T1_C          = round(t1_C, 3),
+            x2_km         = round(x2_km, 3),
+            T2_C          = round(t2_C, 3),
+            dT_C          = round(t2_C - t1_C, 3),
+            dt_Myr        = round((args.t2_yr - args.t1_yr) / 1e6, 3),
+            dTdt_C_per_Myr= round((t2_C - t1_C) / ((args.t2_yr - args.t1_yr) / 1e6), 9)
+        ))
 
     # Write DT output
     pd.DataFrame(rows).to_csv(args.out, index=False)
 
     print(f"[DT] wrote: {args.out}")
-
 
 if __name__ == "__main__":
     main()
