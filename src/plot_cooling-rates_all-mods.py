@@ -65,8 +65,6 @@ def main():
     df = pd.merge(df_p, df_m, on="run_id", how="inner")
     df["thermal_param"] = compute_thermal_param(df)
 
-    print(df.head())
-
     # 3) Plot
     base_params = ["v_conv", "age_SP", "age_OP", "dip_int", "eta_int", "eta_UM", "eps_trans"]
     params = base_params + ["thermal_param"]
