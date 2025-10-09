@@ -56,6 +56,8 @@ def main():
     ap.add_argument("--cmap", default="coolwarm")
     ap.add_argument("--interp", choices=["nearest","linear"], default="nearest")
     ap.add_argument("--y-origin", choices=["bottom","top"], default="bottom")
+    ap.add_argument("--annot", default="",help="Annotation string for the figure")
+
     args = ap.parse_args()
 
     xmin_km = float(args.xmin_km); xmax_km = float(args.xmax_km)
@@ -87,6 +89,10 @@ def main():
     axes[0].set_title("Temperature (t1)")
     cbar = fig.colorbar(im0, ax=axes[0], location="right", fraction=0.05, pad=0.02)
     cbar.set_label("Temperature (°C)")
+
+    if args.annot:
+        axes[0].text(0.4, 0.05, args.annot, transform=axes[0].transAxes,
+                     fontsize=11, ha="center", va="bottom")
 
     # C1
     im1 = axes[1].pcolormesh(X1, Z1, GC1, shading="auto", cmap="viridis", vmin=0, vmax=1)

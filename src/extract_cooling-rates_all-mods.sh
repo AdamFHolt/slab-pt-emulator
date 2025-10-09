@@ -15,7 +15,7 @@ IFS=',' read -r depth1 depth2 depth3 <<< "$DEPTHS"
 
 # where this script and extract_cooling_rates_one-mod.py live
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-EXTRACT="${SCRIPT_DIR}/extract_cooling_rates_one-mod.py"  
+EXTRACT="${SCRIPT_DIR}/extract_cooling-rates_one-mod.py"  
 ROOT="${SCRIPT_DIR}/../subd-model-runs/run-outputs"
 OUTDT_DIR="$ROOT/analysis"
 mkdir -p "$OUTDT_DIR"

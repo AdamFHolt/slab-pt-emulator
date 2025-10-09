@@ -1,6 +1,7 @@
 #!/home/holt/software/ParaView-5.11.1-MPI-Linux-Python3.9-x86_64/bin/pvpython
 
 import sys, pathlib, subprocess, csv
+import pandas as pd
 
 ROOT = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))  
@@ -43,27 +44,34 @@ cmd_slab_DT = [
 ]
 subprocess.run(cmd_slab_DT, check=True)
 
-# print("(depth_km, x1_km, T1_C, x2_km, T2_C, dT_C, dt_Myr, dTdt_C_per_Myr)")
-# with open(OUTDT, "r", newline="") as f:
-#     r = csv.DictReader(f)
-#     for row in r:
-#         d   = float(row["depth_km"])
-#         x1  = float(row["x1_km"])
-#         t1  = float(row["T1_C"])
-#         x2  = float(row["x2_km"])
-#         t2  = float(row["T2_C"])
-#         dT  = float(row["dT_C"])
-#         dt_Myr = float(row["dt_Myr"])
-#         rate = float(row["dTdt_C_per_Myr"])
-#         print(f"{d:6.1f}, {x1:8.1f}, {t1:8.1f}, {x2:8.1f}, {t2:8.1f}, {dT:8.1f}, {dt_Myr:6.3f}, {rate:9.3f}")
-
-
 # 4) Plot fields + markers
 print("3: Plotting-------------------")
 field1 = str(OUTCSV_DIR / f"t{TIMESTEP1}.csv")
 field2 = str(OUTCSV_DIR / f"t{TIMESTEP2}.csv")
 png_out = str(OUTDT_DIR / f"figs/run_{MOD_NAME}.DT_{TIMESTEP1}_{TIMESTEP2}.png")
 pdf_out = str(OUTDT_DIR / f"figs/run_{MOD_NAME}.DT_{TIMESTEP1}_{TIMESTEP2}.pdf")
+
+
+# read params and build annotation string for this run
+params_csv = ROOT / "../data/params-list.csv"
+try:
+    dfp = pd.read_csv(params_csv)
+    idx = int(MOD_NAME)                       # run_000 -> row 0, etc.
+    row = dfp.iloc[idx]
+    annot = (
+        f"run {MOD_NAME}  |  "
+        f"v={row['v_conv']:.2f} cm/yr, "
+        f"age_SP={row['age_SP']:.1f} Ma, "
+        f"age_OP={row['age_OP']:.1f} Ma, "
+        f"dip={row['dip_int']:.1f}°\n"
+        f"η_int={float(row['eta_int']):.2e} Pa·s, "
+        f"η_UM={float(row['eta_UM']):.2e} Pa·s, "
+        f"ε̇_trans={float(row['eps_trans']):.2e} s⁻¹"
+    )
+except Exception as e:
+    annot = f"run {MOD_NAME} (params unavailable)"
+
+
 
 cmd_plot = [
     "python3", plot_script,
@@ -78,5 +86,7 @@ cmd_plot = [
     "--cmap", "coolwarm",
     "--interp", "nearest",
     "--y-origin", "bottom",
+    "--annot", annot,
 ]
+
 subprocess.run(cmd_plot, check=True)
