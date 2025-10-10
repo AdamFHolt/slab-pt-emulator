@@ -122,8 +122,10 @@ def main():
 
     # 4) Save
     fig.savefig(f"{out_prefix}.png", dpi=args.dpi, bbox_inches="tight")
-    fig.savefig(f"{out_prefix}.pdf", bbox_inches="tight")
-    print(f"Saved: {out_prefix}.png and .pdf")
+    print(f"Saved: {out_prefix}.png")
+
+    # fig.savefig(f"{out_prefix}.pdf", bbox_inches="tight")
+    # print(f"Saved: {out_prefix}.pdf")
 
 if __name__ == "__main__":
     main()
