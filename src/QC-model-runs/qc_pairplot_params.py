@@ -12,7 +12,7 @@ LOG_AUTO = ["eta_int","eta_UM","eps_trans"]  # heavy-tailed; plot in log10
 def main():
     p = argparse.ArgumentParser(description="Pairplot of LHS parameters with optional log handling.")
     p.add_argument("--params", default="../../data/params-list.csv")
-    p.add_argument("--out", default="../../subd-model-runs/run-outputs/analysis/plots/pairplot_params.png")
+    p.add_argument("--out", default="../../plots/numerical-mods/qc_pairplot")
     p.add_argument("--dpi", type=int, default=200)
 
     # How to treat the 3 heavy-tailed params
@@ -52,8 +52,8 @@ def main():
     g = sns.pairplot(df_plot, corner=True, diag_kind="hist",
                      plot_kws=dict(s=18, alpha=0.7), diag_kws=dict(edgecolor="none"))
 
-    g.fig.savefig(out_path, dpi=args.dpi, bbox_inches="tight")
-    print(f"Saved: {out_path}")
+    g.fig.savefig(f"{out_path}.png", dpi=args.dpi, bbox_inches="tight")
+    print(f"Saved: {out_path}.png")
 
 if __name__ == "__main__":
     main()

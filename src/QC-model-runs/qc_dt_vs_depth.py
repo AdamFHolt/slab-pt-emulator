@@ -15,7 +15,7 @@ def main():
     p.add_argument("--masters", nargs="+", required=True,
                    help="List of master CSVs for depths, e.g. master_25km_DT1-6.csv master_50km_DT1-6.csv ...")
     p.add_argument("--y", default="dTdt_C_per_Myr", choices=["dT_C","dTdt_C_per_Myr"])
-    p.add_argument("--out", default="../../subd-model-runs/run-outputs/analysis/plots/DT_vs_depth.png")
+    p.add_argument("--out", default="../../plots/numerical-mods/qc_all-DT")
     p.add_argument("--dpi", type=int, default=200)
     args = p.parse_args()
 
@@ -38,8 +38,10 @@ def main():
         ax.set_ylabel(args.y)
         ax.grid(True, ls=":", alpha=0.4)
 
-    fig.savefig(out_path, dpi=args.dpi, bbox_inches="tight")
-    print(f"Saved: {out_path}")
+
+    fig.savefig(f"{out_path}.png", dpi=args.dpi, bbox_inches="tight")
+    print(f"Saved: {out_path}.png")
+
 
 if __name__ == "__main__":
     main()

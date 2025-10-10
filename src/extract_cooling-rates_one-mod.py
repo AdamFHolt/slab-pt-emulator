@@ -14,6 +14,7 @@ TIMESTEP2  = int(sys.argv[3])
 DEPTHS_ARG = str(sys.argv[4])              # e.g. "25,50,75"
 DEPTHS_KM  = [float(s) for s in DEPTHS_ARG.split(",")]
 
+PLOT_DIR    = 
 DT_script   = str(ROOT / "utils" / "compute_slab_cooling.py")
 plot_script = str(ROOT / "utils" / "plot_T_and_C_fields.py")
 
