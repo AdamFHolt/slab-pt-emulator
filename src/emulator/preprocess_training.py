@@ -82,8 +82,8 @@ def _load_masters(masters_glob: str | List[str]) -> Tuple[pd.DataFrame, List[str
     else:
         files = sorted(Path().resolve().glob(masters_glob))
         if len(files) == 0:
-            # try resolving relative to this script (useful when run elsewhere)
-            files = sorted((THIS_FILE.parent / masters_glob).resolve().parent.glob(Path(masters_glob).name))
+            base = (THIS_FILE.parent / Path(masters_glob)).resolve()
+            files = sorted(base.parent.glob(base.name))
 
     if len(files) == 0:
         raise FileNotFoundError(f"No master files found for pattern/paths: {masters_glob}")
@@ -93,7 +93,7 @@ def _load_masters(masters_glob: str | List[str]) -> Tuple[pd.DataFrame, List[str
         df = pd.read_csv(f, dtype={"run_id": str})
         # Standardize run_id formatting
         df["run_id"] = df["run_id"].astype(str).str.zfill(3)
-        # Try to annotate a depth if embedded in filename like 'master_25km_...'
+        # Annotate a depth if embedded in filename like 'master_25km_...'
         m = re.search(r"master_(\d+)\s*km", f.name.replace("-", ""))
         depth_km = int(m.group(1)) if m else None
         if depth_km is not None:
@@ -133,10 +133,11 @@ def _auto_pick_targets(dfm: pd.DataFrame, explicit_targets: List[str] | None) ->
     """
     Returns (Y, target_meta)
     - If explicit_targets provided: use those columns in that order.
-    - Else: try T-depth profile (T_XXkm). If none, try ['dT_C', 'dTdt_C_per_Myr'].
+    - Else: try ['dT_C', 'dTdt_C_per_Myr'].
     """
     meta: Dict = {"target_kind": None}
 
+    # 1) Explicit targets provided by user
     if explicit_targets:
         missing = [t for t in explicit_targets if t not in dfm.columns]
         if missing:
@@ -146,17 +147,7 @@ def _auto_pick_targets(dfm: pd.DataFrame, explicit_targets: List[str] | None) ->
         meta["target_cols"] = explicit_targets
         return Y, meta
 
-    # Try T profile
-    t_cols_depths = _find_T_profile_columns(list(dfm.columns))
-    if t_cols_depths:
-        t_cols, depths = zip(*t_cols_depths)
-        Y = dfm[list(t_cols)].to_numpy(dtype=float)
-        meta["target_kind"] = "T_profile"
-        meta["target_cols"] = list(t_cols)
-        meta["depths_km"] = list(depths)
-        return Y, meta
-
-    # Try summary ΔT and rate
+    # 2) Default: use ΔT and ΔT/Δt if they exist
     if ("dT_C" in dfm.columns) and ("dTdt_C_per_Myr" in dfm.columns):
         cols = ["dT_C", "dTdt_C_per_Myr"]
         Y = dfm[cols].to_numpy(dtype=float)
@@ -164,11 +155,11 @@ def _auto_pick_targets(dfm: pd.DataFrame, explicit_targets: List[str] | None) ->
         meta["target_cols"] = cols
         return Y, meta
 
+    # 3) Otherwise, raise an error
     raise ValueError(
-        "Could not auto-detect targets. "
-        "Pass --targets col1,col2,... or ensure T_XXkm or [dT_C, dTdt_C_per_Myr] exist."
+        "Could not auto-detect targets. Pass --targets col1,col2,... "
+        "or ensure [dT_C, dTdt_C_per_Myr] exist."
     )
-
 
 def _standardize(arr: np.ndarray) -> Tuple[np.ndarray, Dict[str, np.ndarray]]:
     mu = np.nanmean(arr, axis=0)
@@ -210,15 +201,11 @@ def main():
     repo_root = _resolve_root(os.environ.get(args.root_env))
     params_path = (Path(args.params) if Path(args.params).is_absolute()
                    else (Path.cwd() / args.params)).resolve()
+    
     if not params_path.exists():
-        # try relative to repo root
-        alt = (repo_root / Path(args.params)).resolve()
-        if alt.exists():
-            params_path = alt
-    if not params_path.exists():
-        raise FileNotFoundError(f"params-list.csv not found at {params_path}")
+        raise FileNotFoundError(f"params-list.ctsv not found at {params_path}")
 
-    # Load
+    # Load run params
     df_params = _load_params(params_path)
 
     # Load and concat masters
@@ -232,14 +219,13 @@ def main():
 
     # Merge
     df = pd.merge(df_params, df_master, on="run_id", how="inner")
-    # Drop exact duplicate rows if any (across multiple masters)
     df = df.drop_duplicates()
 
-    # Pick features
+    # Pull out features
     feat_cols = _pick_features(df, DEFAULT_PARAM_COLS)
     X = df[feat_cols].to_numpy(dtype=float)
 
-    # Targets
+    # Pull out targets
     explicit_targets = [t.strip() for t in args.targets.split(",")] if args.targets else None
     Y, target_meta = _auto_pick_targets(df, explicit_targets)
 
