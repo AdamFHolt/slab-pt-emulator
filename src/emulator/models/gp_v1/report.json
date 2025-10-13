@@ -1,0 +1,85 @@
+{
+  "model_type": "gp",
+  "n_features": 7,
+  "n_targets": 2,
+  "train_size": 983,
+  "val_size": 173,
+  "feature_cols": [
+    "v_conv",
+    "age_SP",
+    "age_OP",
+    "dip_int",
+    "eta_int",
+    "eta_UM",
+    "eps_trans"
+  ],
+  "target_cols": [
+    "dT_C",
+    "dTdt_C_per_Myr"
+  ],
+  "metrics": {
+    "target_cols": [
+      "dT_C",
+      "dTdt_C_per_Myr"
+    ],
+    "train": {
+      "dT_C": {
+        "rmse": 91.08200564692957,
+        "mae": 73.68560140639617,
+        "r2": 0.28589754496712827
+      },
+      "dTdt_C_per_Myr": {
+        "rmse": 18.216132999057628,
+        "mae": 14.736962155649168,
+        "r2": 0.28590838951973785
+      },
+      "_macro_avg": {
+        "rmse": 54.6490693229936,
+        "mae": 44.21128178102267,
+        "r2": 0.28590296724343306
+      }
+    },
+    "val": {
+      "dT_C": {
+        "rmse": 126.35542735474202,
+        "mae": 103.74194564989975,
+        "r2": -0.45345281224327216
+      },
+      "dTdt_C_per_Myr": {
+        "rmse": 25.271344696511388,
+        "mae": 20.74813871632809,
+        "r2": -0.45351625774207216
+      },
+      "_macro_avg": {
+        "rmse": 75.8133860256267,
+        "mae": 62.24504218311392,
+        "r2": -0.45348453499267216
+      }
+    },
+    "gp_kernels": [
+      {
+        "kernel": "0.528**2 * RBF(length_scale=[0.496, 3.41, 1.17, 1.58, 1.35, 2.95, 1.74]) + WhiteKernel(noise_level=0.1)"
+      },
+      {
+        "kernel": "0.528**2 * RBF(length_scale=[0.496, 3.41, 1.17, 1.58, 1.35, 2.95, 1.74]) + WhiteKernel(noise_level=0.1)"
+      }
+    ]
+  },
+  "data_dir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data",
+  "seed": 42,
+  "gp_hparams": {
+    "ls_init": 1.0,
+    "ls_bounds": [
+      0.01,
+      100.0
+    ],
+    "noise_init": 0.001,
+    "noise_bounds": [
+      1e-06,
+      0.1
+    ],
+    "alpha": 1e-06,
+    "restarts": 5
+  },
+  "rf_hparams": null
+}
