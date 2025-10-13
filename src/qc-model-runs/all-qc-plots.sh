@@ -28,6 +28,7 @@ D2="${2:-50}"
 T1="${3:-1}"
 T2="${4:-6}"
 YVAR="dTdt_C_per_Myr"
+YVAR2="dT_C"
 
 # ---- locate repo root & important dirs ----
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -93,5 +94,11 @@ python3 "$QC_DIR/qc_cooling-rates_all-mods_2-depths.py" \
   --y "$YVAR" \
   --out "$PLOTS_DIR/DT_vs_params_${D1}-${D2}km" \
 
+python3 "$QC_DIR/qc_cooling-rates_all-mods_2-depths.py" \
+  --params "$PARAMS" \
+  --master1 "$MASTER1" \
+  --master2 "$MASTER2" \
+  --y "$YVAR2" \
+  --out "$PLOTS_DIR/DTabs_vs_params_${D1}-${D2}km" \
 
 echo "Done. Plots in: $PLOTS_DIR"

@@ -7,8 +7,7 @@ Preprocess training data.
 - Merges on run_id.
 - Builds X from known parameter columns (only those present).
 - Builds Y automatically:
-    * If columns like T_XXkm exist: builds sorted T-depth vectors (target_kind='T_profile')
-    * Else if ['dT_C', 'dTdt_C_per_Myr'] exist: uses those (target_kind='summary_dT')
+    * If ['dT_C', 'dTdt_C_per_Myr'] exist: uses those (target_kind='summary_dT')
     * Else: requires --targets=<col1,col2,...>
 - Drops rows with NaNs in X or Y.
 - Standardizes X and Y (z-score) and saves raw + standardized arrays.
@@ -23,11 +22,6 @@ Usage examples:
     python preprocess_training.py \
         --masters "../../subd-model-runs/run-outputs/analysis/master_*km_DT1-6.csv" \
         --targets "dTdt_C_per_Myr"
-
-    # Different output dir and split
-    python preprocess_training.py \
-        --masters "../../subd-model-runs/run-outputs/analysis/master_*km_DT1-6.csv" \
-        --outdir "../emulator/data" --val-frac 0.2 --seed 1337
 """
 
 from __future__ import annotations
@@ -142,21 +136,6 @@ def _prepare_features(df: pd.DataFrame,feat_cols: List[str],log_cols: List[str],
     return df, tmap
 
 
-def _find_T_profile_columns(columns: List[str]) -> List[Tuple[str, float]]:
-    """
-    Look for columns like 'T_25km', 'T_100km', 'T_5km' (case-insensitive),
-    return list of (colname, depth_km_float) sorted by depth.
-    """
-    out = []
-    for c in columns:
-        m = re.match(r"^\s*T[_\-]?(\d+(\.\d+)?)\s*km\s*$", c, flags=re.IGNORECASE)
-        if m:
-            depth = float(m.group(1))
-            out.append((c, depth))
-    out.sort(key=lambda x: x[1])
-    return out
-
-
 def _auto_pick_targets(dfm: pd.DataFrame, explicit_targets: List[str] | None) -> Tuple[np.ndarray, Dict]:
     """
     Returns (Y, target_meta)
@@ -216,6 +195,10 @@ def main():
                         help="One or more glob patterns or explicit paths to master_*.csv.")
     parser.add_argument("--targets", default=None,
                         help="Comma-separated target columns to use (overrides auto-detect).")
+    parser.add_argument("--max-dTdt", type=float, default=None,
+                        help="Drop rows w/ dTdt_C_per_Myr > this val.")
+    parser.add_argument("--max-dT", type=float, default=None,
+                        help="Drop rows with dT_C > this val.")
     parser.add_argument("--outdir", default=str(THIS_FILE.parent / "data"),
                         help="Output directory for npy/json artifacts.")
     parser.add_argument("--val-frac", type=float, default=0.15,
@@ -260,14 +243,32 @@ def main():
     explicit_targets = [t.strip() for t in args.targets.split(",")] if args.targets else None
     Y, target_meta = _auto_pick_targets(df, explicit_targets)
 
-    # Drop rows with NaNs in X or Y consistently
-    mask = np.isfinite(X).all(axis=1) & np.isfinite(Y).all(axis=1)
-    n_before = len(mask)
-    X = X[mask]
-    Y = Y[mask]
-    df_clean = df.loc[mask].reset_index(drop=True)
+    # Apply optional cuts on dTdt, dT (create mask)
+    mask_cuts = np.ones(len(df), dtype=bool)
+
+    if args.max_dTdt is not None and "dTdt_C_per_Myr" in df.columns:
+        v = df["dTdt_C_per_Myr"]
+        mask_cuts &= (v.isna() | (v <= args.max_dTdt))
+
+    if args.max_dT is not None and "dT_C" in df.columns:
+        v = df["dT_C"]
+        mask_cuts &= (v.isna() | (v <= args.max_dT))
+
+    n_cut_only = int((~mask_cuts).sum())
+
+    # Also cut out rows with NaNs (create mask)
+    nan_mask = np.isfinite(X).all(axis=1) & np.isfinite(Y).all(axis=1)
+    n_nan_only = int((~nan_mask).sum())
+
+    # Apply masks to cut and eliminate NaN rows
+    full_mask = mask_cuts & nan_mask
+    n_before = len(df)
+    X = X[full_mask]; Y = Y[full_mask]
+    df_clean = df.loc[full_mask].reset_index(drop=True)
     n_after = X.shape[0]
-    dropped = n_before - n_after
+    dropped_total = n_before - n_after
+    print(f"[OK] Dropped by NaNs (post-cut): {n_nan_only}")
+    print(f"[OK] Total dropped (cuts + NaNs): {dropped_total}")
 
     # Standardize
     X_std, X_scaler = _standardize(X)
@@ -294,12 +295,18 @@ def main():
         "repo_root": repo_root.as_posix(),
         "params_path": params_path.as_posix(),
         "master_sources": sorted(list(set(master_sources_all))),
-        "n_rows_before_drop": int(n_before),
-        "n_rows_after_drop": int(n_after),
-        "n_dropped_due_to_nan": int(dropped),
+        "dropped": {
+            "by_cuts": n_cut_only,
+            "by_nans": n_nan_only,
+            "total": dropped_total
+        },
         "feature_cols": feat_cols,
         "feature_transforms": { "log": transform_map },
         "target": target_meta,
+        "cuts_max": {
+            "dTdt_C_per_Myr": args.max_dTdt,
+            "dT_C": args.max_dT,
+        },
         "scalers": {
             "X": X_scaler,
             "Y": Y_scaler,
@@ -311,7 +318,11 @@ def main():
             "n_val": int(val_idx.size),
         },
         "run_ids": df_clean["run_id"].tolist(),
+        "cli_args": vars(args)
     }
+
+    dropped_run_ids = df.loc[~full_mask, "run_id"].tolist()
+    meta["dropped_run_ids"] = dropped_run_ids
 
     # If available, carry through obs_depth_km (useful for multi-depth data)
     if "obs_depth_km" in df_clean.columns:
@@ -322,12 +333,9 @@ def main():
         json.dump(meta, f, indent=2)
 
     # Console summary
-    print(f"[OK] Merged params+masters: {n_before} rows → {n_after} after NaN drop (dropped {dropped}).")
+    print(f"[OK] Merged params+masters: {n_before} rows → {n_after} after NaN drop and thresh cut.")
     print(f"[OK] Features: {feat_cols}")
-    if meta["target"]["target_kind"] == "T_profile":
-        print(f"[OK] Targets (T_profile, {len(meta['target']['target_cols'])} depths): {meta['target']['target_cols']}")
-    else:
-        print(f"[OK] Targets ({meta['target']['target_kind']}): {meta['target']['target_cols']}")
+    print(f"[OK] Targets ({meta['target']['target_kind']}): {meta['target']['target_cols']}")
     if transform_map:
         print(f"[OK] Log-transformed features ({args.log_base}): {sorted(transform_map.keys())}")
     print(f"[OK] Saved arrays to: {outdir}")

@@ -115,14 +115,15 @@ def main():
             ax.set_xscale("log")
 
         # Annotate “suspect” points
+        thresh = -20 if yvar == "dTdt_C_per_Myr" else -100
         for xi, yi, rid in zip(Xplot1, Yplot1, RID1):
-            if yi > -20:  
+            if yi > thresh:  
                 ax.text(
                     (np.log10(xi) if use_logx else xi),yi,rid,
                     fontsize=7,ha="left",va="center",color="red",
                 )
         for xi, yi, rid in zip(Xplot2, Yplot2, RID2):
-            if yi > -20:  
+            if yi > thresh:  
                 ax.text(
                     (np.log10(xi) if use_logx else xi),yi,rid,
                     fontsize=7,ha="left",va="center",color="red",
