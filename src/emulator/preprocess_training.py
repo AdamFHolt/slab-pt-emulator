@@ -114,6 +114,34 @@ def _pick_features(df_merged: pd.DataFrame, preferred: List[str]) -> List[str]:
     return available
 
 
+def _prepare_features(df: pd.DataFrame,feat_cols: List[str],log_cols: List[str], base: str = "10",) -> Tuple[pd.DataFrame, Dict[str, str]]:
+    """
+    Coerce feature columns to numeric and (optionally) log-transform a subset.
+    """
+    # 1) coerce all features to numeric (handles '1.23e20' strings)
+    for c in feat_cols:
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+
+    # 2) apply logs to the intersection (present & requested)
+    tmap: Dict[str, str] = {}
+    log_set = {c for c in log_cols if c in df.columns}
+    if log_set:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            for c in log_set:
+                vals = df[c].astype(float)
+                # non-positive -> NaN (to be dropped by mask later)
+                vals = vals.where(vals > 0)
+                if base == "10":
+                    df[c] = np.log10(vals)
+                    tmap[c] = "log10"
+                else:
+                    df[c] = np.log(vals)
+                    tmap[c] = "loge"
+
+    return df, tmap
+
+
 def _find_T_profile_columns(columns: List[str]) -> List[Tuple[str, float]]:
     """
     Look for columns like 'T_25km', 'T_100km', 'T_5km' (case-insensitive),
@@ -195,6 +223,8 @@ def main():
     parser.add_argument("--seed", type=int, default=42, help="Random seed for split.")
     parser.add_argument("--root-env", default="SLABPT_ROOT",
                         help="Environment variable to override repo root (default: SLABPT_ROOT).")
+    parser.add_argument("--log-cols",default="eta_int,eta_UM,eps_trans",help="feature columns to log10-transform.")
+    parser.add_argument("--log-base",choices=["10", "e"],default="10")
     args = parser.parse_args()
 
     # Resolve root and important paths
@@ -203,7 +233,7 @@ def main():
                    else (Path.cwd() / args.params)).resolve()
     
     if not params_path.exists():
-        raise FileNotFoundError(f"params-list.ctsv not found at {params_path}")
+        raise FileNotFoundError(f"params-list.csv not found at {params_path}")
 
     # Load run params
     df_params = _load_params(params_path)
@@ -218,11 +248,12 @@ def main():
     df_master = pd.concat(concat_master_df_list, ignore_index=True)
 
     # Merge
-    df = pd.merge(df_params, df_master, on="run_id", how="inner")
-    df = df.drop_duplicates()
+    df = pd.merge(df_params, df_master, on="run_id", how="inner").drop_duplicates()
 
-    # Pull out features
+    # Pull out features, coerce to numeric, log-transform some
     feat_cols = _pick_features(df, DEFAULT_PARAM_COLS)
+    log_cols = [c.strip() for c in (args.log_cols.split(",") if args.log_cols else [])]
+    df, transform_map = _prepare_features(df=df,feat_cols=feat_cols,log_cols=log_cols,base=args.log_base,)
     X = df[feat_cols].to_numpy(dtype=float)
 
     # Pull out targets
@@ -267,6 +298,7 @@ def main():
         "n_rows_after_drop": int(n_after),
         "n_dropped_due_to_nan": int(dropped),
         "feature_cols": feat_cols,
+        "feature_transforms": { "log": transform_map },
         "target": target_meta,
         "scalers": {
             "X": X_scaler,
@@ -296,6 +328,8 @@ def main():
         print(f"[OK] Targets (T_profile, {len(meta['target']['target_cols'])} depths): {meta['target']['target_cols']}")
     else:
         print(f"[OK] Targets ({meta['target']['target_kind']}): {meta['target']['target_cols']}")
+    if transform_map:
+        print(f"[OK] Log-transformed features ({args.log_base}): {sorted(transform_map.keys())}")
     print(f"[OK] Saved arrays to: {outdir}")
     print(f"[OK] Train/Val sizes: {meta['split']['n_train']}/{meta['split']['n_val']}")
     print(f"[OK] Wrote metadata: {outdir / 'metadata.json'}")
