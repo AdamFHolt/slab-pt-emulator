@@ -1,55 +1,41 @@
 #!/usr/bin/env python3
 
 """
-Preprocess training data.
+Preprocess a master file for emulator training.
 
-- Reads params-list.csv and one or more master_*.csv files.
+- Reads params-list.csv and one master_*.csv file.
 - Merges on run_id.
 - Builds X from known parameter columns (only those present).
 - Builds Y automatically:
-    * If ['dT_C', 'dTdt_C_per_Myr'] exist: uses those (target_kind='summary_dT')
-    * Else: requires --targets=<col1,col2,...>
-- Drops rows with NaNs in X or Y.
-- Standardizes X and Y (z-score) and saves raw + standardized arrays.
-- Saves split indices (train/val) and metadata.json (columns, scalers, depths, etc).
+    * If ['dT_C','dTdt_C_per_Myr'] exist → uses both (target_kind='summary_dT')
+    * Else: requires --targets col1,col2,...
+- Drops NaNs, applies optional max thresholds, standardizes (z-score),
+  and saves arrays + metadata.
 
-Usage examples:
-    # Typical: combine all master_* CSVs, auto-detect targets
-    python preprocess_training.py \
-        --masters "../../subd-model-runs/run-outputs/analysis/master_*km_DT1-6.csv"
-
-    # Explicit targets:
-    python preprocess_training.py \
-        --masters "../../subd-model-runs/run-outputs/analysis/master_*km_DT1-6.csv" \
-        --targets "dTdt_C_per_Myr"
+Usage:
+    python preprocess_training_single.py \
+        --params ../../data/params-list.csv \
+        --master ../../subd-model-runs/run-outputs/analysis/master_25km_DT1-6.csv \
+        --targets dTdt_C_per_Myr \
+        --outdir src/emulator/data
 """
 
 from __future__ import annotations
-import argparse
-import json
-import os
-import re
+import argparse, json, os, re
 from pathlib import Path
 from typing import Dict, List, Tuple
-
-import numpy as np
-import pandas as pd
+import numpy as np, pandas as pd
 
 # Preferred parameter columns (will use intersection with actual columns)
 DEFAULT_PARAM_COLS = ["v_conv", "age_SP", "age_OP", "dip_int", "eta_int", "eta_UM", "eps_trans"]
-
-# Default relative locations (resolved from this file)
 THIS_FILE = Path(__file__).resolve()
-
-# Repo root assumed to be two levels above this file: .../src/emulator/preprocess_training.py
+# Repo root two levels above this file: 
 SLABPT_ROOT_DEFAULT = THIS_FILE.parents[2]
-
 
 def _resolve_root(env_var: str | None) -> Path:
     if env_var and len(env_var.strip()) > 0:
         return Path(env_var).expanduser().resolve()
     return SLABPT_ROOT_DEFAULT
-
 
 def _load_params(params_path: Path) -> pd.DataFrame:
     dfp = pd.read_csv(params_path)
@@ -58,7 +44,6 @@ def _load_params(params_path: Path) -> pd.DataFrame:
         dfp = dfp.copy()
         dfp["run_id"] = [f"{i:03d}" for i in range(len(dfp))]
     else:
-        # Coerce to zero-padded strings if they look numeric
         if np.issubdtype(dfp["run_id"].dtype, np.number):
             dfp["run_id"] = dfp["run_id"].astype(int).map(lambda i: f"{i:03d}")
         else:
@@ -66,38 +51,23 @@ def _load_params(params_path: Path) -> pd.DataFrame:
     return dfp
 
 
-def _load_masters(masters_glob: str | List[str]) -> Tuple[pd.DataFrame, List[str]]:
-    """
-    Accepts a glob string or list of explicit paths.
-    Returns concatenated dataframe and list of source file paths (str).
-    """
-    if isinstance(masters_glob, list):
-        files = [Path(p).resolve() for p in masters_glob]
-    else:
-        files = sorted(Path().resolve().glob(masters_glob))
-        if len(files) == 0:
-            base = (THIS_FILE.parent / Path(masters_glob)).resolve()
-            files = sorted(base.parent.glob(base.name))
+def _load_master(master_path: str) -> pd.DataFrame:
+    """Read a master CSV and annotate depth if found in filename."""
+    f = Path(master_path).resolve()
+    if not f.exists():
+        raise FileNotFoundError(f"Master file not found: {f}")
 
-    if len(files) == 0:
-        raise FileNotFoundError(f"No master files found for pattern/paths: {masters_glob}")
+    df = pd.read_csv(f, dtype={"run_id": str})
+    df["run_id"] = df["run_id"].astype(str).str.zfill(3)
 
-    dfs = []
-    for f in files:
-        df = pd.read_csv(f, dtype={"run_id": str})
-        # Standardize run_id formatting
-        df["run_id"] = df["run_id"].astype(str).str.zfill(3)
-        # Annotate a depth if embedded in filename like 'master_25km_...'
-        m = re.search(r"master_(\d+)\s*km", f.name.replace("-", ""))
-        depth_km = int(m.group(1)) if m else None
-        if depth_km is not None:
-            df = df.copy()
-            df["obs_depth_km"] = depth_km
-        df["source_file"] = f.as_posix()
-        dfs.append(df)
+    # Annotate a depth if embedded in filename like 'master_25km_...'
+    m = re.search(r"master_(\d+)\s*km", f.name.replace("-", ""))
+    depth_km = int(m.group(1)) if m else None
+    if depth_km is not None:
+        df["obs_depth_km"] = depth_km
 
-    dfm = pd.concat(dfs, ignore_index=True)
-    return dfm, [f.as_posix() for f in files]
+    df["source_file"] = f.as_posix()
+    return df
 
 
 def _pick_features(df_merged: pd.DataFrame, preferred: List[str]) -> List[str]:
@@ -144,7 +114,7 @@ def _auto_pick_targets(dfm: pd.DataFrame, explicit_targets: List[str] | None) ->
     """
     meta: Dict = {"target_kind": None}
 
-    # 1) Explicit targets provided by user
+    # 1) Explicit targets provided 
     if explicit_targets:
         missing = [t for t in explicit_targets if t not in dfm.columns]
         if missing:
@@ -162,16 +132,12 @@ def _auto_pick_targets(dfm: pd.DataFrame, explicit_targets: List[str] | None) ->
         meta["target_cols"] = cols
         return Y, meta
 
-    # 3) Otherwise, raise an error
-    raise ValueError(
-        "Could not auto-detect targets. Pass --targets col1,col2,... "
-        "or ensure [dT_C, dTdt_C_per_Myr] exist."
-    )
+    raise ValueError("Could not auto-detect targets. Pass --targets col1,col2,... or ensure [dT_C, dTdt_C_per_Myr] exist.")
+
 
 def _standardize(arr: np.ndarray) -> Tuple[np.ndarray, Dict[str, np.ndarray]]:
     mu = np.nanmean(arr, axis=0)
     sigma = np.nanstd(arr, axis=0, ddof=0)
-    # Avoid division by zero
     sigma_safe = np.where(sigma == 0, 1.0, sigma)
     arr_std = (arr - mu) / sigma_safe
     return arr_std, {"mean": mu.tolist(), "std": sigma_safe.tolist()}
@@ -191,14 +157,18 @@ def main():
     parser = argparse.ArgumentParser(description="Preprocess Slab P–T training data.")
     parser.add_argument("--params", default="../../data/params-list.csv",
                         help="Path to params-list.csv (relative or absolute).")
-    parser.add_argument("--masters", nargs="+", default=["../../subd-model-runs/run-outputs/analysis/master_*km_DT1-6.csv"],
-                        help="One or more glob patterns or explicit paths to master_*.csv.")
+    parser.add_argument("--master", required=True,
+                        help="Path to a single master_*.csv file.")
     parser.add_argument("--targets", default=None,
                         help="Comma-separated target columns to use (overrides auto-detect).")
     parser.add_argument("--max-dTdt", type=float, default=None,
                         help="Drop rows w/ dTdt_C_per_Myr > this val.")
     parser.add_argument("--max-dT", type=float, default=None,
                         help="Drop rows with dT_C > this val.")
+    parser.add_argument("--add-thermal-param", action="store_true",
+                        help="Include thermal parameter as a feature.")
+    parser.add_argument("--add-eta-ratio", action="store_true",
+                        help="Include interface viscosity ratio as a feature.")
     parser.add_argument("--outdir", default=str(THIS_FILE.parent / "data"),
                         help="Output directory for npy/json artifacts.")
     parser.add_argument("--val-frac", type=float, default=0.15,
@@ -214,53 +184,54 @@ def main():
     repo_root = _resolve_root(os.environ.get(args.root_env))
     params_path = (Path(args.params) if Path(args.params).is_absolute()
                    else (Path.cwd() / args.params)).resolve()
-    
     if not params_path.exists():
         raise FileNotFoundError(f"params-list.csv not found at {params_path}")
 
-    # Load run params
+    # Load params and master
     df_params = _load_params(params_path)
-
-    # Load and concat masters
-    concat_master_df_list = []
-    master_sources_all = []
-    for m in args.masters:
-        dfm, sources = _load_masters(m)
-        concat_master_df_list.append(dfm)
-        master_sources_all.extend(sources)
-    df_master = pd.concat(concat_master_df_list, ignore_index=True)
+    df_master = _load_master(args.master)
 
     # Merge
     df = pd.merge(df_params, df_master, on="run_id", how="inner").drop_duplicates()
 
-    # Pull out features, coerce to numeric, log-transform some
+    # Feature prep
     feat_cols = _pick_features(df, DEFAULT_PARAM_COLS)
     log_cols = [c.strip() for c in (args.log_cols.split(",") if args.log_cols else [])]
     df, transform_map = _prepare_features(df=df,feat_cols=feat_cols,log_cols=log_cols,base=args.log_base,)
+    # Optional extra features
+    extra_feats = []
+    if args.add_thermal_param:
+        if all(c in df.columns for c in ["v_conv", "age_SP", "dip_int"]):
+            df["thermal_param"] = df["v_conv"] * df["age_SP"] * np.sin(np.radians(df["dip_int"]))
+            feat_cols.append("thermal_param")
+            extra_feats.append("thermalParam")
+        else:
+            print("[WARN] Missing one or more columns for slab thermal parameter; skipping.")
+    if args.add_eta_ratio:
+        if all(c in df.columns for c in ["eta_int", "eta_UM"]):
+            df["eta_ratio"] = df["eta_int"] / df["eta_UM"]
+            feat_cols.append("eta_ratio")
+            extra_feats.append("etaRatio")
+    # Final feature set
     X = df[feat_cols].to_numpy(dtype=float)
 
-    # Pull out targets
+    # Targets
     explicit_targets = [t.strip() for t in args.targets.split(",")] if args.targets else None
     Y, target_meta = _auto_pick_targets(df, explicit_targets)
 
-    # Apply optional cuts on dTdt, dT (create mask)
+    # Apply optional cuts 
     mask_cuts = np.ones(len(df), dtype=bool)
-
     if args.max_dTdt is not None and "dTdt_C_per_Myr" in df.columns:
         v = df["dTdt_C_per_Myr"]
         mask_cuts &= (v.isna() | (v <= args.max_dTdt))
-
     if args.max_dT is not None and "dT_C" in df.columns:
         v = df["dT_C"]
         mask_cuts &= (v.isna() | (v <= args.max_dT))
-
     n_cut_only = int((~mask_cuts).sum())
 
-    # Also cut out rows with NaNs (create mask)
+    # Also drop NaNs 
     nan_mask = np.isfinite(X).all(axis=1) & np.isfinite(Y).all(axis=1)
     n_nan_only = int((~nan_mask).sum())
-
-    # Apply masks to cut and eliminate NaN rows
     full_mask = mask_cuts & nan_mask
     n_before = len(df)
     X = X[full_mask]; Y = Y[full_mask]
@@ -277,12 +248,27 @@ def main():
     # Split
     train_idx, val_idx = _train_val_split(n_after, args.val_frac, args.seed)
 
-    # Prepare outdir
-    outdir = (Path(args.outdir) if Path(args.outdir).is_absolute()
-              else (THIS_FILE.parent / args.outdir)).resolve()
+    # Save outputs
+    base_outdir = Path(args.outdir).resolve()
+    m = re.search(r"master_(\d+)\s*km", Path(args.master).name.replace("-", ""))
+    depth_str = f"{m.group(1)}km" if m else "unknown_depth"
+    # short labels for targets
+    def _shorten_target(name: str) -> str:
+        name = name.replace("dTdt_C_per_Myr", "dTdt")
+        name = name.replace("dT_C", "dT")
+        return name
+    if args.targets:
+        target_list = [_shorten_target(t.strip()) for t in args.targets.split(",")]
+    else:
+        target_list = [_shorten_target(t) for t in target_meta["target_cols"]]
+    target_label = "_".join(target_list)
+    if extra_feats:
+        target_label += "_" + "_".join(extra_feats)
+    subdir_name = f"{depth_str}_{target_label}"
+    outdir = base_outdir / subdir_name
     outdir.mkdir(parents=True, exist_ok=True)
-
-    # Save arrays
+    # save
+    print(f"[OK] Output directory set to: {outdir}")
     np.save(outdir / "X_raw.npy", X)
     np.save(outdir / "Y_raw.npy", Y)
     np.save(outdir / "X_std.npy", X_std)
@@ -294,7 +280,7 @@ def main():
     meta = {
         "repo_root": repo_root.as_posix(),
         "params_path": params_path.as_posix(),
-        "master_sources": sorted(list(set(master_sources_all))),
+        "master_source": Path(args.master).resolve().as_posix(),
         "dropped": {
             "by_cuts": n_cut_only,
             "by_nans": n_nan_only,
