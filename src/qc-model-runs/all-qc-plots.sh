@@ -25,8 +25,9 @@ EOF
 # ---- parse args (positionals with defaults) ----
 D1="${1:-25}"
 D2="${2:-50}"
-T1="${3:-1}"
-T2="${4:-6}"
+D3="${3:-75}"
+T1="${4:-1}"
+T2="${5:-6}"
 YVAR="dTdt_C_per_Myr"
 YVAR2="dT_C"
 
@@ -42,6 +43,7 @@ QC_DIR="$SCRIPT_DIR"   # where the qc_*.py live
 PARAMS="$DATA_DIR/params-list.csv"
 MASTER1="$ANALYSIS_DIR/master_${D1}km_DT${T1}-${T2}.csv"
 MASTER2="$ANALYSIS_DIR/master_${D2}km_DT${T1}-${T2}.csv"
+MASTER3="$ANALYSIS_DIR/master_${D3}km_DT${T1}-${T2}.csv"
 
 mkdir -p "$PLOTS_DIR" 
 
@@ -86,6 +88,18 @@ python3 "$QC_DIR/qc_cooling-rates_all-mods.py" \
   --y "$YVAR" \
   --out "$PLOTS_DIR/DT_vs_params_${D1}km" \
 
+python3 "$QC_DIR/qc_cooling-rates_all-mods.py" \
+  --params "$PARAMS" \
+  --master "$MASTER2" \
+  --y "$YVAR" \
+  --out "$PLOTS_DIR/DT_vs_params_${D2}km" \
+
+python3 "$QC_DIR/qc_cooling-rates_all-mods.py" \
+  --params "$PARAMS" \
+  --master "$MASTER3" \
+  --y "$YVAR" \
+  --out "$PLOTS_DIR/DT_vs_params_${D3}km" \
+
 # ---- 5) ΔT or ΔT/Δt vs parameters (two depths overlay) ----
 python3 "$QC_DIR/qc_cooling-rates_all-mods_2-depths.py" \
   --params "$PARAMS" \
@@ -94,11 +108,11 @@ python3 "$QC_DIR/qc_cooling-rates_all-mods_2-depths.py" \
   --y "$YVAR" \
   --out "$PLOTS_DIR/DT_vs_params_${D1}-${D2}km" \
 
-python3 "$QC_DIR/qc_cooling-rates_all-mods_2-depths.py" \
+python3 "$QC_DIR/qc_cooling-rates_all-mods_3-depths.py" \
   --params "$PARAMS" \
-  --master1 "$MASTER1" \
-  --master2 "$MASTER2" \
-  --y "$YVAR2" \
-  --out "$PLOTS_DIR/DTabs_vs_params_${D1}-${D2}km" \
+  --masters "$MASTER1" "$MASTER2" "$MASTER3"  \
+  --y "$YVAR" \
+  --out "$PLOTS_DIR/DT_vs_params_${D1}-${D2}-${D3}km" \
+
 
 echo "Done. Plots in: $PLOTS_DIR"
