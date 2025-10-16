@@ -1,0 +1,71 @@
+{
+  "model_type": "gp",
+  "n_features": 8,
+  "n_targets": 1,
+  "train_size": 333,
+  "val_size": 59,
+  "feature_cols": [
+    "v_conv",
+    "age_SP",
+    "age_OP",
+    "dip_int",
+    "eta_int",
+    "eta_UM",
+    "eps_trans",
+    "thermal_param"
+  ],
+  "target_cols": [
+    "dTdt_C_per_Myr"
+  ],
+  "metrics": {
+    "target_cols": [
+      "dTdt_C_per_Myr"
+    ],
+    "train": {
+      "dTdt_C_per_Myr": {
+        "rmse": 1.1108478547322682,
+        "mae": 0.8504296427725666,
+        "r2": 0.9883648083440699
+      },
+      "_macro_avg": {
+        "rmse": 1.1108478547322682,
+        "mae": 0.8504296427725666,
+        "r2": 0.9883648083440699
+      }
+    },
+    "val": {
+      "dTdt_C_per_Myr": {
+        "rmse": 3.742369907133888,
+        "mae": 1.985175349501156,
+        "r2": 0.8226650110293074
+      },
+      "_macro_avg": {
+        "rmse": 3.742369907133888,
+        "mae": 1.985175349501156,
+        "r2": 0.8226650110293074
+      }
+    },
+    "gp_kernels": [
+      {
+        "kernel": "6.85**2 * Matern(length_scale=[4.51, 67.4, 3.15, 67.3, 20.4, 45.3, 81.7, 7.92], nu=2.5) + WhiteKernel(noise_level=0.02)"
+      }
+    ]
+  },
+  "data_dir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data/25km_dTdt_thermalParam",
+  "seed": 42,
+  "gp_hparams": {
+    "ls_init": 1.0,
+    "ls_bounds": [
+      0.001,
+      1000.0
+    ],
+    "noise_init": 0.003,
+    "noise_bounds": [
+      1e-06,
+      1.0
+    ],
+    "alpha": 1e-06,
+    "restarts": 20
+  },
+  "rf_hparams": null
+}

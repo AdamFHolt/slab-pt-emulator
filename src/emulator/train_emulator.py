@@ -25,10 +25,10 @@ import numpy as np
 # ---- Model choices
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, WhiteKernel, ConstantKernel as C
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.gaussian_process.kernels import RBF, Matern, WhiteKernel, ConstantKernel as C
+
 
 # ---------- utils
 
@@ -36,29 +36,28 @@ def _inverse_standardize(arr_std: np.ndarray, mean: np.ndarray, std: np.ndarray)
     """Undo z-score: arr = arr_std * std + mean. Broadcasts over columns."""
     return arr_std * std + mean
 
-def _load_data(data_dir: Path) -> Dict[str, Any]:
-    with open(data_dir / "metadata.json", "r") as f:
+def _load_data(data_root: Path, data_name: str) -> Dict[str, Any]:
+    data_path = data_root / data_name
+
+    with open(data_path / "metadata.json", "r") as f:
         meta = json.load(f)
 
-    X_std = np.load(data_dir / "X_std.npy")
-    Y_std = np.load(data_dir / "Y_std.npy")
-    X_raw = np.load(data_dir / "X_raw.npy")
-    Y_raw = np.load(data_dir / "Y_raw.npy")
+    X_std = np.load(data_path / "X_std.npy")
+    Y_std = np.load(data_path / "Y_std.npy")
+    X_raw = np.load(data_path / "X_raw.npy")
+    Y_raw = np.load(data_path / "Y_raw.npy")
 
-    train_idx_path = data_dir / "train_idx.npy"
-    val_idx_path   = data_dir / "val_idx.npy"
-
+    train_idx_path = data_path / "train_idx.npy"
+    val_idx_path   = data_path / "val_idx.npy"
     if train_idx_path.exists() and val_idx_path.exists():
         train_idx = np.load(train_idx_path)
         val_idx   = np.load(val_idx_path)
     else:
-        # Fallback: no split files (shouldn't happen if you used the preprocessor)
         n = X_std.shape[0]
         train_idx = np.arange(n, dtype=int)
         val_idx   = np.array([], dtype=int)
         print("[WARN] train_idx.npy / val_idx.npy not found; using all rows for training.")
 
-    # scalers (lists) -> np.ndarray
     X_mu = np.asarray(meta["scalers"]["X"]["mean"], dtype=float)
     X_sd = np.asarray(meta["scalers"]["X"]["std"],  dtype=float)
     Y_mu = np.asarray(meta["scalers"]["Y"]["mean"], dtype=float)
@@ -68,8 +67,9 @@ def _load_data(data_dir: Path) -> Dict[str, Any]:
         X_std=X_std, Y_std=Y_std, X_raw=X_raw, Y_raw=Y_raw,
         train_idx=train_idx, val_idx=val_idx,
         X_mu=X_mu, X_sd=X_sd, Y_mu=Y_mu, Y_sd=Y_sd,
-        meta=meta
+        meta=meta, data_path=str(data_path)
     )
+
 
 def _metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
     return {
@@ -85,7 +85,8 @@ def _ensure_2d(y: np.ndarray) -> np.ndarray:
 # ---------- model builders
 
 def build_gp(n_features, lengthscale_init, lengthscale_bounds, noise_level_init, noise_bounds,
-             n_restarts, alpha, random_state, kernel_name="matern15"):
+             n_restarts, alpha, random_state, kernel_name):
+
     if kernel_name == "rbf":
         base = RBF(length_scale=np.full(n_features, lengthscale_init),
                    length_scale_bounds=lengthscale_bounds)
@@ -118,11 +119,12 @@ def build_rf(n_estimators: int, max_depth: int | None, random_state: int, n_jobs
 
 def main():
     p = argparse.ArgumentParser(description="Train GP (or RF) emulator on preprocessed data.")
-    p.add_argument("--data-dir", default=str(Path(__file__).parent / "data"),
-                   help="Directory containing X_std.npy, Y_std.npy, train_idx.npy, val_idx.npy, metadata.json")
+    p.add_argument("--data-root", default=str(Path(__file__).parent / "data"),
+                   help="Directory containing all of the preprocessed data folders (within a subdir)")
+    p.add_argument("--data-name", type=str, required=True,
+               help="Name of subfolder within --data-root (e.g., 25km_dTdt_slabparam)")
     p.add_argument("--model", choices=["gp", "rf"], default="gp",
                    help="Model type: Gaussian Process (gp) or Random Forest (rf).")
-
     # GP hyperparams
     p.add_argument("--ls-init", type=float, default=1.0, help="RBF lengthscale initial value (in standardized X units).")
     p.add_argument("--ls-bounds", type=float, nargs=2, default=[1e-2, 1e2], help="RBF lengthscale bounds (min max).")
@@ -136,16 +138,21 @@ def main():
     p.add_argument("--rf-trees", type=int, default=400, help="n_estimators for RandomForest.")
     p.add_argument("--rf-max-depth", type=int, default=None, help="Max depth for RandomForest (None = unlimited).")
     p.add_argument("--rf-jobs", type=int, default=-1, help="n_jobs for RandomForest (-1 = all cores).")
-
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--out", default="models", help="Output directory for model + report.")
     args = p.parse_args()
 
-    data_dir = Path(args.data_dir).resolve()
-    out_dir  = (Path(args.out) if Path(args.out).is_absolute() else Path.cwd() / args.out).resolve()
-    out_dir.mkdir(parents=True, exist_ok=True)
+    # --- kernel suffix (for GP only)
+    kernel_suffix = ""
+    if args.model == "gp":
+        kernel_suffix = {
+            "rbf": "_rbf",
+            "matern15": "_m15",
+            "matern25": "_m25"
+        }[args.kernel]
 
-    bundle = _load_data(data_dir)
+    data_root = Path(args.data_root).resolve()
+    bundle = _load_data(data_root, args.data_name)
     Xs = bundle["X_std"]; Ys = _ensure_2d(bundle["Y_std"])      # standardized
     Xr = bundle["X_raw"]; Yr = _ensure_2d(bundle["Y_raw"])      # raw for metric reporting
     tr = bundle["train_idx"]; va = bundle["val_idx"]
@@ -153,6 +160,12 @@ def main():
     meta = bundle["meta"]
     n_features = Xs.shape[1]
     n_targets  = Ys.shape[1]
+
+    # Odir
+    out_root = Path(args.out).resolve()
+    model_dir_name = args.model + kernel_suffix
+    out_dir = out_root / args.data_name / model_dir_name
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     # Build model
     if args.model == "gp":
@@ -164,7 +177,8 @@ def main():
             noise_bounds=tuple(args.noise_bounds),
             n_restarts=args.gp_restarts,
             alpha=args.alpha,
-            random_state=args.seed
+            random_state=args.seed,
+            kernel_name=args.kernel
         )
         model = MultiOutputRegressor(base_gp) if n_targets > 1 else base_gp
     else:
@@ -189,7 +203,7 @@ def main():
     Yhat_va_std = _ensure_2d(np.asarray(Yhat_va_std))
 
     Yhat_tr = _inverse_standardize(Yhat_tr_std, Y_mu, Y_sd)
-    Yhat_va = _inverse_standardize(Yhat_va_std, Y_mu, Y_sd)
+    Yhat_va = _inverse_standardize(Yhat_va_std, Y_mu, Y_sd) if va.size else Yhat_va_std
 
     # Metrics in RAW units (per-target and averaged)
     metrics: Dict[str, Any] = {"target_cols": meta["target"]["target_cols"]}
@@ -235,7 +249,7 @@ def main():
         "feature_cols": meta["feature_cols"],
         "target_cols": metrics["target_cols"],
         "metrics": metrics,
-        "data_dir": str(data_dir),
+        "data_dir": bundle["data_path"],
         "seed": args.seed,
         "gp_hparams": {
             "ls_init": args.ls_init, "ls_bounds": args.ls_bounds,

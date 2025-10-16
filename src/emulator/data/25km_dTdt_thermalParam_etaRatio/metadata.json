@@ -20,8 +20,8 @@
   ],
   "feature_transforms": {
     "log": {
-      "eps_trans": "log10",
       "eta_UM": "log10",
+      "eps_trans": "log10",
       "eta_int": "log10"
     }
   },
