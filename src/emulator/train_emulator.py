@@ -28,7 +28,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, WhiteKernel, ConstantKernel as C
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-
+from sklearn.gaussian_process.kernels import RBF, Matern, WhiteKernel, ConstantKernel as C
 
 # ---------- utils
 
@@ -84,26 +84,26 @@ def _ensure_2d(y: np.ndarray) -> np.ndarray:
 
 # ---------- model builders
 
-def build_gp(n_features: int, lengthscale_init: float, lengthscale_bounds: Tuple[float, float],
-             noise_level_init: float, noise_bounds: Tuple[float, float],
-             n_restarts: int, alpha: float, random_state: int) -> GaussianProcessRegressor:
-    """
-    Returns a single-target GP regressor. We'll wrap per-target with MultiOutputRegressor.
-    NOTE: We train on standardized X/Y, so set normalize_y=False here.
-    """
-    kernel = C(1.0, (1e-3, 1e3)) * RBF(
-        length_scale=np.full(n_features, lengthscale_init),
-        length_scale_bounds=lengthscale_bounds
-    ) + WhiteKernel(noise_level=noise_level_init, noise_level_bounds=noise_bounds)
+def build_gp(n_features, lengthscale_init, lengthscale_bounds, noise_level_init, noise_bounds,
+             n_restarts, alpha, random_state, kernel_name="matern15"):
+    if kernel_name == "rbf":
+        base = RBF(length_scale=np.full(n_features, lengthscale_init),
+                   length_scale_bounds=lengthscale_bounds)
+    elif kernel_name == "matern25":
+        base = Matern(length_scale=np.full(n_features, lengthscale_init),
+                      length_scale_bounds=lengthscale_bounds, nu=2.5)
+    else:  # "matern15"
+        base = Matern(length_scale=np.full(n_features, lengthscale_init),
+                      length_scale_bounds=lengthscale_bounds, nu=1.5)
 
-    gp = GaussianProcessRegressor(
-        kernel=kernel,
-        alpha=alpha,                    # add'l nugget on the diagonal
-        normalize_y=False,              # we already standardized Y
-        n_restarts_optimizer=n_restarts,
-        random_state=random_state
+    kernel = C(1.0, (1e-3, 1e3)) * base + WhiteKernel(
+        noise_level=noise_level_init, noise_level_bounds=noise_bounds
     )
-    return gp
+    return GaussianProcessRegressor(
+        kernel=kernel, alpha=alpha, normalize_y=False,
+        n_restarts_optimizer=n_restarts, random_state=random_state
+    )
+
 
 def build_rf(n_estimators: int, max_depth: int | None, random_state: int, n_jobs: int) -> RandomForestRegressor:
     return RandomForestRegressor(
@@ -130,6 +130,7 @@ def main():
     p.add_argument("--noise-bounds", type=float, nargs=2, default=[1e-6, 1e-1], help="WhiteKernel noise bounds (min max).")
     p.add_argument("--alpha", type=float, default=1e-6, help="Jitter on K-diagonal for numerical stability.")
     p.add_argument("--gp-restarts", type=int, default=5, help="Optimizer restarts for kernel hyperparameters.")
+    p.add_argument("--kernel", choices=["rbf","matern15","matern25"], default="matern15")
 
     # RF hyperparams
     p.add_argument("--rf-trees", type=int, default=400, help="n_estimators for RandomForest.")
