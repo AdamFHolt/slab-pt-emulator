@@ -7,7 +7,7 @@ DATA_ROOT="./data"
 OUT_ROOT="./models"
 
 # GP config
-KERNEL="matern25"
+KERNEL="rbf"
 RESTARTS=20
 LS_LOW=1e-3
 LS_HIGH=1e3

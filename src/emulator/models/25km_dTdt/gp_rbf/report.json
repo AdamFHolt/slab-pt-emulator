@@ -1,0 +1,70 @@
+{
+  "model_type": "gp",
+  "n_features": 7,
+  "n_targets": 1,
+  "train_size": 333,
+  "val_size": 59,
+  "feature_cols": [
+    "v_conv",
+    "age_SP",
+    "age_OP",
+    "dip_int",
+    "eta_int",
+    "eta_UM",
+    "eps_trans"
+  ],
+  "target_cols": [
+    "dTdt_C_per_Myr"
+  ],
+  "metrics": {
+    "target_cols": [
+      "dTdt_C_per_Myr"
+    ],
+    "train": {
+      "dTdt_C_per_Myr": {
+        "rmse": 1.4160597064926006,
+        "mae": 1.0713396949266836,
+        "r2": 0.9810927872686712
+      },
+      "_macro_avg": {
+        "rmse": 1.4160597064926006,
+        "mae": 1.0713396949266836,
+        "r2": 0.9810927872686712
+      }
+    },
+    "val": {
+      "dTdt_C_per_Myr": {
+        "rmse": 3.656313199860357,
+        "mae": 2.082353607619091,
+        "r2": 0.8307269621210014
+      },
+      "_macro_avg": {
+        "rmse": 3.656313199860357,
+        "mae": 2.082353607619091,
+        "r2": 0.8307269621210014
+      }
+    },
+    "gp_kernels": [
+      {
+        "kernel": "4.35**2 * RBF(length_scale=[1.92, 39.7, 1.28, 4.31, 10.6, 46.3, 51]) + WhiteKernel(noise_level=0.0273)"
+      }
+    ]
+  },
+  "data_dir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data/25km_dTdt",
+  "seed": 42,
+  "gp_hparams": {
+    "ls_init": 1.0,
+    "ls_bounds": [
+      0.001,
+      1000.0
+    ],
+    "noise_init": 0.003,
+    "noise_bounds": [
+      1e-06,
+      1.0
+    ],
+    "alpha": 1e-06,
+    "restarts": 20
+  },
+  "rf_hparams": null
+}
