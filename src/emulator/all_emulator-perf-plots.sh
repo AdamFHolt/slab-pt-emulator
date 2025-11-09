@@ -35,6 +35,7 @@ echo "Now plotting residuals for each depth and variant combination."
 
 
 ALGOS=("gp_m25")
+VARIANTS=("dTdt")
 for ALGO in "${ALGOS[@]}"; do
     for VAR in "${VARIANTS[@]}"; do
         for DEPTH in "${DEPTHS[@]}"; do
@@ -52,6 +53,31 @@ for ALGO in "${ALGOS[@]}"; do
         done
     done
 done
+
+echo "------"
+echo "2nd round of plots complete. Also saved to ${OUT_DIR}/"
+echo "Now plotting residuals vs all params for each depth and variant combination."
+
+
+ALGOS=("gp_m25" "gp_m15" "gp_rbf")  
+VARIANTS=("dTdt")
+for ALGO in "${ALGOS[@]}"; do
+    for VAR in "${VARIANTS[@]}"; do
+        for DEPTH in "${DEPTHS[@]}"; do
+            echo "------"
+            echo "Plotting ${ALGO} residuals for variant ${VAR} and depth ${DEPTH}"
+            python plot_emulator_misfit-vs-params.py \
+                --params "../../data/params-list.csv" \
+                --data ""$DATA_ROOT"/${DEPTH}_${VAR}" \
+                --out "${OUT_DIR}/emulator_misfit-vs-params.${DEPTH}_${VAR}.residual-${ALGO}.png" \
+                --models "$MODEL_ROOT" \
+                --algo "$ALGO" \
+                --label-thresh 10
+
+        done
+    done
+done
+
 
 echo "All plots complete. Saved to ${OUT_DIR}/"
 
