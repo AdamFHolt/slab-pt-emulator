@@ -7,10 +7,9 @@ misc/
 # Jupyter
 .ipynb_checkpoints/
 # Heavy outputs are tracked by DVC or stay off-git
-subd-model-runs/initial-structures
-subd-model-runs/run-outputs/run*/
-subd-model-runs/run-outputs/analysis/figs
-subd-model-runs/run-outputs/analysis/run*
+subd-model-runs/run*/inputs
+subd-model-runs/v1-old
 *.h5
 *.nc
 *.csv
+*.txt
