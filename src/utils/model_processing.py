@@ -4,7 +4,8 @@ import numpy as np, os, pathlib, re, sys
 def extract_csv(IN_DIR, OUT_DIR, MOD_NAME, TIMESTEP):
 
     # load in the .pvd file
-    soln = f'{IN_DIR}run_{MOD_NAME}/outputs/run_{MOD_NAME}/solution.pvd'
+    soln = f'{IN_DIR}/run_{MOD_NAME}/solution.pvd'
+
     if not os.path.exists(soln):
         print(f'ERROR: {soln} not found')
         sys.exit(1)

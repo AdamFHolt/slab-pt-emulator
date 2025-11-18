@@ -92,7 +92,7 @@ def main():
 
     if args.annot:
         axes[0].text(0.4, 0.05, args.annot, transform=axes[0].transAxes,
-                     fontsize=11, ha="center", va="bottom")
+                     fontsize=10, ha="center", va="bottom")
 
     # C1
     im1 = axes[1].pcolormesh(X1, Z1, GC1, shading="auto", cmap="viridis", vmin=0, vmax=1)
@@ -121,11 +121,11 @@ def main():
     axes[-1].set_xlabel("Distance (km)")
 
     # overlay markers as stars, t1
-    axes[0].plot(DT_markers[:,0], DT_markers[:,2], marker="*", linestyle="None", markersize=15, color="k", zorder=5)
-    axes[1].plot(DT_markers[:,0], DT_markers[:,2], marker="*", linestyle="None", markersize=15, color="k", zorder=5)
+    axes[0].plot(DT_markers[:,0], DT_markers[:,2], marker="*", linestyle="None", markersize=8, color="k", zorder=5)
+    axes[1].plot(DT_markers[:,0], DT_markers[:,2], marker="*", linestyle="None", markersize=8, color="k", zorder=5)
     # t2
-    axes[2].plot(DT_markers[:,1], DT_markers[:,2], marker="*", linestyle="None", markersize=15, color="k", zorder=5)
-    axes[3].plot(DT_markers[:,1], DT_markers[:,2], marker="*", linestyle="None", markersize=15, color="k", zorder=5)
+    axes[2].plot(DT_markers[:,1], DT_markers[:,2], marker="*", linestyle="None", markersize=8, color="k", zorder=5)
+    axes[3].plot(DT_markers[:,1], DT_markers[:,2], marker="*", linestyle="None", markersize=8, color="k", zorder=5)
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
