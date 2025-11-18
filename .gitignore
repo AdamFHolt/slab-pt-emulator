@@ -7,8 +7,12 @@ misc/
 # Jupyter
 .ipynb_checkpoints/
 # Heavy outputs are tracked by DVC or stay off-git
+subd-model-runs/const-vc/run-inputs/run*/inputs
 subd-model-runs/const-vc/run-outputs/
 subd-model-runs/const-vc/analysis/figs/
+subd-model-runs/ramped-vc/run-inputs/run*/inputs
+subd-model-runs/ramped-vc/run-outputs/
+subd-model-runs/ramped-vc/analysis/figs/
 *.h5
 *.nc
 *.csv
