@@ -2,23 +2,25 @@
 """
 QC plot: dT or dT/dt vs parameters (+ thermal parameter) for a *single depth*.
 
-Now adapted for the hierarchical master file format:
+Uses the hierarchical master file format:
 
     depth_km,run_id,T1_C,T2_C,dT_C,dt_Myr,dTdt_C_per_Myr
 
-Usage example:
+Example:
 
-  python qc_cooling-rates_all-mods.py \
-      --params ../../data/params/params-list.csv \
+  python qc_dTdt_vs_params_1depth.py \
+      --params ../../data/params/params-list.const-vc.csv \
       --master ../../subd-model-runs/const-vc/analysis/master_DT1-10.csv \
       --depth-km 50 \
       --y dTdt_C_per_Myr \
-      --out ./plots/qc_cooling-rates_50km_DT1-10
+      --out ../../plots/qc-numerical-mods/const-vc_DT1-10_dTdt-vs-params_50km
 
-This will:
-  - take rows where depth_km == 50,
-  - merge with params via run_id,
-  - plot y vs each parameter (+ thermal_param).
+Behavior:
+  - If params file includes `t_conv`, we also plot:
+      * t_conv
+      * v_conv_over_tconv = v_conv / t_conv
+    and use a 4-column grid.
+  - Otherwise, no extra panels and we use a 3-column grid.
 """
 
 import argparse
@@ -39,13 +41,15 @@ def zero_pad_runids(n: int):
 def nice_label(param: str) -> str:
     labels = {
         "v_conv": r"Convergence rate (cm/yr)",
+        "v_conv_over_tconv": r"$v_{\rm conv}/t_{\rm conv}$ (cm/yr/Myr)",
+        "t_conv": r"$t_{\rm conv}$ (Myr)",
         "age_SP": r"Age$_{\rm SP}$ (Ma)",
         "age_OP": r"Age$_{\rm OP}$ (Ma)",
         "dip_int": r"Initial dip (°)",
         "eta_int": r"$\eta_{\rm int}$ (Pa·s)",
         "eta_UM": r"$\eta_{\rm UM}$ (Pa·s)",
         "eps_trans": r"$\dot\epsilon_{\rm trans}$ (s$^{-1}$)",
-        "thermal_param": r"$v\; \mathrm{age}_{\rm SP}\; {\sin(\mathrm{dip})}$ (km)",
+        "thermal_param": r"$v\; \mathrm{age}_{\rm SP}\; \sin(\mathrm{dip})$ (km)",
         "dT_C": r"$\Delta T$ (°C)",
         "dTdt_C_per_Myr": r"$\Delta T/\Delta t$ (°C/Myr)",
     }
@@ -67,7 +71,7 @@ def main():
                     "for a single depth from the hierarchical master."
     )
     p.add_argument("--params", required=True,
-                   help="Path to params-list.csv (LHS design).")
+                   help="Path to params-list.<suite>.csv (LHS design).")
     p.add_argument("--master", required=True,
                    help="Hierarchical master CSV with depth_km column.")
     p.add_argument("--depth-km", type=float, required=True,
@@ -87,10 +91,18 @@ def main():
 
     depth = args.depth_km
 
+    # ------------------------------------------------------------
     # 1) Load params and master
+    # ------------------------------------------------------------
     df_p = pd.read_csv(params_path)
-    # make a string run_id column consistent with run_000 style
     df_p["run_id"] = zero_pad_runids(len(df_p))
+
+    # If t_conv exists, compute v_conv_over_tconv
+    ramped = "t_conv" in df_p.columns
+    if ramped:
+        t = df_p["t_conv"].replace(0, np.nan).to_numpy(float)
+        v = df_p["v_conv"].to_numpy(float)
+        df_p["v_conv_over_tconv"] = v / t
 
     df_m_all = pd.read_csv(master_path, dtype={"run_id": str})
     if "depth_km" not in df_m_all.columns:
@@ -106,41 +118,72 @@ def main():
             f"No rows found in {master_path} for depth_km = {depth}."
         )
 
-    # 2) Merge and add derived thermal parameter
+    # Merge and add thermal_param
     df = pd.merge(df_p, df_m, on="run_id", how="inner")
     if df.empty:
         raise ValueError("Merge of params and master resulted in empty DataFrame.")
-
     df["thermal_param"] = compute_thermal_param(df)
 
-    # 3) Plot
-    base_params_all = ["v_conv", "age_SP", "age_OP", "dip_int", "eta_int", "eta_UM", "eps_trans"]
-    base_params = [c for c in base_params_all if c in df.columns]
+    # ------------------------------------------------------------
+    # 2) Build parameter list (x-axes)
+    # ------------------------------------------------------------
+    base_params = []
+
+    # Always include v_conv if present
+    if "v_conv" in df.columns:
+        base_params.append("v_conv")
+
+    # If ramped, also include v_conv_over_tconv and t_conv
+    if ramped:
+        if "v_conv_over_tconv" in df.columns:
+            base_params.append("v_conv_over_tconv")
+        if "t_conv" in df.columns:
+            base_params.append("t_conv")
+
+    # Standard parameters
+    for name in ["age_SP", "age_OP", "dip_int", "eta_int", "eta_UM", "eps_trans"]:
+        if name in df.columns:
+            base_params.append(name)
+
     params = base_params + ["thermal_param"]
+
+    # Grid: 4 columns if ramped (extra panels), else 3
+    if ramped:
+        ncols = 4
+    else:
+        ncols = 3
+
     n = len(params)
-    ncols = 3
+    ncols = min(ncols, n)  # in case very few params
     nrows = int(np.ceil(n / ncols))
 
-    fig, axes = plt.subplots(nrows, ncols, figsize=(12, 3.6 * nrows), constrained_layout=True)
+    fig, axes = plt.subplots(
+        nrows, ncols,
+        figsize=(4*ncols, 3.6*nrows),
+        constrained_layout=True
+    )
     axes = axes.flatten() if n > 1 else [axes]
+
     yvar = args.y
     ylab = nice_label(yvar)
 
     yvals_all = df[yvar].to_numpy(dtype=float)
     run_ids_all = df["run_id"].to_numpy(str)
 
+    # ------------------------------------------------------------
+    # 3) Make the panels
+    # ------------------------------------------------------------
     for i, pname in enumerate(params):
         ax = axes[i]
 
         x = df[pname].to_numpy(dtype=float)
         yvals = yvals_all
-        run_ids = run_ids_all
 
         msk = np.isfinite(x) & np.isfinite(yvals)
         use_logx = pname in LOG_PARAMS
+
         Xplot = x[msk]
         Yplot = yvals[msk]
-        RID = run_ids[msk]
 
         ax.scatter(
             np.log10(Xplot) if use_logx else Xplot,
@@ -150,44 +193,26 @@ def main():
             alpha=0.75,
         )
 
-        # If plotting thermal parameter, use log axis (but not log10 transform)
         if pname == "thermal_param":
             ax.set_xscale("log")
 
-        # # Annotate “suspect” points (ΔT/dt > −20 °C/Myr or ΔT > −100 °C, as before)
-        # if yvar == "dTdt_C_per_Myr":
-        #     thresh = -20.0
-        # else:
-        #     thresh = -100.0
-
-        # for xi, yi, rid in zip(Xplot, Yplot, RID):
-        #     if yi > thresh:
-        #         ax.text(
-        #             (np.log10(xi) if use_logx else xi),
-        #             yi,
-        #             rid,
-        #             fontsize=7,
-        #             ha="left",
-        #             va="center",
-        #             color="red",
-        #         )
-
-        # Labels and formatting
         xlab = nice_label(pname) + (" (log₁₀)" if use_logx else "")
         ax.set_xlabel(xlab)
         ax.set_ylabel(ylab)
         ax.grid(True, ls=":", alpha=0.4)
         ax.set_title(f"{pname} @ {depth:.0f} km", fontsize=10)
-        ax.set_ylim(bottom=-160.0, top=0)
 
-    # Hide unused axes
+        if yvar == "dTdt_C_per_Myr":
+            ax.set_ylim(bottom=-160.0, top=0)
+
+    # Hide unused axes if grid larger than number of params
     for j in range(i + 1, len(axes)):
         axes[j].axis("off")
 
-    # Save
     fig.savefig(f"{out_prefix}.png", dpi=args.dpi, bbox_inches="tight")
-    print(f"Saved: {out_prefix}.png")
+    print(f"Saved:", f"{out_prefix}.png")
 
 
 if __name__ == "__main__":
     main()
+
