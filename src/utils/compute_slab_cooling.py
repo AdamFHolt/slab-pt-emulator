@@ -63,25 +63,40 @@ def main():
     x2, y2, T2, C2 = read_field_csv(f2)
     _, _, GT2, GC2 = grid_field(x2, y2, T2, C2, args.grid_res_km, xmin_km, xmax_km, ymax_km, args.interp)
 
+    # Time difference (handle t1 == t2 safely)
+    dt_yr = args.t2_yr - args.t1_yr
+    if abs(dt_yr) < 1e-12:
+        dt_Myr = 0.0
+        inv_dt_Myr = np.nan  # so dT/dt will be NaN
+    else:
+        dt_Myr = dt_yr / 1e6
+        inv_dt_Myr = 1.0 / dt_Myr
+
     rows = []
     for d in args.depths_km:
         x1_km, t1_C = pick_rightmost_x_at_depth(X, Z, GC1, GT1, d, args.c_thresh, args.x_min_km)
         x2_km, t2_C = pick_rightmost_x_at_depth(X, Z, GC2, GT2, d, args.c_thresh, args.x_min_km)
+
+        dT = t2_C - t1_C
+        if np.isnan(inv_dt_Myr):
+            dTdt = np.nan
+        else:
+            dTdt = dT * inv_dt_Myr
+
         rows.append(dict(
-            depth_km      = round(d, 3),
-            x1_km         = round(x1_km, 3),
-            T1_C          = round(t1_C, 3),
-            x2_km         = round(x2_km, 3),
-            T2_C          = round(t2_C, 3),
-            dT_C          = round(t2_C - t1_C, 3),
-            dt_Myr        = round((args.t2_yr - args.t1_yr) / 1e6, 3),
-            dTdt_C_per_Myr= round((t2_C - t1_C) / ((args.t2_yr - args.t1_yr) / 1e6), 9)
+            depth_km       = round(d, 3),
+            x1_km          = round(x1_km, 3),
+            T1_C           = round(t1_C, 3),
+            x2_km          = round(x2_km, 3),
+            T2_C           = round(t2_C, 3),
+            dT_C           = round(dT, 3),
+            dt_Myr         = round(dt_Myr, 9),
+            dTdt_C_per_Myr = round(dTdt, 9),
         ))
 
     # Write DT output
     pd.DataFrame(rows).to_csv(args.out, index=False)
-
-    print(f"[DT] wrote: {args.out}")
+    # print(f"[DT] wrote: {args.out}")
 
 if __name__ == "__main__":
     main()
