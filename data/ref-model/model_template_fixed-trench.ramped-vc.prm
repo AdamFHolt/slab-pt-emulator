@@ -1,9 +1,9 @@
 set Dimension                              = 2
 set Use years in output instead of seconds = true
-set End time                               = 6.5e6
+set End time                               = 10.5e6
 set Output directory                       = outputs/$$MODELNAME$$
-
 set Resume computation			   = auto
+set Maximum time step                      = 0.25e6
 
 ### SOLVER STUFF
 # non-linear stuff

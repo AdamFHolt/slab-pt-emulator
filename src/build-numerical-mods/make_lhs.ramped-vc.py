@@ -13,7 +13,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 RANGES = {
     # name         (min,    max,   'lin' | 'log')
     "v_conv"    : ( 1.0 ,   8.0,    'lin'),  # cm/yr  (convergence rate)
-    "t_conv"    : ( 0.5,    5.0,    'lin'),  # Myr (time to ramp up to v_conv)
+    "t_conv"    : ( 1.0,    5.0,    'lin'),  # Myr (time to ramp up to v_conv)
     "age_SP"    : ( 40.0 ,  110.0,  'lin'),  # Myr
     "age_OP"    : ( 10.0 ,  110.0,  'lin'),  # Myr
     "dip_int"   : ( 25.0 ,  75.0,   'lin'),  # degrees (slab dip angle)
