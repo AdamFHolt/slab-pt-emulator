@@ -99,8 +99,8 @@ def main():
 
     p.add_argument("--max-lines", type=int, default=800,
                    help="Cap number of individual profiles plotted per panel (default 800)")
-    p.add_argument("--alpha", type=float, default=0.1,
-                   help="Alpha for individual profiles (default 0.1)")
+    p.add_argument("--alpha", type=float, default=0.2,
+                   help="Alpha for individual profiles (default 0.2)")
     p.add_argument("--show-envelope", action="store_true",
                    help="Show 16–84 percentile envelope.")
     p.add_argument("--Tlim", nargs=2, type=float, default=None,
@@ -234,7 +234,7 @@ def main():
         # Title with actual selected time (median of selected times)
         t_selecteds = [tsel for *_rest, tsel in entries]
         tmed = float(np.nanmedian(np.array(t_selecteds)))
-        ax.set_title(f"time ~ {t:g} Myr (picked {tmed:.2f} Myr)")
+        ax.set_title(f"time = {tmed:.2f} Myr")
 
         ax.set_xlabel("Temperature (°C)")
         ax.grid(True, ls=":", alpha=0.35)
@@ -243,7 +243,6 @@ def main():
         ax.invert_yaxis()
 
     axes[0].set_ylabel("Depth (km)")
-    fig.suptitle("Vertical temperature profiles (all runs)", y=1.02)
     fig.savefig(f"{out_prefix}.png", dpi=args.dpi, bbox_inches="tight")
     print("Saved:", f"{out_prefix}.png")
     if bad:
