@@ -99,6 +99,10 @@ for k in TIMES_ALLT:
         "--grid-res-km", "1",
         "--c-thresh", "0.5",
         "--x-min-km", "1600",
+        "--smooth-x",
+        "--smooth-window-km", "14",
+        "--smooth-polyorder", "2",
+        "--interp", "linear",
     ]
     subprocess.run(cmd_slab_allT, check=True)
 
@@ -110,6 +114,9 @@ for k in TIMES_ALLT:
         "depth_km": df_tmp["depth_km"].to_numpy(),
         "T_C":      df_tmp["T2_C"].to_numpy(),  # T2_C = interface T at this timestep
     })
+    # confirm not accidentally using raw
+    dmax = (df_tmp["T2_C"] - df_tmp["T2_C_raw"]).abs().max()
+    print("max |T2_C - T2_C_raw| =", dmax)
     out_allT = RUN_ANALYSIS / f"Tprof_{k}.csv"
     df_allT.to_csv(out_allT, index=False)
     print(f"[DT] wrote: {out_allT}")
@@ -139,6 +146,9 @@ cmd_slab_DT = [
     "--grid-res-km", "1",
     "--c-thresh", "0.5",
     "--x-min-km", "1600",
+    "--smooth-x",
+    "--smooth-window-km", "14",
+    "--smooth-polyorder", "2",
 ]
 subprocess.run(cmd_slab_DT, check=True)
 

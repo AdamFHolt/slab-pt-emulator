@@ -128,6 +128,37 @@ python qc_pairplot_params.py \
   --out "${OUT_PREFIX_PAIR}" \
   --mode compute-log10
 
+# =========================================================================== #
+# 7) LHS parameter pairplot colored by dT/dt (50 km)
+# =========================================================================== #
+echo
+echo "=== QC: LHS parameter pairplot colored by ${YVAR} (50 km) ==="
+
+OUT_PREFIX_PAIR_COLOR="${OUT_DIR}/${SUITE}/params-pairplot_colored_50km"
+
+python qc_pairplot_params_colored.py \
+  --params "${PARAMS}" \
+  --master "${MASTER}" \
+  --depth-km 50 \
+  --y "${YVAR}" \
+  --out "${OUT_PREFIX_PAIR_COLOR}" \
+  --mode compute-log10
+
+
+# =========================================================================== #
+# 8) Vertical T profiles (all runs; times 0, 2.5, 5 Myr)
+# =========================================================================== #
+echo
+echo "=== QC: Vertical T profiles (all runs) ==="
+
+TPROF_GLOB="../../subd-model-runs/${SUITE}/analysis/run_*/Tprof_*.csv"
+OUT_PREFIX_TPROF="${OUT_DIR}/${SUITE}/Tprofiles_t0t2.5t5"
+
+python qc_T_profiles_allmodels_3times.py \
+  --glob "${TPROF_GLOB}" \
+  --times 0.5 2.5 5 \
+  --tol-myr 0.1 \
+  --out "${OUT_PREFIX_TPROF}" \
 
 # =========================================================================== #
 

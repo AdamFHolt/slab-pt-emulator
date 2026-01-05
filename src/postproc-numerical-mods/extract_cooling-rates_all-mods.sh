@@ -107,17 +107,26 @@ for RUN_DIR in "${RUN_DIRS[@]}"; do
 
     # Append per-depth results into hierarchical master
     for depth in "${DEPTH_ARR[@]}"; do
-      line=$(awk -F, -v d="$depth" '
-        NR>1 && ($1+0)==(d+0) {
-          if ($3=="" || $5=="" || $6=="" || $7=="" || $8=="")
-            print "NaN,NaN,NaN,NaN,NaN";
-          else
-            print $3,$5,$6,$7,$8;
-          found=1; exit
-        }
-        END { if (!found) print "NaN,NaN,NaN,NaN,NaN" }
-      ' OFS="," "$OUTDT")
+          line=$(awk -F, -v d="$depth" '
+            NR==1 {
+              for (i=1; i<=NF; i++) h[$i]=i
+              next
+            }
+            ($1+0)==(d+0) {
+              t1 = $(h["T1_C"])
+              t2 = $(h["T2_C"])
+              dt = $(h["dt_Myr"])
+              dT = $(h["dT_C"])
+              r  = $(h["dTdt_C_per_Myr"])
 
+              if (t1=="" || t2=="" || dT=="" || dt=="" || r=="") print "NaN,NaN,NaN,NaN,NaN"
+              else print t1,t2,dT,dt,r
+
+              found=1
+              exit
+            }
+            END { if (!found) print "NaN,NaN,NaN,NaN,NaN" }
+          ' OFS="," "$OUTDT")
       echo "${depth},${RUN_NUM},${line}" >> "$MASTER"
     done
 
