@@ -23,12 +23,70 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter
 
+# font setup
+import matplotlib as mpl
+import matplotlib.font_manager as fm
+font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
+myriad_pro = fm.FontProperties(fname=font_path)
+mpl.rcParams['font.family'] = 'Myriad Pro'  
+mpl.rcParams['font.size'] = 11.5
+mpl.rcParams['axes.labelsize'] = 11.5
+mpl.rcParams['axes.labelpad'] = 1.5
+mpl.rcParams['xtick.labelsize'] = 9.75
+mpl.rcParams['ytick.labelsize'] = 9.75
+mpl.rcParams['xtick.major.pad'] = 2
+mpl.rcParams['ytick.major.pad'] = 2
+mpl.rcParams['xtick.major.size'] = 3
+mpl.rcParams['ytick.major.size'] = 3
+mpl.rcParams['xtick.minor.size'] = 1.5
+mpl.rcParams['ytick.minor.size'] = 1.5
+
+
 LOG_PARAMS = {"eta_int", "eta_UM", "eps_trans", "thermal_param"}
 
 
 def zero_pad_runids(n: int):
     width = max(3, len(str(n - 1)))
     return [f"{i:0{width}d}" for i in range(n)]
+
+def nice_label(param: str) -> str:
+    labels = {
+        "v_conv": r"Convergence rate (cm/yr)",
+        "v_conv_over_tconv": r"$v_{\rm conv}/t_{\rm conv}$ (cm/yr/Myr)",
+        "t_conv": r"$t_{\rm conv}$ (Myr)",
+        "age_SP": r"Age$_{\rm SP}$ (Ma)",
+        "age_OP": r"Age$_{\rm OP}$ (Ma)",
+        "dip_int": r"Initial dip (°)",
+        "eta_int": r"$\eta_{\rm int}$ (Pa·s)",
+        "eta_UM": r"$\eta_{\rm UM}$ (Pa·s)",
+        "eps_trans": r"$\dot\epsilon_{\rm trans}$ (s$^{-1}$)",
+        "thermal_param": r"$v\; \mathrm{age}_{\rm SP}\; \sin(\mathrm{dip})$ (km)",
+        "dT_C": r"$\Delta T$ (°C)",
+        "dTdt_C_per_Myr": r"$\Delta T/\Delta t$ (°C/Myr)",
+    }
+
+    # log10(...) columns
+    if param.startswith("log10(") and param.endswith(")"):
+        base = param[len("log10("):-1]
+        base_lbl = labels.get(base, base)
+
+        # If base label already has a math chunk like "$...$ (units)", reuse it
+        if isinstance(base_lbl, str) and base_lbl.startswith("$") and "$" in base_lbl[1:]:
+            j = base_lbl.find("$", 1)         # end of first math chunk
+            math_inner = base_lbl[1:j]        # inside $...$
+            units = base_lbl[j+1:]            # rest (e.g. " (Pa·s)")
+            return rf"$\log_{{10}}\!\left({math_inner}\right)$" + units
+
+        # Fallback: just put base inside log as text in math mode
+        return rf"$\log_{{10}}\!\left({base}\right)$"
+
+    return labels.get(param, param)
+
+def display_name(v: str, mode: str) -> str:
+    # if we log10-transformed this variable, label it as log10(...)
+    if mode == "compute-log10" and v in LOG_PARAMS:
+        return nice_label(f"log10({v})")
+    return nice_label(v)
 
 
 def compute_thermal_param(df: pd.DataFrame) -> np.ndarray:
@@ -271,12 +329,12 @@ def main():
 
             # Labels only outer axes
             if i == n - 1:
-                ax.set_xlabel(vars_[j])
+                ax.set_xlabel(display_name(vars_[j], args.mode))
             else:
                 ax.set_xticklabels([])
 
             if j == 0:
-                ax.set_ylabel(vars_[i])
+                ax.set_ylabel(display_name(vars_[i], args.mode))
             else:
                 ax.set_yticklabels([])
 
@@ -288,9 +346,8 @@ def main():
         plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax)),
         cax=cax
     )
-    cb.set_label(args.y)
+    cb.set_label(nice_label(args.y))
 
-    fig.suptitle(f"Pairplot colored by {args.y} @ {args.depth_km:.0f} km", y=1.01)
     fig.savefig(f"{out_prefix}.png", dpi=args.dpi, bbox_inches="tight")
     print("Saved:", f"{out_prefix}.png")
 

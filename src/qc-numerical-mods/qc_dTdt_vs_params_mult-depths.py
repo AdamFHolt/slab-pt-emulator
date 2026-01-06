@@ -16,6 +16,25 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# font setup
+import matplotlib as mpl
+import matplotlib.font_manager as fm
+font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
+myriad_pro = fm.FontProperties(fname=font_path)
+mpl.rcParams['font.family'] = 'Myriad Pro'  
+mpl.rcParams['font.size'] = 11.5
+mpl.rcParams['axes.labelsize'] = 11.5
+mpl.rcParams['axes.labelpad'] = 1.5
+mpl.rcParams['xtick.labelsize'] = 9.75
+mpl.rcParams['ytick.labelsize'] = 9.75
+mpl.rcParams['xtick.major.pad'] = 2
+mpl.rcParams['ytick.major.pad'] = 2
+mpl.rcParams['xtick.major.size'] = 3
+mpl.rcParams['ytick.major.size'] = 3
+mpl.rcParams['xtick.minor.size'] = 1.5
+mpl.rcParams['ytick.minor.size'] = 1.5
+
+
 LOG_PARAMS = {"eta_int", "eta_UM", "eps_trans"}  # log10 for these
 
 
@@ -166,7 +185,6 @@ def main():
         ax.set_xlabel(nice_label(pname) + (" (log₁₀)" if use_logx else ""))
         ax.set_ylabel(ylab)
         ax.grid(True, ls=":", alpha=0.4)
-        ax.set_title(pname)
         if yvar == "dTdt_C_per_Myr":
             ax.set_ylim(-160, 0)
 

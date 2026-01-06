@@ -21,6 +21,24 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# font setup
+import matplotlib as mpl
+import matplotlib.font_manager as fm
+font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
+myriad_pro = fm.FontProperties(fname=font_path)
+mpl.rcParams['font.family'] = 'Myriad Pro'  
+mpl.rcParams['font.size'] = 11.5
+mpl.rcParams['axes.labelsize'] = 11.5
+mpl.rcParams['axes.labelpad'] = 1.5
+mpl.rcParams['xtick.labelsize'] = 9.75
+mpl.rcParams['ytick.labelsize'] = 9.75
+mpl.rcParams['xtick.major.pad'] = 2
+mpl.rcParams['ytick.major.pad'] = 2
+mpl.rcParams['xtick.major.size'] = 3
+mpl.rcParams['ytick.major.size'] = 3
+mpl.rcParams['xtick.minor.size'] = 1.5
+mpl.rcParams['ytick.minor.size'] = 1.5
+
 
 def nice_y_label(yvar: str) -> str:
     if yvar == "dTdt_C_per_Myr":
@@ -85,7 +103,7 @@ def main():
         ax.scatter(x, y, s=14, alpha=0.8)
         ax.axhline(0.0, color="k", lw=0.8, ls="--", alpha=0.5)
         ax.set_title(f"{depth:.0f} km", fontsize=11)
-        ax.set_xlabel("run index")
+        ax.set_xlabel("run #")
         ax.grid(True, ls=":", alpha=0.4)
 
         # Use common y-limits (as we did before)
@@ -95,7 +113,6 @@ def main():
     # Put y-label on the leftmost axis only
     axes[0].set_ylabel(ylab)
 
-    fig.suptitle(f"{yvar} vs run index at multiple depths", fontsize=13)
     fig.savefig(f"{out_prefix}.png", dpi=args.dpi, bbox_inches="tight")
     print(f"Saved: {out_prefix}.png")
 

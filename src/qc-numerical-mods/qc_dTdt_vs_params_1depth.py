@@ -29,6 +29,25 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# font setup
+import matplotlib as mpl
+import matplotlib.font_manager as fm
+font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
+myriad_pro = fm.FontProperties(fname=font_path)
+mpl.rcParams['font.family'] = 'Myriad Pro'  
+mpl.rcParams['font.size'] = 11.5
+mpl.rcParams['axes.labelsize'] = 11.5
+mpl.rcParams['axes.labelpad'] = 1.5
+mpl.rcParams['xtick.labelsize'] = 9.75
+mpl.rcParams['ytick.labelsize'] = 9.75
+mpl.rcParams['xtick.major.pad'] = 2
+mpl.rcParams['ytick.major.pad'] = 2
+mpl.rcParams['xtick.major.size'] = 3
+mpl.rcParams['ytick.major.size'] = 3
+mpl.rcParams['xtick.minor.size'] = 1.5
+mpl.rcParams['ytick.minor.size'] = 1.5
+
+
 LOG_PARAMS = {"eta_int", "eta_UM", "eps_trans"}  # log10 for these
 
 
@@ -76,7 +95,7 @@ def main():
                    help="Hierarchical master CSV with depth_km column.")
     p.add_argument("--depth-km", type=float, required=True,
                    help="Depth (km) to extract from master (e.g. 25, 50, 75).")
-    p.add_argument("--y", default="dTdt_C_per_Myr",
+    p.add_argument("--y", default="dTdt_Cqc_dTdt_vs_params_mult-depths.py_per_Myr",
                    choices=["dT_C", "dTdt_C_per_Myr"],
                    help="Quantity to plot on y-axis.")
     p.add_argument("--out", required=True,
@@ -200,7 +219,6 @@ def main():
         ax.set_xlabel(xlab)
         ax.set_ylabel(ylab)
         ax.grid(True, ls=":", alpha=0.4)
-        ax.set_title(f"{pname} @ {depth:.0f} km", fontsize=10)
 
         if yvar == "dTdt_C_per_Myr":
             ax.set_ylim(bottom=-160.0, top=0)

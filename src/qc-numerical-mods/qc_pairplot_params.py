@@ -6,6 +6,25 @@ import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 
+# font setup
+import matplotlib as mpl
+import matplotlib.font_manager as fm
+font_path = "/home/holt/.local/share/fonts/MYRIADPRO-REGULAR.OTF"
+myriad_pro = fm.FontProperties(fname=font_path)
+mpl.rcParams['font.family'] = 'Myriad Pro'  
+mpl.rcParams['font.size'] = 11.5
+mpl.rcParams['axes.labelsize'] = 11.5
+mpl.rcParams['axes.labelpad'] = 1.5
+mpl.rcParams['xtick.labelsize'] = 9.75
+mpl.rcParams['ytick.labelsize'] = 9.75
+mpl.rcParams['xtick.major.pad'] = 2
+mpl.rcParams['ytick.major.pad'] = 2
+mpl.rcParams['xtick.major.size'] = 3
+mpl.rcParams['ytick.major.size'] = 3
+mpl.rcParams['xtick.minor.size'] = 1.5
+mpl.rcParams['ytick.minor.size'] = 1.5
+
+
 # Base parameters (present in both suites)
 RAW_BASE_PARAMS = ["v_conv", "age_SP", "age_OP", "dip_int", "eta_UM"]
 
@@ -17,6 +36,40 @@ RAW_PARAMS_ALL = RAW_BASE_PARAMS + OPTIONAL_PARAMS
 
 # Heavy-tailed; plot in log10 if desired
 LOG_AUTO = ["eta_UM"]  
+
+def nice_label(param: str) -> str:
+    labels = {
+        "v_conv": r"Convergence rate (cm/yr)",
+        "v_conv_over_tconv": r"$v_{\rm conv}/t_{\rm conv}$ (cm/yr/Myr)",
+        "t_conv": r"$t_{\rm conv}$ (Myr)",
+        "age_SP": r"Age$_{\rm SP}$ (Ma)",
+        "age_OP": r"Age$_{\rm OP}$ (Ma)",
+        "dip_int": r"Initial dip (°)",
+        "eta_int": r"$\eta_{\rm int}$ (Pa·s)",
+        "eta_UM": r"$\eta_{\rm UM}$ (Pa·s)",
+        "eps_trans": r"$\dot\epsilon_{\rm trans}$ (s$^{-1}$)",
+        "thermal_param": r"$v\; \mathrm{age}_{\rm SP}\; \sin(\mathrm{dip})$ (km)",
+        "dT_C": r"$\Delta T$ (°C)",
+        "dTdt_C_per_Myr": r"$\Delta T/\Delta t$ (°C/Myr)",
+    }
+ 
+     # log10(...) columns
+    if param.startswith("log10(") and param.endswith(")"):
+        base = param[len("log10("):-1]
+        base_lbl = labels.get(base, base)
+
+        # If base label already has a math chunk like "$...$ (units)", reuse it
+        if isinstance(base_lbl, str) and base_lbl.startswith("$") and "$" in base_lbl[1:]:
+            j = base_lbl.find("$", 1)         # end of first math chunk
+            math_inner = base_lbl[1:j]        # inside $...$
+            units = base_lbl[j+1:]            # rest (e.g. " (Pa·s)")
+            return rf"$\log_{{10}}\!\left({math_inner}\right)$" + units
+
+        # Fallback: just put base inside log as text in math mode
+        return rf"$\log_{{10}}\!\left({base}\right)$"
+
+
+    return labels.get(param, param)
 
 def main():
     p = argparse.ArgumentParser(
@@ -63,6 +116,7 @@ def main():
 
     # Keep only known params that actually exist in this suite (e.g., t_conv only for ramped-vc)
     present_cols = [c for c in RAW_PARAMS_ALL if c in df.columns]
+    print(f"Present columns for pairplot: {present_cols}")
     df = df[present_cols].copy()
 
     df_plot = df.copy()
@@ -96,6 +150,10 @@ def main():
         # else: parameter not present in this suite -> skip
 
     df_plot = df_plot[ordered_cols]
+
+    # Rename columns to nice labels for plotting
+    rename_map = {c: nice_label(c) for c in df_plot.columns}
+    df_plot = df_plot.rename(columns=rename_map)
 
     g = sns.pairplot(
         df_plot,
