@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-PLOTS_DIR_DEFAULT = Path("/home/holt/Projects/SlabPT-emulator/plots/qc-emulator/")
+PLOTS_DIR_DEFAULT = Path("/home/holt/Projects/SlabPT-emulator/plots/qc-emulator")
 
 # Params we want to display on a log-x axis (raw values)
 LOGX_PARAMS = {"eta_int", "eta_UM", "eps_trans"}
@@ -296,7 +296,6 @@ def main():
     p.add_argument("--names", nargs="*", default=None,
                    help="Optional explicit dataset names (e.g., 10km_dTdt 20km_dTdt ...). "
                         "If omitted, auto-discovers all '*km_<variant>' under data/<suite>/.")
-
     p.add_argument("--params", default=None,
                    help="Optional params-list.<suite>.csv override. If omitted, uses metadata.json['params_path'] per dataset.")
 
@@ -341,6 +340,12 @@ def main():
     outdir = Path(args.outdir).resolve()
     outdir.mkdir(parents=True, exist_ok=True)
 
+    outdir = Path(args.outdir).resolve()
+    outdir.mkdir(parents=True, exist_ok=True)
+    plotdir = outdir.joinpath(args.suite, "misfits-vs-params").resolve()
+    plotdir.mkdir(parents=True, exist_ok=True)
+
+
     for name in names:
         bundle = load_bundle(
             data_root=data_root,
@@ -351,7 +356,7 @@ def main():
             yidx=args.yidx,
         )
 
-        outpath = outdir / f"misfit_vs_params_{args.suite}_{name}_{args.algo}.png"
+        outpath = plotdir / f"{args.suite}_{name}_{args.algo}.png"
         plot_one_dataset(
             bundle=bundle,
             df_params_full=df_params_full,

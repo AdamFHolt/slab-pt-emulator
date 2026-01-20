@@ -295,11 +295,13 @@ def main():
 
     outdir = Path(args.outdir).resolve()
     outdir.mkdir(parents=True, exist_ok=True)
+    plotdir = outdir.joinpath(suite, "pred-vs-true").resolve()
+    plotdir.mkdir(parents=True, exist_ok=True)
 
     if args.outfile:
-        outpath = outdir / args.outfile
+        outpath = plotdir / args.outfile
     else:
-        outpath = outdir / f"emulator_scatter_{suite}_{args.variant}_{args.algo}_{target_name}.png"
+        outpath = plotdir / f"{suite}_{args.variant}_{args.algo}.png"
 
     fig.savefig(outpath, dpi=args.dpi, bbox_inches="tight")
     print(f"[OK] Saved: {outpath}")
