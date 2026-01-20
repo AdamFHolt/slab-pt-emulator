@@ -1,28 +1,12 @@
 #!/usr/bin/env python3
-"""
-Train the Slab P–T emulator on preprocessed arrays.
-
-Inputs (produced by preprocess_training.py):
-- X_std.npy, Y_std.npy : standardized features/targets (float32/64)
-- X_raw.npy, Y_raw.npy : raw (unstandardized) features/targets
-- train_idx.npy, val_idx.npy : index arrays for split
-- metadata.json : includes scalers (X.mean/std, Y.mean/std), feature/target names, etc.
-
-Outputs:
-- model.joblib : trained scikit-learn model (MultiOutput wrapper if multi-target)
-- report.json : metrics on train/val in RAW units (RMSE, MAE, R²), kernel params if GP
-- yhat_train.npy, yhat_val.npy : predictions in RAW units (same shape as Y_raw subsets)
-"""
-
 from __future__ import annotations
-import argparse, json
+import argparse, json, shutil
 from pathlib import Path
-from typing import Dict, Any, Tuple
+from typing import Dict, Any
 
 import joblib
 import numpy as np
 
-# ---- Model choices
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.ensemble import RandomForestRegressor
@@ -30,16 +14,29 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.gaussian_process.kernels import RBF, Matern, WhiteKernel, ConstantKernel as C
 
 
-# ---------- utils
-
 def _inverse_standardize(arr_std: np.ndarray, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
-    """Undo z-score: arr = arr_std * std + mean. Broadcasts over columns."""
     return arr_std * std + mean
 
-def _load_data(data_root: Path, data_name: str) -> Dict[str, Any]:
-    data_path = data_root / data_name
+def _ensure_2d(y: np.ndarray) -> np.ndarray:
+    return y.reshape(-1, 1) if y.ndim == 1 else y
 
-    with open(data_path / "metadata.json", "r") as f:
+def _metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
+    return {
+        "rmse": float(np.sqrt(mean_squared_error(y_true, y_pred))),
+        "mae":  float(mean_absolute_error(y_true, y_pred)),
+        "r2":   float(r2_score(y_true, y_pred)),
+    }
+
+def _load_data(data_root: Path, data_name: str) -> Dict[str, Any]:
+    data_path = (data_root / data_name).resolve()
+    if not data_path.exists():
+        raise FileNotFoundError(f"Dataset folder not found: {data_path}")
+
+    meta_path = data_path / "metadata.json"
+    if not meta_path.exists():
+        raise FileNotFoundError(f"Missing metadata.json in: {data_path}")
+
+    with open(meta_path, "r") as f:
         meta = json.load(f)
 
     X_std = np.load(data_path / "X_std.npy")
@@ -58,31 +55,18 @@ def _load_data(data_root: Path, data_name: str) -> Dict[str, Any]:
         val_idx   = np.array([], dtype=int)
         print("[WARN] train_idx.npy / val_idx.npy not found; using all rows for training.")
 
-    X_mu = np.asarray(meta["scalers"]["X"]["mean"], dtype=float)
-    X_sd = np.asarray(meta["scalers"]["X"]["std"],  dtype=float)
     Y_mu = np.asarray(meta["scalers"]["Y"]["mean"], dtype=float)
     Y_sd = np.asarray(meta["scalers"]["Y"]["std"],  dtype=float)
 
     return dict(
         X_std=X_std, Y_std=Y_std, X_raw=X_raw, Y_raw=Y_raw,
         train_idx=train_idx, val_idx=val_idx,
-        X_mu=X_mu, X_sd=X_sd, Y_mu=Y_mu, Y_sd=Y_sd,
-        meta=meta, data_path=str(data_path)
+        Y_mu=Y_mu, Y_sd=Y_sd,
+        meta=meta,
+        data_path=str(data_path),
+        meta_path=str(meta_path),
     )
 
-
-def _metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
-    return {
-        "rmse": float(np.sqrt(mean_squared_error(y_true, y_pred))),
-        "mae":  float(mean_absolute_error(y_true, y_pred)),
-        "r2":   float(r2_score(y_true, y_pred)),
-    }
-
-def _ensure_2d(y: np.ndarray) -> np.ndarray:
-    return y.reshape(-1, 1) if y.ndim == 1 else y
-
-
-# ---------- model builders
 
 def build_gp(n_features, lengthscale_init, lengthscale_bounds, noise_level_init, noise_bounds,
              n_restarts, alpha, random_state, kernel_name):
@@ -93,7 +77,7 @@ def build_gp(n_features, lengthscale_init, lengthscale_bounds, noise_level_init,
     elif kernel_name == "matern25":
         base = Matern(length_scale=np.full(n_features, lengthscale_init),
                       length_scale_bounds=lengthscale_bounds, nu=2.5)
-    else:  # "matern15"
+    else:  # matern15
         base = Matern(length_scale=np.full(n_features, lengthscale_init),
                       length_scale_bounds=lengthscale_bounds, nu=1.5)
 
@@ -115,53 +99,51 @@ def build_rf(n_estimators: int, max_depth: int | None, random_state: int, n_jobs
     )
 
 
-# ---------- training entry
-
 def main():
     p = argparse.ArgumentParser(description="Train GP (or RF) emulator on preprocessed data.")
     p.add_argument("--data-root", default=str(Path(__file__).parent / "data"),
-                   help="Directory containing all of the preprocessed data folders (within a subdir)")
+                   help="Directory containing dataset folders (e.g., ./data/const-vc).")
     p.add_argument("--data-name", type=str, required=True,
-               help="Name of subfolder within --data-root (e.g., 25km_dTdt_slabparam)")
-    p.add_argument("--model", choices=["gp", "rf"], default="gp",
-                   help="Model type: Gaussian Process (gp) or Random Forest (rf).")
+                   help="Dataset folder name within --data-root (e.g., 50km_dTdt_thermalParam).")
+    p.add_argument("--model", choices=["gp", "rf"], default="gp")
+
     # GP hyperparams
-    p.add_argument("--ls-init", type=float, default=1.0, help="RBF lengthscale initial value (in standardized X units).")
-    p.add_argument("--ls-bounds", type=float, nargs=2, default=[1e-2, 1e2], help="RBF lengthscale bounds (min max).")
-    p.add_argument("--noise-init", type=float, default=1e-3, help="WhiteKernel noise init (std^2) in standardized Y units.")
-    p.add_argument("--noise-bounds", type=float, nargs=2, default=[1e-6, 1e-1], help="WhiteKernel noise bounds (min max).")
-    p.add_argument("--alpha", type=float, default=1e-6, help="Jitter on K-diagonal for numerical stability.")
-    p.add_argument("--gp-restarts", type=int, default=5, help="Optimizer restarts for kernel hyperparameters.")
+    p.add_argument("--ls-init", type=float, default=1.0)
+    p.add_argument("--ls-bounds", type=float, nargs=2, default=[1e-2, 1e2])
+    p.add_argument("--noise-init", type=float, default=1e-3)
+    p.add_argument("--noise-bounds", type=float, nargs=2, default=[1e-6, 1e-1])
+    p.add_argument("--alpha", type=float, default=1e-6)
+    p.add_argument("--gp-restarts", type=int, default=5)
     p.add_argument("--kernel", choices=["rbf","matern15","matern25"], default="matern15")
 
     # RF hyperparams
-    p.add_argument("--rf-trees", type=int, default=400, help="n_estimators for RandomForest.")
-    p.add_argument("--rf-max-depth", type=int, default=None, help="Max depth for RandomForest (None = unlimited).")
-    p.add_argument("--rf-jobs", type=int, default=-1, help="n_jobs for RandomForest (-1 = all cores).")
+    p.add_argument("--rf-trees", type=int, default=400)
+    p.add_argument("--rf-max-depth", type=int, default=None)
+    p.add_argument("--rf-jobs", type=int, default=-1)
+
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--out", default="models", help="Output directory for model + report.")
     args = p.parse_args()
 
-    # --- kernel suffix (for GP only)
     kernel_suffix = ""
     if args.model == "gp":
-        kernel_suffix = {
-            "rbf": "_rbf",
-            "matern15": "_m15",
-            "matern25": "_m25"
-        }[args.kernel]
+        kernel_suffix = {"rbf": "_rbf", "matern15": "_m15", "matern25": "_m25"}[args.kernel]
 
     data_root = Path(args.data_root).resolve()
     bundle = _load_data(data_root, args.data_name)
-    Xs = bundle["X_std"]; Ys = _ensure_2d(bundle["Y_std"])      # standardized
-    Xr = bundle["X_raw"]; Yr = _ensure_2d(bundle["Y_raw"])      # raw for metric reporting
-    tr = bundle["train_idx"]; va = bundle["val_idx"]
-    X_mu, X_sd, Y_mu, Y_sd = bundle["X_mu"], bundle["X_sd"], bundle["Y_mu"], bundle["Y_sd"]
+
+    Xs = bundle["X_std"]
+    Ys = _ensure_2d(bundle["Y_std"])
+    Yr = _ensure_2d(bundle["Y_raw"])
+    tr = bundle["train_idx"]
+    va = bundle["val_idx"]
+    Y_mu, Y_sd = bundle["Y_mu"], bundle["Y_sd"]
     meta = bundle["meta"]
+
     n_features = Xs.shape[1]
     n_targets  = Ys.shape[1]
 
-    # Odir
+    # Output dir
     out_root = Path(args.out).resolve()
     model_dir_name = args.model + kernel_suffix
     out_dir = out_root / args.data_name / model_dir_name
@@ -169,7 +151,7 @@ def main():
 
     # Build model
     if args.model == "gp":
-        base_gp = build_gp(
+        base = build_gp(
             n_features=n_features,
             lengthscale_init=args.ls_init,
             lengthscale_bounds=tuple(args.ls_bounds),
@@ -180,39 +162,34 @@ def main():
             random_state=args.seed,
             kernel_name=args.kernel
         )
-        model = MultiOutputRegressor(base_gp) if n_targets > 1 else base_gp
+        model = MultiOutputRegressor(base) if n_targets > 1 else base
     else:
-        base_rf = build_rf(
+        base = build_rf(
             n_estimators=args.rf_trees,
             max_depth=args.rf_max_depth,
             random_state=args.seed,
             n_jobs=args.rf_jobs
         )
-        model = MultiOutputRegressor(base_rf) if n_targets > 1 else base_rf
+        model = MultiOutputRegressor(base) if n_targets > 1 else base
 
     # Train
     Xtr, Ytr = Xs[tr], Ys[tr]
     model.fit(Xtr, Ytr.ravel() if Ytr.shape[1] == 1 else Ytr)
 
-    # Predict (standardized space) then invert to RAW units for reporting
-    Yhat_tr_std = model.predict(Xs[tr])
-    Yhat_va_std = model.predict(Xs[va]) if va.size else np.empty((0, Ys.shape[1]))
-
-    # Ensure 2D for broadcasting inverse transform
-    Yhat_tr_std = _ensure_2d(np.asarray(Yhat_tr_std))
-    Yhat_va_std = _ensure_2d(np.asarray(Yhat_va_std))
+    # Predict in standardized space then invert to RAW units
+    Yhat_tr_std = _ensure_2d(np.asarray(model.predict(Xs[tr])))
+    Yhat_va_std = _ensure_2d(np.asarray(model.predict(Xs[va]))) if va.size else np.empty((0, Ys.shape[1]))
 
     Yhat_tr = _inverse_standardize(Yhat_tr_std, Y_mu, Y_sd)
     Yhat_va = _inverse_standardize(Yhat_va_std, Y_mu, Y_sd) if va.size else Yhat_va_std
 
-    # Metrics in RAW units (per-target and averaged)
+    # Metrics in RAW units
     metrics: Dict[str, Any] = {"target_cols": meta["target"]["target_cols"]}
+
     def per_target_metrics(y_true, y_pred, prefix):
         out = {}
         for j, name in enumerate(metrics["target_cols"]):
-            m = _metrics(y_true[:, j], y_pred[:, j])
-            out[name] = m
-        # macro-averages
+            out[name] = _metrics(y_true[:, j], y_pred[:, j])
         out["_macro_avg"] = {
             "rmse": float(np.mean([out[name]["rmse"] for name in metrics["target_cols"]])),
             "mae":  float(np.mean([out[name]["mae"]  for name in metrics["target_cols"]])),
@@ -224,11 +201,10 @@ def main():
     if va.size:
         per_target_metrics(Yr[va], Yhat_va, "val")
 
-    # Extract GP kernel params (lengthscales etc.) if using GP
+    # GP kernel dump
     if args.model == "gp":
-        def dump_gp_params(estimator) -> Dict[str, Any]:
-            k = estimator.kernel_
-            return {"kernel": str(k)}
+        def dump_gp_params(est) -> Dict[str, Any]:
+            return {"kernel": str(est.kernel_)}
         if isinstance(model, MultiOutputRegressor):
             metrics["gp_kernels"] = [dump_gp_params(est) for est in model.estimators_]
         else:
@@ -240,8 +216,12 @@ def main():
     if va.size:
         np.save(out_dir / "yhat_val.npy", Yhat_va)
 
+    # Copy metadata alongside model (helps later)
+    shutil.copy2(bundle["meta_path"], out_dir / "metadata.json")
+
     report = {
         "model_type": args.model,
+        "kernel": (args.kernel if args.model == "gp" else None),
         "n_features": n_features,
         "n_targets": n_targets,
         "train_size": int(tr.size),
@@ -271,7 +251,6 @@ def main():
     else:
         print(f"[OK] Train macro RMSE: {metrics['train']['_macro_avg']['rmse']:.3f} "
               f"R²: {metrics['train']['_macro_avg']['r2']:.3f}")
-
 
 if __name__ == "__main__":
     main()
