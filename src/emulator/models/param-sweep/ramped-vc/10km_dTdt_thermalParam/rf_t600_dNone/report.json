@@ -1,0 +1,57 @@
+{
+  "model_type": "rf",
+  "kernel": null,
+  "n_features": 8,
+  "n_targets": 1,
+  "train_size": 423,
+  "val_size": 75,
+  "feature_cols": [
+    "v_conv",
+    "t_conv",
+    "age_SP",
+    "age_OP",
+    "dip_int",
+    "eta_UM",
+    "thermal_param",
+    "v_conv_over_tconv"
+  ],
+  "target_cols": [
+    "dTdt_C_per_Myr"
+  ],
+  "metrics": {
+    "target_cols": [
+      "dTdt_C_per_Myr"
+    ],
+    "train": {
+      "dTdt_C_per_Myr": {
+        "rmse": 0.4388620383703947,
+        "mae": 0.3201377354450374,
+        "r2": 0.9949320160999182
+      },
+      "_macro_avg": {
+        "rmse": 0.4388620383703947,
+        "mae": 0.3201377354450374,
+        "r2": 0.9949320160999182
+      }
+    },
+    "val": {
+      "dTdt_C_per_Myr": {
+        "rmse": 1.1762250975880122,
+        "mae": 0.9016802763271103,
+        "r2": 0.9561759988177392
+      },
+      "_macro_avg": {
+        "rmse": 1.1762250975880122,
+        "mae": 0.9016802763271103,
+        "r2": 0.9561759988177392
+      }
+    }
+  },
+  "data_dir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data/ramped-vc/10km_dTdt_thermalParam",
+  "seed": 42,
+  "gp_hparams": null,
+  "rf_hparams": {
+    "n_estimators": 600,
+    "max_depth": null
+  }
+}

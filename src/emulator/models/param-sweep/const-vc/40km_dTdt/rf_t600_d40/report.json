@@ -1,0 +1,54 @@
+{
+  "model_type": "rf",
+  "kernel": null,
+  "n_features": 5,
+  "n_targets": 1,
+  "train_size": 332,
+  "val_size": 59,
+  "feature_cols": [
+    "v_conv",
+    "age_SP",
+    "age_OP",
+    "dip_int",
+    "eta_UM"
+  ],
+  "target_cols": [
+    "dTdt_C_per_Myr"
+  ],
+  "metrics": {
+    "target_cols": [
+      "dTdt_C_per_Myr"
+    ],
+    "train": {
+      "dTdt_C_per_Myr": {
+        "rmse": 1.4028900205533124,
+        "mae": 1.0237835515095157,
+        "r2": 0.989446927734621
+      },
+      "_macro_avg": {
+        "rmse": 1.4028900205533124,
+        "mae": 1.0237835515095157,
+        "r2": 0.989446927734621
+      }
+    },
+    "val": {
+      "dTdt_C_per_Myr": {
+        "rmse": 3.9239710619119537,
+        "mae": 2.9892751241549944,
+        "r2": 0.8930059545024565
+      },
+      "_macro_avg": {
+        "rmse": 3.9239710619119537,
+        "mae": 2.9892751241549944,
+        "r2": 0.8930059545024565
+      }
+    }
+  },
+  "data_dir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data/const-vc/40km_dTdt",
+  "seed": 42,
+  "gp_hparams": null,
+  "rf_hparams": {
+    "n_estimators": 600,
+    "max_depth": 40
+  }
+}
