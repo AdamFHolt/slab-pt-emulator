@@ -8,7 +8,7 @@ set -euo pipefail
 
 SUITE="${1:-const-vc}"
 VARIANT="${2:-dTdt_thermalParam}"
-ALGO="${3:-gp_rbf}"
+ALGO="${3:-gp_m25}"
 
 # Roots (defaults assume you run this from src/emulator/)
 DATA_ROOT="${DATA_ROOT:-./data}"
@@ -90,6 +90,7 @@ if [[ "${RESIDUAL_COVERAGE}" == "1" ]]; then
     --outdir "${PLOTS_ROOT}" \
     --dpi "${DPI}"
 fi
+
 
 echo
 echo "== Done =="
