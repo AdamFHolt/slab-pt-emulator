@@ -176,6 +176,36 @@ python qc_master_dTdt_healthcheck.py \
   --out "${OUT_PREFIX_HEALTH}"
 
 # =========================================================================== #
+# 10) Optional: per-run depth-time heatmaps from Tprof_*.csv
+# =========================================================================== #
+#
+# Uncomment to generate one heatmap per run:
+#
+# OUT_DIR_TPROF_HEAT="${OUT_DIR}/${SUITE}/Tprof_heatmaps"
+# python qc_Tprof_depth_time_heatmap.py \
+#   --glob "../../subd-model-runs/${SUITE}/analysis/run_*/Tprof_*.csv" \
+#   --out-dir "${OUT_DIR_TPROF_HEAT}"
+#
+# For quick test on first few runs only:
+# python qc_Tprof_depth_time_heatmap.py \
+#   --glob "../../subd-model-runs/${SUITE}/analysis/run_*/Tprof_*.csv" \
+#   --out-dir "${OUT_DIR_TPROF_HEAT}" \
+#   --max-runs 10
+
+# =========================================================================== #
+# 11) Optional: ensemble T(depth) envelope across runs (median + 5-95%)
+# =========================================================================== #
+#
+# Uncomment to generate:
+#
+# OUT_PREFIX_TPROF_ENV="${OUT_DIR}/${SUITE}/Tprofiles_ensemble_envelope_t0.5t2.5t5"
+# python qc_Tprof_ensemble_envelope.py \
+#   --glob "../../subd-model-runs/${SUITE}/analysis/run_*/Tprof_*.csv" \
+#   --times 0.5 2.5 5.0 \
+#   --tol-myr 0.2 \
+#   --out "${OUT_PREFIX_TPROF_ENV}"
+
+# =========================================================================== #
 
 echo
 echo "All QC plots done. Saved under: ${OUT_DIR}/${SUITE}/"
