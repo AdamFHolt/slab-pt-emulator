@@ -29,8 +29,34 @@ Run from repo root:
 python3 -m venv env
 source env/bin/activate
 pip install -r requirements.txt
-pip install pyDOE2
+pip install pyDOE2 pyyaml
 ```
+
+## Uniform Training Entry Point
+
+Industry-style config-driven training is available via:
+
+```bash
+python train.py --config configs/gp.yaml
+```
+
+Examples:
+
+```bash
+# GP (default example config)
+python train.py --config configs/gp.yaml
+
+# RF example config
+python train.py --config configs/rf.yaml
+
+# Preview commands only
+python train.py --config configs/gp.yaml --dry-run
+
+# Run only selected datasets
+python train.py --config configs/gp.yaml --datasets 10km_dTdt,20km_dTdt
+```
+
+Update `suite` in config to switch between `const-vc` and `ramped-vc`.
 
 ## From Scratch (Generalized For Either Suite)
 
@@ -104,9 +130,7 @@ Outputs under:
 ### 7) Train baseline emulator models
 
 ```bash
-cd src/emulator
-./train_all_depths.sh "${SUITE}"
-cd ../..
+python train.py --config configs/gp.yaml
 ```
 
 Outputs under:

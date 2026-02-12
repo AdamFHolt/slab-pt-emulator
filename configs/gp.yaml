@@ -1,0 +1,36 @@
+suite: const-vc
+
+# These point to folder roots that contain suite subfolders.
+data_root: src/emulator/data
+out_root: src/emulator/models
+
+dataset:
+  # auto: discover all folders in data_root/<suite>, optionally filtered
+  # list: use explicit dataset.names below
+  mode: auto
+
+  # Keep only datasets matching "<depth>km_<variant>"
+  variant: dTdt
+
+  # Optional regex filter applied after variant filter
+  # pattern: "thermalParam"
+
+  # Used only when mode == list
+  # names:
+  #   - 10km_dTdt
+  #   - 20km_dTdt
+
+model:
+  type: gp
+  seed: 42
+  kernel: matern25
+  gp_restarts: 25
+  ls_init: 1.0
+  ls_bounds: [1e-3, 1e3]
+  noise_init: 3e-3
+  noise_bounds: [1e-6, 1.0]
+  alpha: 1e-6
+
+execution:
+  fail_fast: true
+  dry_run: false
