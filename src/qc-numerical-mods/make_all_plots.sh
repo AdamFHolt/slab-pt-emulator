@@ -129,20 +129,22 @@ python qc_pairplot_params.py \
   --mode compute-log10
 
 # =========================================================================== #
-# 7) LHS parameter pairplot colored by dT/dt (50 km)
+# 7) LHS parameter pairplot colored by dT/dt (10, 50, 70 km)
 # =========================================================================== #
 echo
-echo "=== QC: LHS parameter pairplot colored by ${YVAR} (50 km) ==="
+echo "=== QC: LHS parameter pairplot colored by ${YVAR} (10, 50, 70 km) ==="
 
-OUT_PREFIX_PAIR_COLOR="${OUT_DIR}/${SUITE}/params-pairplot_colored_50km"
+for depth in 10 50 70; do
+  OUT_PREFIX_PAIR_COLOR="${OUT_DIR}/${SUITE}/params-pairplot_colored_${depth}km"
 
-python qc_pairplot_params_colored.py \
-  --params "${PARAMS}" \
-  --master "${MASTER}" \
-  --depth-km 50 \
-  --y "${YVAR}" \
-  --out "${OUT_PREFIX_PAIR_COLOR}" \
-  --mode compute-log10
+  python qc_pairplot_params_colored.py \
+    --params "${PARAMS}" \
+    --master "${MASTER}" \
+    --depth-km "${depth}" \
+    --y "${YVAR}" \
+    --out "${OUT_PREFIX_PAIR_COLOR}" \
+    --mode compute-log10
+done
 
 
 # =========================================================================== #
