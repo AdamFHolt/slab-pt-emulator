@@ -161,7 +161,19 @@ python qc_T_profiles_allmodels_3times.py \
   --out "${OUT_PREFIX_TPROF}" \
 
 # =========================================================================== #
+# 9) Master DT health checks before ML preprocessing
+# =========================================================================== #
+echo
+echo "=== QC: master DT health checks (${SUITE}) ==="
+
+OUT_PREFIX_HEALTH="${OUT_DIR}/${SUITE}/master_DT${TSTEP1}-${TSTEP2}_healthcheck"
+
+python qc_master_dTdt_healthcheck.py \
+  --master "${MASTER}" \
+  --y "${YVAR}" \
+  --out "${OUT_PREFIX_HEALTH}"
+
+# =========================================================================== #
 
 echo
 echo "All QC plots done. Saved under: ${OUT_DIR}/${SUITE}/"
-
