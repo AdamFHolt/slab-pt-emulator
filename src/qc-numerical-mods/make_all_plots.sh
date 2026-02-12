@@ -193,6 +193,18 @@ python qc_master_dTdt_healthcheck.py \
 #   --max-runs 10
 
 # =========================================================================== #
+# 11) Optional: depth x parameter correlation heatmap (pre-ML diagnostics)
+# =========================================================================== #
+#
+# OUT_PREFIX_CORR="${OUT_DIR}/${SUITE}/param_depth_corr_dTdt_pearson"
+# python qc_param_depth_correlation_heatmap.py \
+#   --params "${PARAMS}" \
+#   --master "${MASTER}" \
+#   --y "${YVAR}" \
+#   --method pearson \
+#   --out "${OUT_PREFIX_CORR}"
+
+# =========================================================================== #
 
 echo
 echo "All QC plots done. Saved under: ${OUT_DIR}/${SUITE}/"
