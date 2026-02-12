@@ -96,7 +96,7 @@ Outputs under:
 Run each generated `.prm` model so solutions land under:
 - `subd-model-runs/${SUITE}/run-outputs/run_*/solution/...`
 
-This submission/execution step is external to this repository.
+This step is external to this repository.
 
 ### 4) Extract cooling-rate targets from model outputs
 
