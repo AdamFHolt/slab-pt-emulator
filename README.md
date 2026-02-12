@@ -37,26 +37,30 @@ pip install pyDOE2 pyyaml
 Industry-style config-driven training is available via:
 
 ```bash
-python train.py --config configs/gp.yaml
+python train.py --config configs/gp.const-vc.yaml
 ```
 
 Examples:
 
 ```bash
-# GP (default example config)
-python train.py --config configs/gp.yaml
+# GP (const-vc)
+python train.py --config configs/gp.const-vc.yaml
 
-# RF example config
-python train.py --config configs/rf.yaml
+# GP (ramped-vc)
+python train.py --config configs/gp.ramped-vc.yaml
+
+# RF (const-vc)
+python train.py --config configs/rf.const-vc.yaml
+
+# RF (ramped-vc)
+python train.py --config configs/rf.ramped-vc.yaml
 
 # Preview commands only
-python train.py --config configs/gp.yaml --dry-run
+python train.py --config configs/gp.const-vc.yaml --dry-run
 
 # Run only selected datasets
-python train.py --config configs/gp.yaml --datasets 10km_dTdt,20km_dTdt
+python train.py --config configs/gp.const-vc.yaml --datasets 10km_dTdt,20km_dTdt
 ```
-
-Update `suite` in config to switch between `const-vc` and `ramped-vc`.
 
 ## From Scratch (Generalized For Either Suite)
 
@@ -130,7 +134,7 @@ Outputs under:
 ### 7) Train baseline emulator models
 
 ```bash
-python train.py --config configs/gp.yaml
+python train.py --config configs/gp.const-vc.yaml
 ```
 
 Outputs under:

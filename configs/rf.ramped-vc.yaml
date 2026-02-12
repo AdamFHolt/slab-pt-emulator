@@ -1,0 +1,19 @@
+suite: ramped-vc
+
+data_root: src/emulator/data
+out_root: src/emulator/models
+
+dataset:
+  mode: auto
+  variant: dTdt_thermalParam
+
+model:
+  type: rf
+  seed: 42
+  rf_trees: 600
+  rf_max_depth: 40
+  rf_jobs: -1
+
+execution:
+  fail_fast: true
+  dry_run: false
