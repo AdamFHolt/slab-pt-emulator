@@ -193,19 +193,6 @@ python qc_master_dTdt_healthcheck.py \
 #   --max-runs 10
 
 # =========================================================================== #
-# 11) Optional: ensemble T(depth) envelope across runs (median + 5-95%)
-# =========================================================================== #
-#
-# Uncomment to generate:
-#
-# OUT_PREFIX_TPROF_ENV="${OUT_DIR}/${SUITE}/Tprofiles_ensemble_envelope_t0.5t2.5t5"
-# python qc_Tprof_ensemble_envelope.py \
-#   --glob "../../subd-model-runs/${SUITE}/analysis/run_*/Tprof_*.csv" \
-#   --times 0.5 2.5 5.0 \
-#   --tol-myr 0.2 \
-#   --out "${OUT_PREFIX_TPROF_ENV}"
-
-# =========================================================================== #
 
 echo
 echo "All QC plots done. Saved under: ${OUT_DIR}/${SUITE}/"

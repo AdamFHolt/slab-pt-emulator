@@ -114,12 +114,10 @@ def main():
     p.add_argument("--out", required=True)
     p.add_argument("--dpi", type=int, default=220)
 
-    p.add_argument("--max-lines", type=int, default=800,
-                   help="Cap number of individual profiles plotted per panel (default 800)")
+    p.add_argument("--max-lines", type=int, default=None,
+                   help="Optional cap on number of individual profiles per panel (default: plot all)")
     p.add_argument("--alpha", type=float, default=0.2,
                    help="Alpha for individual profiles (default 0.2)")
-    p.add_argument("--show-envelope", action="store_true",
-                   help="Show 16–84 percentile envelope.")
     p.add_argument("--Tlim", nargs=2, type=float, default=None,
                    help="Optional x-limits: Tmin Tmax (°C)")
     p.add_argument("--zlim", nargs=2, type=float, default=None,
@@ -204,7 +202,7 @@ def main():
             continue
 
         # Choose subset for plotting individual profiles (if huge)
-        if len(entries) > args.max_lines:
+        if args.max_lines is not None and args.max_lines > 0 and len(entries) > args.max_lines:
             idx = rng.choice(len(entries), size=args.max_lines, replace=False)
             plot_entries = [entries[i] for i in idx]
         else:
@@ -236,17 +234,16 @@ def main():
 
         # Plot individual profiles
         for _, z, T, tsel in plot_entries:
-            ax.plot(T, z, lw=0.8, alpha=args.alpha)
+            ax.plot(T, z, lw=0.8, alpha=args.alpha, color="0.65")
 
         # Stats overlays
         if M is not None and M.size > 0:
             med = np.nanmedian(M, axis=0)
-            ax.plot(med, zgrid, lw=2, alpha=1.0, color="black")
+            ax.plot(med, zgrid, lw=2, alpha=1.0, color="tab:blue")
 
-            if args.show_envelope:
-                p16 = np.nanpercentile(M, 16, axis=0)
-                p84 = np.nanpercentile(M, 84, axis=0)
-                ax.fill_betweenx(zgrid, p16, p84, alpha=0.18)
+            p05 = np.nanpercentile(M, 5, axis=0)
+            p95 = np.nanpercentile(M, 95, axis=0)
+            ax.fill_betweenx(zgrid, p05, p95, alpha=0.22, color="tab:blue")
 
         # Title with actual selected time (median of selected times)
         t_selecteds = [tsel for *_rest, tsel in entries]
