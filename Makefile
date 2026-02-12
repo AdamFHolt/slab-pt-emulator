@@ -1,11 +1,12 @@
 SHELL := /bin/bash
 
-.PHONY: help setup train-gp-const train-gp-ramped train-rf-const train-rf-ramped \
+.PHONY: help setup test train-gp-const train-gp-ramped train-rf-const train-rf-ramped \
         train-gp-const-dry train-gp-ramped-dry qc-num-const qc-num-ramped
 
 help:
 	@echo "Targets:"
 	@echo "  setup               - create venv and install Python deps"
+	@echo "  test                - run smoke tests"
 	@echo "  train-gp-const      - train GP models for const-vc"
 	@echo "  train-gp-ramped     - train GP models for ramped-vc"
 	@echo "  train-rf-const      - train RF models for const-vc"
@@ -19,6 +20,9 @@ setup:
 	python3 -m venv env
 	source env/bin/activate && \
 	pip install -r requirements.txt
+
+test:
+	python3 -m unittest discover -s tests -v
 
 train-gp-const:
 	python3 train.py --config configs/gp.const-vc.yaml

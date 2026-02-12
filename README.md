@@ -32,6 +32,14 @@ pip install -r requirements.txt
 pip install pyDOE2 pyyaml
 ```
 
+## Tests
+
+Run smoke tests from repo root:
+
+```bash
+make test
+```
+
 ## Uniform Training Entry Point
 
 Industry-style config-driven training is available via:

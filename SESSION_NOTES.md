@@ -61,3 +61,39 @@ Use this next time:
 
 > Continue from `SESSION_NOTES.md`. Focus on [your next task], and check CI + training entrypoint first.
 
+---
+
+## Update (2026-02-12, later)
+
+### What Was Added
+
+- Added smoke/integration tests:
+  - `tests/test_train_smoke.py`
+  - coverage includes:
+    - config loading (`configs/gp.*.yaml`, `configs/rf.*.yaml`)
+    - dataset discovery filtering
+    - command construction for GP and RF
+    - CLI dry run (`train.py --dry-run --datasets ...`)
+    - failure paths (invalid suite, invalid dataset mode, invalid model type, missing suite dir)
+    - tiny synthetic RF end-to-end training test for `src/emulator/train_emulator.py`
+- Updated CI test command:
+  - `.github/workflows/ci.yml`
+  - now runs `python -m unittest discover -s tests -v` (no silent pass when tests fail)
+- Added local test shortcut:
+  - `Makefile` target `test`
+- Updated docs:
+  - `README.md` includes a `## Tests` section with `make test`
+
+### Current Test Status
+
+- `python3 -m unittest discover -s tests -v`
+  - 10 tests passing
+
+### Decisions Made
+
+- Deferred optional dev-tooling steps for now:
+  - `requirements-dev.txt`
+  - `pre-commit`
+  - CI lint stage
+  - expanded dev-workflow docs
+- Rationale: current setup uses stdlib `unittest` and no external lint/format stack yet.
