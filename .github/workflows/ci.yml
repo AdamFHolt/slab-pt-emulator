@@ -28,7 +28,7 @@ jobs:
       group: quality-gate-${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
     env:
-      CI_DATASETS: 10km_dTdt,80km_dTdt
+      CI_DATASETS: 40km_dTdt
       CI_SUITES: const-vc,ramped-vc
     steps:
       - uses: actions/checkout@v4

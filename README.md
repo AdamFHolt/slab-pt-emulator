@@ -71,6 +71,23 @@ python src/emulator/validate_emulator_quality.py \
   --json-out plots/qc-emulator/quality-gates/gp_m25_validation.json
 ```
 
+## Definition Of Done (Step 4)
+
+A change affecting emulator training, data prep, or model quality is complete when all of the following are true:
+
+- Required checks pass:
+  - `make test`
+  - `make quality-check-gp-m25` (or CI-equivalent filtered scope)
+- PR CI quality gate passes for representative subset policy:
+  - suites: `const-vc`, `ramped-vc`
+  - datasets: `40km_dTdt`
+  - gate command in CI: `make quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=40km_dTdt`
+- Canonical artifacts are present in standard locations:
+  - training reports: `src/emulator/models/<suite>/<dataset>/<model_tag>/report.json`
+  - quality-gate summary (optional JSON): `plots/qc-emulator/quality-gates/gp_m25_validation.json`
+  - emulator QC figures: `plots/qc-emulator/<suite>/`
+  - numerical QC figures: `plots/qc-numerical-mods/<suite>/`
+
 ## Uniform Training Entry Point
 
 Industry-style config-driven training is available via:
