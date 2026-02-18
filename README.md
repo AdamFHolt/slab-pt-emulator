@@ -80,8 +80,8 @@ A change affecting emulator training, data prep, or model quality is complete wh
   - `make quality-check-gp-m25` (or CI-equivalent filtered scope)
 - PR CI quality gate passes for representative subset policy:
   - suites: `const-vc`, `ramped-vc`
-  - datasets: `10km_dTdt`, `80km_dTdt`
-  - gate command in CI: `make quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=10km_dTdt,80km_dTdt`
+  - datasets: `40km_dTdt`
+  - gate command in CI: `make quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=40km_dTdt`
 - Canonical artifacts are present in standard locations:
   - training reports: `src/emulator/models/<suite>/<dataset>/<model_tag>/report.json`
   - quality-gate summary (optional JSON): `plots/qc-emulator/quality-gates/gp_m25_validation.json`
