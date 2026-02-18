@@ -183,3 +183,29 @@ Use this next time:
 
 - Current repository pattern is to version-control selected QC figures in `plots/`.
 - `.gitignore` does not ignore `plots/`, so regenerated core QC PNGs are expected to appear as git changes.
+
+---
+
+## Next Session TODO (added 2026-02-18)
+
+### 1) Add CI quality gate job (Step 3)
+
+- Extend GitHub Actions to:
+  - train a small representative emulator subset
+  - run `make quality-check-gp-m25`
+  - fail CI on quality regressions
+
+### 2) Decide representative CI subset
+
+- Lock in explicit datasets for bounded runtime while sampling depth behavior.
+- Candidate default:
+  - suites: `const-vc`, `ramped-vc`
+  - depths: `10km`, `40km`, `80km`
+  - variant: `dTdt`
+
+### 3) Document “Definition of Done” (Step 4)
+
+- Add a concise section in `README.md` covering:
+  - required train commands (or subset policy in CI)
+  - required pass of `make quality-check-gp-m25`
+  - canonical artifact/report locations
