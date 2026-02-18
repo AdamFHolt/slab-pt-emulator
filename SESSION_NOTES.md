@@ -210,6 +210,21 @@ Use this next time:
   - required pass of `make quality-check-gp-m25`
   - canonical artifact/report locations
 
+---
+
+## Follow-up (added 2026-02-18, branch-protection check names)
+
+- Current state:
+  - classic branch protection rule for `main` is in use
+  - CI jobs are running on PRs (`CI / test`, `CI / quality-gate`)
+- Deferred UI fix (GitHub check-name indexing lag):
+  1. Open one tiny PR to `main` and let CI fully complete.
+  2. Go to `Settings -> Branches -> main rule -> Edit`.
+  3. Under required status checks, add:
+     - `CI / test (pull_request)`
+     - `CI / quality-gate (pull_request)`
+  4. Save and confirm both checks show as required on subsequent PRs.
+
 
 ## Update (2026-02-18, CI gate + DoD finalized)
 
@@ -225,5 +240,4 @@ Use this next time:
   ### Policy
 
   - Branch ruleset should target `main` and require status checks (`CI / Any source`) before merge.
-
 
