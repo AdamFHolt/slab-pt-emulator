@@ -40,6 +40,37 @@ Run smoke tests from repo root:
 make test
 ```
 
+## Emulator Quality Gates (Step 1)
+
+Per-dataset validation thresholds for baseline GP are defined in:
+
+- `configs/emulator-quality.gp_m25.yaml`
+
+This file specifies:
+
+- metric source: `metrics.val._macro_avg` from each model `report.json`
+- thresholds per suite + dataset:
+  - `r2_min` (minimum acceptable validation R2)
+  - `rmse_max` (maximum acceptable validation RMSE)
+  - `mae_max` (maximum acceptable validation MAE)
+
+These thresholds are intended to support automated pass/fail checks in CI.
+
+Run validation against existing model reports:
+
+```bash
+make quality-check-gp-m25
+```
+
+Direct invocation (with optional summary JSON):
+
+```bash
+python src/emulator/validate_emulator_quality.py \
+  --thresholds configs/emulator-quality.gp_m25.yaml \
+  --models-root src/emulator/models \
+  --json-out plots/qc-emulator/quality-gates/gp_m25_validation.json
+```
+
 ## Uniform Training Entry Point
 
 Industry-style config-driven training is available via:

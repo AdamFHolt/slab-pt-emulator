@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 .PHONY: help setup test train-gp-const train-gp-ramped train-rf-const train-rf-ramped \
-        train-gp-const-dry train-gp-ramped-dry qc-num-const qc-num-ramped
+        train-gp-const-dry train-gp-ramped-dry qc-num-const qc-num-ramped quality-check-gp-m25
 
 help:
 	@echo "Targets:"
@@ -15,6 +15,7 @@ help:
 	@echo "  train-gp-ramped-dry - dry-run GP training commands (ramped-vc)"
 	@echo "  qc-num-const        - make numerical QC plots for const-vc"
 	@echo "  qc-num-ramped       - make numerical QC plots for ramped-vc"
+	@echo "  quality-check-gp-m25 - validate gp_m25 reports vs thresholds"
 
 setup:
 	python3 -m venv env
@@ -47,3 +48,8 @@ qc-num-const:
 
 qc-num-ramped:
 	cd src/qc-numerical-mods && ./make_all_plots.sh ramped-vc
+
+quality-check-gp-m25:
+	python3 src/emulator/validate_emulator_quality.py \
+		--thresholds configs/emulator-quality.gp_m25.yaml \
+		--models-root src/emulator/models
