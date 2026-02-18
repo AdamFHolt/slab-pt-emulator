@@ -15,7 +15,7 @@ help:
 	@echo "  train-gp-ramped-dry - dry-run GP training commands (ramped-vc)"
 	@echo "  qc-num-const        - make numerical QC plots for const-vc"
 	@echo "  qc-num-ramped       - make numerical QC plots for ramped-vc"
-	@echo "  quality-check-gp-m25 - validate gp_m25 reports vs thresholds"
+	@echo "  quality-check-gp-m25 - validate gp_m25 reports vs thresholds (optional QUALITY_SUITES/QUALITY_DATASETS filters)"
 
 setup:
 	python3 -m venv env
@@ -52,4 +52,6 @@ qc-num-ramped:
 quality-check-gp-m25:
 	python3 src/emulator/validate_emulator_quality.py \
 		--thresholds configs/emulator-quality.gp_m25.yaml \
-		--models-root src/emulator/models
+		--models-root src/emulator/models \
+		$(if $(QUALITY_SUITES),--suites $(QUALITY_SUITES),) \
+		$(if $(QUALITY_DATASETS),--datasets $(QUALITY_DATASETS),)
