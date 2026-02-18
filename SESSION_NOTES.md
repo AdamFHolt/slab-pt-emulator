@@ -209,3 +209,21 @@ Use this next time:
   - required train commands (or subset policy in CI)
   - required pass of `make quality-check-gp-m25`
   - canonical artifact/report locations
+
+
+## Update (2026-02-18, CI gate + DoD finalized)
+
+  ### Completed
+
+  - Added CI `quality-gate` job in `.github/workflows/ci.yml`.
+  - PR quality subset locked to:
+    - suites: `const-vc`, `ramped-vc`
+    - dataset: `40km_dTdt`
+  - Added Definition of Done section to `README.md`.
+  - `Makefile` quality-check target now supports optional dataset/suite filters.
+
+  ### Policy
+
+  - Branch ruleset should target `main` and require status checks (`CI / Any source`) before merge.
+
+
