@@ -155,3 +155,31 @@ Use this next time:
 - `52569b3` qc: add optional Tprof heatmap and ensemble envelope visualizations
 - `7227318` qc: extend colored pairplots to 10/50/70 km
 - `42d61d5` qc: add pre-ML master healthcheck outputs
+
+---
+
+## Update (2026-02-18, ground-check + ramped-vc refresh)
+
+### Verification Completed
+
+- Re-checked current docs/code alignment:
+  - `train.py`
+  - `tests/test_train_smoke.py`
+  - `src/qc-numerical-mods/make_all_plots.sh`
+  - `README.md`
+- Confirmed smoke/integration test status:
+  - `make test` -> `python3 -m unittest discover -s tests -v`
+  - result: 10 tests passing
+
+### Artifacts Refreshed
+
+- Refreshed ramped-vc QC output figures under:
+  - `plots/qc-numerical-mods/ramped-vc/`
+- Includes updated core outputs and two newly generated diagnostics:
+  - `master_DT1-10_healthcheck_missing-heatmap.png`
+  - `param_depth_corr_dTdt_pearson.png`
+
+### Tracking Policy Check
+
+- Current repository pattern is to version-control selected QC figures in `plots/`.
+- `.gitignore` does not ignore `plots/`, so regenerated core QC PNGs are expected to appear as git changes.
