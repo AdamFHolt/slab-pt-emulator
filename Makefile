@@ -1,7 +1,8 @@
 SHELL := /bin/bash
 
 .PHONY: help setup test train-gp-const train-gp-ramped train-rf-const train-rf-ramped \
-        train-gp-const-dry train-gp-ramped-dry qc-num-const qc-num-ramped quality-check-gp-m25
+        train-gp-const-dry train-gp-ramped-dry qc-num-const qc-num-ramped quality-check-gp-m25 \
+        env-status env-ensure env-doctor
 
 help:
 	@echo "Targets:"
@@ -16,6 +17,9 @@ help:
 	@echo "  qc-num-const        - make numerical QC plots for const-vc"
 	@echo "  qc-num-ramped       - make numerical QC plots for ramped-vc"
 	@echo "  quality-check-gp-m25 - validate gp_m25 reports vs thresholds (optional QUALITY_SUITES/QUALITY_DATASETS filters)"
+	@echo "  env-status          - show active python/pip/env context"
+	@echo "  env-ensure          - create env (venv or virtualenv fallback) and install deps"
+	@echo "  env-doctor          - verify core Python imports"
 
 setup:
 	python3 -m venv env
@@ -55,3 +59,12 @@ quality-check-gp-m25:
 		--models-root src/emulator/models \
 		$(if $(QUALITY_SUITES),--suites $(QUALITY_SUITES),) \
 		$(if $(QUALITY_DATASETS),--datasets $(QUALITY_DATASETS),)
+
+env-status:
+	./dev-env.sh status
+
+env-ensure:
+	./dev-env.sh ensure
+
+env-doctor:
+	./dev-env.sh doctor
