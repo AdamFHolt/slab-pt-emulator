@@ -29,7 +29,14 @@ Run from repo root:
 python3 -m venv env
 source env/bin/activate
 pip install -r requirements.txt
-pip install pyDOE2 pyyaml
+```
+
+If `python3 -m venv` fails because `python3-venv`/`ensurepip` is unavailable, use:
+
+```bash
+python3 -m virtualenv --app-data /tmp/virtualenv-appdata --no-periodic-update --never-download env
+source env/bin/activate
+pip install -r requirements.txt
 ```
 
 ## Tests
