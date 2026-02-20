@@ -241,3 +241,21 @@ Use this next time:
 
   - Branch ruleset should target `main` and require status checks (`CI / Any source`) before merge.
 
+---
+
+## Update (2026-02-20, pragmatic fallback on branch protection)
+
+### Decision
+
+- Branch-protection required-check selection in GitHub UI is currently unreliable for this repo (check context indexing not appearing).
+- Stop spending time on UI troubleshooting for now.
+
+### Working Policy (effective immediately)
+
+- CI continues to run on PRs (`CI / test`, `CI / quality-gate`).
+- Do not merge PRs to `main` unless both checks are green.
+- If a red build is merged accidentally, revert promptly and re-open with fixes.
+
+### Scope note
+
+- Current maintenance mode is effectively single-maintainer, so manual merge discipline is acceptable as a temporary control.
