@@ -259,3 +259,174 @@ Use this next time:
 ### Scope note
 
 - Current maintenance mode is effectively single-maintainer, so manual merge discipline is acceptable as a temporary control.
+
+---
+
+## Next Phase Plan (2026-02-20, functional emulator via PCA on profiles)
+
+### Objective
+
+- Extend emulator capability from per-depth scalar targets (e.g., `dTdt` at fixed depths) to functional targets representing full vertical thermal structure (`T(z)` first, later `T(z,t)`).
+- Keep current project architecture (`train.py` + YAML configs + suite split) and add a parallel dataset/mode path rather than replacing existing per-depth workflows.
+
+### Feasibility Decision
+
+- Feasible with current codebase and data layout.
+- Recommended implementation path:
+  1. Fixed-time profile mode (`T(z)`): implement now.
+  2. Compare against current per-depth baseline.
+  3. Space-time extension (`T(z,t)`): only after phase-1 quality is established.
+
+### Core Modeling Design
+
+- Use PCA across depth for profile compression.
+- For each run (at selected time slice), represent profile by top-`k` PCA scores.
+- Train emulator(s) on PCA scores as targets (initially one independent GP per component).
+- Reconstruct full profile by inverse PCA (`mean_profile + scores @ components`).
+
+### Why PCA Path (chosen over alternatives)
+
+- Strong dimensionality reduction with smooth vertical structure preservation.
+- Better stability than independently emulating each depth.
+- Lower complexity than GP over combined `(params, depth)` input.
+- Straightforward integration with current single-output training scripts.
+
+### Data Handling Rules (must keep)
+
+- Center profile matrix per depth before PCA (store and reuse mean profile).
+- Do not z-score each depth unless explicitly testing that variant (default: centered-only).
+- Track and save:
+  - `mean_profile`
+  - `components`
+  - `explained_variance_ratio`
+  - `k` and selection rule
+  - depth grid metadata
+  - time metadata used to extract profiles
+
+### Proposed Repository Layout
+
+- New preprocess script(s) in `src/emulator/`:
+  - `preprocess_profile_pca.py`
+  - optional helper: `reconstruct_profile_pca.py` (or utility function in existing module)
+- New config files:
+  - `configs/gp.const-vc.profile-pca.yaml`
+  - `configs/gp.ramped-vc.profile-pca.yaml`
+  - optional RF variants later
+- Data artifacts:
+  - `src/emulator/data/<suite>/<dataset_name>/`
+  - include:
+    - `X_raw.npy`
+    - `scores_raw.npy` (N x k target matrix)
+    - `train_idx.npy`, `val_idx.npy`
+    - `pca_mean_profile.npy`
+    - `pca_components.npy` (k x n_depth)
+    - `pca_explained_variance_ratio.npy`
+    - `metadata.json`
+- Model artifacts (follow existing conventions):
+  - `src/emulator/models/<suite>/<dataset_name>/<model_tag>/`
+  - include component-level reports and aggregate/reconstruction metrics.
+
+### Dataset Naming Convention
+
+- Preserve existing suite-first structure.
+- Use explicit mode name in dataset:
+  - example: `profileT_pca_t5Myr`
+  - or: `Tprofile_pca_fixed-time`
+- Avoid ambiguous names like just `profile_pca`.
+
+### `train.py` / Config Integration Plan
+
+- Add a new `dataset.mode` (or equivalent selector) for profile PCA datasets.
+- Keep command surface identical:
+  - `python train.py --config configs/gp.const-vc.profile-pca.yaml`
+- Initial training strategy:
+  - train one model per PCA component score (`PC1..PCk`), reusing current single-target training path.
+- Add aggregation stage to collect component predictions and reconstruct profiles for evaluation.
+
+### QC/Validation Additions (required for acceptance)
+
+- New QC outputs under:
+  - `plots/qc-emulator/<suite>/profile-pca/`
+- Required plots:
+  - cumulative explained variance vs component count
+  - reconstruction overlay (true vs reconstructed) on val set for representative runs
+  - reconstruction RMSE vs depth
+  - predicted vs true PCA scores per component
+  - error distribution summary across validation runs
+
+### Quality Gate Additions
+
+- Add thresholds config:
+  - `configs/emulator-quality.profile-pca.yaml`
+- Candidate gate metrics (validation):
+  - reconstruction RMSE (global)
+  - reconstruction RMSE by depth percentile (e.g., P90)
+  - score-space R2 for each retained component (or macro average)
+- Keep existing `gp_m25` gate untouched; add profile-pca gate in parallel.
+
+### Test Plan (must add)
+
+- Unit tests:
+  - PCA preprocess output shape and metadata integrity.
+  - deterministic split behavior for profile datasets.
+  - reconstruction correctness smoke test (`inverse_transform` consistency).
+- Integration tests:
+  - dry-run command construction for profile-pca configs.
+  - tiny synthetic end-to-end training on 2–3 components.
+- CI:
+  - defer heavy profile training in default PR checks unless runtime is acceptable.
+  - add optional or scheduled profile-pca gate job after stabilization.
+
+### Rollout Milestones
+
+1. Scaffold
+- Create preprocess script, dataset schema, config stubs.
+- Confirm `train.py --dry-run` works for new configs.
+
+2. Trainability
+- Train const-vc profile-pca with `k=3` (or variance target threshold).
+- Produce initial reports and QC figures.
+
+3. Benchmark
+- Compare against current depthwise baseline for comparable target scope.
+- Decide default `k` and metric thresholds.
+
+4. Productionize
+- Add quality-gate config + Make target.
+- Document in README and update Definition of Done for profile-pca changes.
+
+### Open Decisions To Resolve Early
+
+- Fixed-time profile source:
+  - exact time index or physical-time interpolation policy.
+- PCA `k` policy:
+  - fixed `k` (e.g., 4 or 5) vs variance threshold (e.g., 99%).
+- Whether to include optional depth weighting in PCA fit.
+- Whether to predict raw `T(z)` only first, or include `dTdt(z)` profile mode in same phase.
+
+### Non-goals (for this phase)
+
+- Full multi-output GP with coupled covariance across PCA components.
+- Joint depth-time functional PCA (`T(z,t)`) in first implementation.
+- Replacing existing per-depth emulator paths.
+
+### Risks and Mitigations
+
+- Risk: components capture artifacts instead of physics.
+  - Mitigation: inspect component shapes and reconstruction residual structure vs depth.
+- Risk: low-variance components become noise-dominated.
+  - Mitigation: cap `k` and monitor per-component validation R2.
+- Risk: data leakage via PCA fit on all data.
+  - Mitigation: fit PCA on train split only; apply transform to val/test.
+
+### Immediate Next-session Execution Checklist
+
+1. Inspect current emulator preprocess/training interfaces:
+  - `src/emulator/preprocess_one_training.py`
+  - `src/emulator/train_emulator.py`
+  - `train.py`
+2. Draft profile-pca metadata schema and dataset naming.
+3. Implement `preprocess_profile_pca.py` with train-only PCA fit.
+4. Add `gp.*.profile-pca.yaml` configs and dry-run tests.
+5. Add first QC plotting script for explained variance + reconstruction overlays.
+6. Run on one suite (`const-vc`) and collect baseline metrics.
