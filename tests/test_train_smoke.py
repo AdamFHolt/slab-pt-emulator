@@ -82,7 +82,7 @@ class TrainConfigSmokeTests(unittest.TestCase):
         self.assertIn("[OK] dry-run complete.", proc.stdout)
 
     def test_invalid_dataset_mode_raises(self) -> None:
-        with self.assertRaisesRegex(ValueError, "dataset.mode must be 'auto' or 'list'."):
+        with self.assertRaisesRegex(ValueError, "dataset.mode must be 'auto', 'list', or 'profile-pca'."):
             train._discover_datasets(
                 REPO_ROOT / "src" / "emulator" / "data" / "const-vc",
                 {"mode": "bad-mode"},
