@@ -1,0 +1,29 @@
+suite: ramped-vc
+
+# These point to folder roots that contain suite subfolders.
+data_root: src/emulator/data
+out_root: src/emulator/models
+
+dataset:
+  # profile-pca: discover profile PCA dataset folders in data_root/<suite>.
+  mode: profile-pca
+
+  # Optional regex filter applied to discovered profile-PCA folders.
+  # Examples:
+  # pattern: "t5"
+  # pattern: "fixed-time"
+
+model:
+  type: gp
+  seed: 42
+  kernel: matern25
+  gp_restarts: 25
+  ls_init: 1.0
+  ls_bounds: [1e-3, 1e3]
+  noise_init: 3e-3
+  noise_bounds: [1e-6, 1.0]
+  alpha: 1e-6
+
+execution:
+  fail_fast: true
+  dry_run: false

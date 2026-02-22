@@ -32,8 +32,8 @@ def _load_config(path: Path) -> dict[str, Any]:
 
 def _discover_datasets(suite_dir: Path, ds_cfg: dict[str, Any]) -> list[str]:
     mode = str(ds_cfg.get("mode", "auto")).strip().lower()
-    if mode not in {"auto", "list"}:
-        raise ValueError("dataset.mode must be 'auto' or 'list'.")
+    if mode not in {"auto", "list", "profile-pca"}:
+        raise ValueError("dataset.mode must be 'auto', 'list', or 'profile-pca'.")
 
     if mode == "list":
         names = ds_cfg.get("names", [])
@@ -45,6 +45,21 @@ def _discover_datasets(suite_dir: Path, ds_cfg: dict[str, Any]) -> list[str]:
         raise FileNotFoundError(f"Suite data directory not found: {suite_dir}")
 
     names = [p.name for p in suite_dir.iterdir() if p.is_dir()]
+
+    if mode == "profile-pca":
+        # For profile-PCA datasets, default to *_pca* folders unless a prefix is given.
+        prefix = str(ds_cfg.get("prefix", "")).strip()
+        if prefix:
+            names = [n for n in names if n.startswith(prefix)]
+        else:
+            names = [n for n in names if "_pca" in n.lower()]
+
+        pattern = ds_cfg.get("pattern")
+        if pattern:
+            rgx = re.compile(str(pattern))
+            names = [n for n in names if rgx.search(n)]
+
+        return sorted(names)
 
     variant = ds_cfg.get("variant")
     if variant:
