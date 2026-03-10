@@ -430,3 +430,60 @@ Use this next time:
 4. Add `gp.*.profile-pca.yaml` configs and dry-run tests.
 5. Add first QC plotting script for explained variance + reconstruction overlays.
 6. Run on one suite (`const-vc`) and collect baseline metrics.
+
+---
+
+## Update (2026-03-10, profile-pca runs captured)
+
+### What Was Executed
+
+- Preprocessed profile-PCA datasets (train-only PCA fit, depth grid 0..80 km, step 1 km, val split seed 42):
+  - `src/emulator/data/const-vc/profileT_pca_t5Myr_k8/`
+  - `src/emulator/data/ramped-vc/profileT_pca_t5Myr_k8/`
+  - exploratory variants:
+    - `src/emulator/data/const-vc/profileT_pca_t0p5Myr_k8/`
+    - `src/emulator/data/const-vc/profileT_pca_t5Myr_k8_wht/`
+    - `src/emulator/data/const-vc/profileT_pca_t5Myr_k8_wht_id/`
+- Trained GP (`gp_m25`) on 5 Myr `k=8` datasets:
+  - `src/emulator/models/const-vc/profileT_pca_t5Myr_k8/gp_m25/`
+  - `src/emulator/models/ramped-vc/profileT_pca_t5Myr_k8/gp_m25/`
+- Generated profile-PCA QC figures:
+  - `plots/qc-emulator/const-vc/profile-pca/`
+  - `plots/qc-emulator/ramped-vc/profile-pca/`
+
+### Dataset Snapshot
+
+- `const-vc/profileT_pca_t5Myr_k8`:
+  - split: `n_train=332`, `n_val=59`
+  - PCA EVR: `PC1=0.9715`, `PC2=0.0188`, `PC3=0.0073`, cumulative `k=8 -> 0.9998`
+- `ramped-vc/profileT_pca_t5Myr_k8`:
+  - split: `n_train=423`, `n_val=75`
+  - PCA EVR: `PC1=0.9671`, `PC2=0.0224`, `PC3=0.0083`, cumulative `k=8 -> 0.9998`
+- `const-vc/profileT_pca_t0p5Myr_k8` exploratory preprocess-only:
+  - split: `n_train=332`, `n_val=59`
+  - PCA EVR: `PC1=0.9410`, `PC2=0.0510`, `PC3=0.0048`, cumulative `k=8 -> 0.9997`
+
+### Baseline GP Metrics (score-space, macro averages)
+
+- `const-vc/profileT_pca_t5Myr_k8/gp_m25`:
+  - train: `RMSE=6.3694`, `MAE=4.5701`, `R2=0.9571`
+  - val: `RMSE=21.9293`, `MAE=16.0852`, `R2=0.6060`
+  - note: 1 component has negative validation `R2` (PC8)
+- `ramped-vc/profileT_pca_t5Myr_k8/gp_m25`:
+  - train: `RMSE=9.4731`, `MAE=6.3967`, `R2=0.8985`
+  - val: `RMSE=28.3043`, `MAE=19.0063`, `R2=0.5911`
+  - note: 1 component has negative validation `R2` (PC8)
+
+### Current Interpretation
+
+- Phase-1 pipeline is now functionally end-to-end for `profile-pca` at 5 Myr on both suites.
+- Leading components dominate variance strongly (>96% in PC1), and `k=8` captures ~99.98% variance.
+- Validation quality is usable but not yet production-gate ready due to weak tail-component generalization.
+
+### Next Session TODO (from current state)
+
+1. Add reconstruction-space metrics to reports (global/profile RMSE, depthwise RMSE, P90 depth RMSE) and log them in `report.json`.
+2. Decide `k` policy for default runs (`fixed k=8` vs variance threshold + component quality floor).
+3. Evaluate whether to trim/weight tail PCs (e.g., drop components with unstable val `R2`) and compare reconstruction impact.
+4. Add/lock `emulator-quality.profile-pca.yaml` thresholds and wire a `make` quality-check target for profile-PCA.
+5. Run/record the same baseline for whitened variants if they remain candidates (`*_wht`, `*_wht_id`), otherwise de-scope.
