@@ -137,7 +137,7 @@ class SummarizeProfilePCAGPTuningSweepTests(unittest.TestCase):
             proc = subprocess.run(
                 [
                     sys.executable,
-                    "src/emulator/summarize_profile_pca_gp_tuning_sweep.py",
+                    "src/emulator/profile_pca/summarize_profile_pca_gp_tuning_sweep.py",
                     "--sweep-root",
                     str(sweep_root),
                     "--suites",

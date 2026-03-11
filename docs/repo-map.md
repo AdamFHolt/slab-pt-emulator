@@ -28,11 +28,11 @@ This file is a short orientation guide for the repository.
 
 ### 2. Standard Single-Depth Emulator Workflow
 
-- `src/emulator/preprocess_one_training.py`
+- `src/emulator/single_depth/preprocess_single_depth_training.py`
   - build one single-depth training dataset
 - `src/emulator/train_emulator.py`
   - shared model trainer used by both workflows
-- `src/emulator/validate_emulator_quality.py`
+- `src/emulator/single_depth/validate_single_depth_quality.py`
   - validate standard single-depth model quality against thresholds
 - `configs/gp.const-vc.yaml`
 - `configs/gp.ramped-vc.yaml`
@@ -41,15 +41,15 @@ This file is a short orientation guide for the repository.
 
 ### 3. Profile-PCA Emulator Workflow
 
-- `src/emulator/preprocess_profile_pca.py`
+- `src/emulator/profile_pca/preprocess_profile_pca.py`
   - build profile-PCA datasets
-- `src/emulator/evaluate_profile_pca_quality.py`
+- `src/emulator/profile_pca/evaluate_profile_pca_quality.py`
   - compute score-space and profile-space quality metrics
-- `src/emulator/validate_profile_pca_quality.py`
+- `src/emulator/profile_pca/validate_profile_pca_quality.py`
   - validate profile-PCA reports against thresholds
-- `src/emulator/run_profile_pca_sweep.py`
+- `src/emulator/profile_pca/run_profile_pca_sweep.py`
   - sweep PCA representation choices (`k`, `raw` vs `whitened`)
-- `src/emulator/run_profile_pca_gp_tuning_sweep.py`
+- `src/emulator/profile_pca/run_profile_pca_gp_tuning_sweep.py`
   - sweep GP settings on a fixed chosen PCA representation
 - `configs/gp.const-vc.profile-pca.yaml`
 - `configs/gp.ramped-vc.profile-pca.yaml`
@@ -60,9 +60,9 @@ These scripts are still tracked for reference, but they are not the preferred
 entrypoints for routine work now that the repo uses `Makefile` targets and
 config-driven training:
 
-- `src/emulator/preprocess_all_training.sh`
-- `src/emulator/train_all_depths.sh`
-- `src/emulator/train_one_depth_param-sweep.sh`
+- `src/emulator/legacy/preprocess_all_training.sh`
+- `src/emulator/legacy/train_all_depths.sh`
+- `src/emulator/legacy/train_one_depth_param-sweep.sh`
 
 If you are not sure which path to use, prefer:
 

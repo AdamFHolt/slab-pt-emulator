@@ -20,7 +20,7 @@ class ProfilePCAQualityReportTests(unittest.TestCase):
     # The test is intentionally end-to-end:
     # 1. build a tiny synthetic profile-PCA dataset
     # 2. train a very small RF model on that dataset
-    # 3. run evaluate_profile_pca_quality.py
+    # 3. run profile_pca/evaluate_profile_pca_quality.py
     # 4. inspect the output JSON structure
     #
     # Using an RF keeps the test fast. The quality-report script itself only
@@ -84,7 +84,7 @@ class ProfilePCAQualityReportTests(unittest.TestCase):
             preprocess = subprocess.run(
                 [
                     sys.executable,
-                    "src/emulator/preprocess_profile_pca.py",
+                    "src/emulator/profile_pca/preprocess_profile_pca.py",
                     "--suite",
                     "const-vc",
                     "--params",
@@ -157,7 +157,7 @@ class ProfilePCAQualityReportTests(unittest.TestCase):
             eval_proc = subprocess.run(
                 [
                     sys.executable,
-                    "src/emulator/evaluate_profile_pca_quality.py",
+                    "src/emulator/profile_pca/evaluate_profile_pca_quality.py",
                     "--dataset-dir",
                     str(dataset_dir),
                     "--model-dir",

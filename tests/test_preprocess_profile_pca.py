@@ -111,7 +111,7 @@ class PreprocessProfilePCATests(unittest.TestCase):
             proc = subprocess.run(
                 [
                     sys.executable,
-                    "src/emulator/preprocess_profile_pca.py",
+                    "src/emulator/profile_pca/preprocess_profile_pca.py",
                     "--suite",
                     "const-vc",
                     "--params",
@@ -220,7 +220,7 @@ class PreprocessProfilePCATests(unittest.TestCase):
             proc = subprocess.run(
                 [
                     sys.executable,
-                    "src/emulator/preprocess_profile_pca.py",
+                    "src/emulator/profile_pca/preprocess_profile_pca.py",
                     "--suite",
                     "ramped-vc",
                     "--params",

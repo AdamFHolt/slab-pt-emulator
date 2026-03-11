@@ -176,7 +176,7 @@ class TrainConfigSmokeTests(unittest.TestCase):
         proc = subprocess.run(
             [
                 sys.executable,
-                "src/emulator/run_profile_pca_sweep.py",
+                "src/emulator/profile_pca/run_profile_pca_sweep.py",
                 "--suites",
                 "const-vc",
                 "--times",
@@ -205,7 +205,7 @@ class TrainConfigSmokeTests(unittest.TestCase):
         proc = subprocess.run(
             [
                 sys.executable,
-                "src/emulator/run_profile_pca_gp_tuning_sweep.py",
+                "src/emulator/profile_pca/run_profile_pca_gp_tuning_sweep.py",
                 "--suites",
                 "ramped-vc",
                 "--datasets",
@@ -249,7 +249,7 @@ class TrainConfigSmokeTests(unittest.TestCase):
             proc = subprocess.run(
                 [
                     sys.executable,
-                    "src/emulator/run_profile_pca_gp_tuning_sweep.py",
+                    "src/emulator/profile_pca/run_profile_pca_gp_tuning_sweep.py",
                     "--suites",
                     "ramped-vc",
                     "--datasets",

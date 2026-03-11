@@ -429,7 +429,7 @@ make quality-check-gp-m25
 Direct invocation (with optional summary JSON):
 
 ```bash
-python src/emulator/validate_emulator_quality.py \
+python src/emulator/single_depth/validate_single_depth_quality.py \
   --thresholds configs/emulator-quality.gp_m25.yaml \
   --models-root src/emulator/models \
   --json-out plots/qc-emulator/quality-gates/gp_m25_validation.json
@@ -457,7 +457,7 @@ The profile-PCA quality report includes both:
 Write the quality report JSON for an existing trained model:
 
 ```bash
-python src/emulator/evaluate_profile_pca_quality.py \
+python src/emulator/profile_pca/evaluate_profile_pca_quality.py \
   --dataset-dir src/emulator/data/const-vc/profileT_pca_t3Myr_k10 \
   --model-dir src/emulator/models/const-vc/profileT_pca_t3Myr_k10/gp_m25
 ```
@@ -471,7 +471,7 @@ make profile-pca-quality-check-gp-m25
 Direct invocation:
 
 ```bash
-python src/emulator/validate_profile_pca_quality.py \
+python src/emulator/profile_pca/validate_profile_pca_quality.py \
   --thresholds configs/profile-pca-quality.gp_m25.yaml \
   --models-root src/emulator/models \
   --suites const-vc,ramped-vc \
@@ -514,8 +514,8 @@ A change affecting emulator training, data prep, or model quality is complete wh
   - `src/postproc-numerical-mods/extract_cooling-rates_all-mods.sh`
   - `src/postproc-numerical-mods/extract_cooling-rates_one-mod.py`
 - Emulator prep/train:
-  - `src/emulator/preprocess_all_training.sh`
-  - `src/emulator/train_all_depths.sh`
+  - `src/emulator/legacy/preprocess_all_training.sh`
+  - `src/emulator/legacy/train_all_depths.sh`
   - `src/emulator/train_emulator.py`
 
 <!-- ruleset check -->
