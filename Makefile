@@ -83,8 +83,8 @@ env-doctor:
 #   make profile-pca-preprocess PROFILE_SUITES="const-vc" PROFILE_TIMES="1 2 3 4 5" PROFILE_K=8
 PROFILE_SUITES ?= const-vc ramped-vc
 PROFILE_TIMES ?= 0.5 1 2 3 4 5
-PROFILE_K ?= 8
-PROFILE_SCORE_SPACE ?= raw
+PROFILE_K ?= 10
+PROFILE_SCORE_SPACE ?= whitened
 PROFILE_QC_SPLIT ?= val
 PROFILE_MODEL_TAG ?= gp_m25
 PROFILE_SWEEP_KS ?= 4 6 8 10

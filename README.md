@@ -125,7 +125,11 @@ Default suites:
 
 Default PCA components:
 
-- `k=8`
+- `k=10`
+
+Default PCA score space:
+
+- `whitened`
 
 ### Step 1: Preprocess Profile-PCA Datasets
 
@@ -191,7 +195,7 @@ make profile-pca-train-gp PROFILE_TIMES="1 2 3 4 5"
 make profile-pca-qc PROFILE_K=6 PROFILE_QC_SPLIT=train
 
 # One representative CI-style subset
-make profile-pca-quality-report PROFILE_SUITES="const-vc ramped-vc" PROFILE_TIMES="3" PROFILE_K=8
+make profile-pca-quality-report PROFILE_SUITES="const-vc ramped-vc" PROFILE_TIMES="3" PROFILE_K=10 PROFILE_SCORE_SPACE=whitened
 
 # Sweep summary for t3Myr only
 make profile-pca-sweep-summary PROFILE_SWEEP_DATASET_PATTERN="profileT_pca_t3Myr"
@@ -200,9 +204,10 @@ make profile-pca-sweep-summary PROFILE_SWEEP_DATASET_PATTERN="profileT_pca_t3Myr
 Notes:
 
 - Dataset names are generated as `profileT_pca_t<time_label>Myr_k<K>` (e.g., `t0p5Myr`, `t3Myr`, `t5Myr`).
+- The default profile-PCA workflow now uses `k=10` and `score_space=whitened`.
 - Sweep dataset names include score-space to avoid collisions:
-  - `profileT_pca_t3Myr_k8_raw`
-  - `profileT_pca_t3Myr_k8_whitened`
+  - `profileT_pca_t3Myr_k10_raw`
+  - `profileT_pca_t3Myr_k10_whitened`
 - Training configs for this workflow are separate from the standard depth-based GP configs:
   - `configs/gp.const-vc.profile-pca.yaml`
   - `configs/gp.ramped-vc.profile-pca.yaml`
@@ -388,7 +393,8 @@ The current representative threshold spec is:
 This initial gate covers the representative subset:
 
 - suites: `const-vc`, `ramped-vc`
-- dataset: `profileT_pca_t3Myr_k8`
+- dataset: `profileT_pca_t3Myr_k10`
+- score space: `whitened`
 
 The profile-PCA quality report includes both:
 
@@ -399,8 +405,8 @@ Write the quality report JSON for an existing trained model:
 
 ```bash
 python src/emulator/evaluate_profile_pca_quality.py \
-  --dataset-dir src/emulator/data/const-vc/profileT_pca_t3Myr_k8 \
-  --model-dir src/emulator/models/const-vc/profileT_pca_t3Myr_k8/gp_m25
+  --dataset-dir src/emulator/data/const-vc/profileT_pca_t3Myr_k10 \
+  --model-dir src/emulator/models/const-vc/profileT_pca_t3Myr_k10/gp_m25
 ```
 
 Validate existing profile-PCA quality reports against thresholds:
@@ -416,7 +422,7 @@ python src/emulator/validate_profile_pca_quality.py \
   --thresholds configs/profile-pca-quality.gp_m25.yaml \
   --models-root src/emulator/models \
   --suites const-vc,ramped-vc \
-  --datasets profileT_pca_t3Myr_k8
+  --datasets profileT_pca_t3Myr_k10
 ```
 
 ## Definition Of Done
@@ -433,9 +439,9 @@ A change affecting emulator training, data prep, or model quality is complete wh
   - gate command in CI: `make quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=40km_dTdt`
   - profile-PCA representative subset:
     - suites: `const-vc`, `ramped-vc`
-    - dataset: `profileT_pca_t3Myr_k8`
+    - dataset: `profileT_pca_t3Myr_k10`
     - gate command in CI:
-      `make profile-pca-quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=profileT_pca_t3Myr_k8`
+      `make profile-pca-quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=profileT_pca_t3Myr_k10`
 - Canonical artifacts are present in standard locations:
   - training reports: `src/emulator/models/<suite>/<dataset>/<model_tag>/report.json`
   - quality-gate summary (optional JSON): `plots/qc-emulator/quality-gates/gp_m25_validation.json`

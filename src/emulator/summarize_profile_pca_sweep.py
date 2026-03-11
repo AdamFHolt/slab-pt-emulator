@@ -104,7 +104,7 @@ def main() -> int:
     ap.add_argument("--outdir", default=str(PLOTS_ROOT_DEFAULT), help="Output directory for summary tables.")
     args = ap.parse_args()
 
-    suites = [x.strip() for x in args.suites.split(",") if x.strip()]
+    suites = [x.strip() for x in args.suites.replace(",", " ").split() if x.strip()]
     models_root = (REPO_ROOT / args.models_root).resolve() if not Path(args.models_root).is_absolute() else Path(args.models_root)
     outdir = (REPO_ROOT / args.outdir).resolve() if not Path(args.outdir).is_absolute() else Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
