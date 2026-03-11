@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Legacy helper retained for reference.
+# Prefer the documented Makefile/config-driven workflow for routine use.
+
 # Train a *single depth* across multiple emulator types/hyperparams,
 # then copy each trained model directory into a unique param-sweep folder.
 #

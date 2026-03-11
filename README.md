@@ -6,6 +6,12 @@ Supported experiment suites:
 - `const-vc` (constant convergence rate)
 - `ramped-vc` (time-ramped convergence)
 
+Quick orientation:
+
+- [`Makefile`](/home/holt/Projects/SlabPT-emulator/Makefile) is the main day-to-day command entrypoint.
+- [`train.py`](/home/holt/Projects/SlabPT-emulator/train.py) is the main config-driven training entrypoint.
+- [`docs/repo-map.md`](/home/holt/Projects/SlabPT-emulator/docs/repo-map.md) summarizes the repo structure and identifies legacy helpers.
+
 ## What This Repo Does
 
 1. Generate Latin-hypercube parameter sets.

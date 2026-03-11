@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Legacy helper retained for reference.
+# Prefer the documented Makefile/config-driven workflow for routine use.
+
 SUITE="${1:-const-vc}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
