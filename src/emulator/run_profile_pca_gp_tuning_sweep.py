@@ -79,6 +79,11 @@ def main() -> int:
         action="store_true",
         help="Only train/copy models; do not compute profile_pca_quality.json.",
     )
+    ap.add_argument(
+        "--force",
+        action="store_true",
+        help="Rerun jobs even when the sweep output already has profile_pca_quality.json.",
+    )
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -118,6 +123,19 @@ def main() -> int:
                                 f"ls_high={ls_high:g} noise_low={noise_low:g} tag={tag}"
                             )
 
+                            model_dir_name = {
+                                "matern25": "gp_m25",
+                                "matern15": "gp_m15",
+                                "rbf": "gp_rbf",
+                            }[kernel]
+                            trained_dir = base_model_root / suite / dataset_name / model_dir_name
+                            sweep_dir = sweep_root / suite / dataset_name / tag
+                            quality_json = sweep_dir / "profile_pca_quality.json"
+
+                            if quality_json.exists() and not args.force:
+                                print(f"[SKIP] existing quality report: {quality_json}")
+                                continue
+
                             train_cmd = [
                                 sys.executable,
                                 str(TRAIN_PY),
@@ -149,14 +167,6 @@ def main() -> int:
                                 str(base_model_root / suite),
                             ]
                             _run(train_cmd, dry_run=args.dry_run)
-
-                            model_dir_name = {
-                                "matern25": "gp_m25",
-                                "matern15": "gp_m15",
-                                "rbf": "gp_rbf",
-                            }[kernel]
-                            trained_dir = base_model_root / suite / dataset_name / model_dir_name
-                            sweep_dir = sweep_root / suite / dataset_name / tag
 
                             if args.dry_run:
                                 print(f"[COPY] {trained_dir} -> {sweep_dir}")

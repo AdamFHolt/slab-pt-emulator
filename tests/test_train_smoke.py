@@ -231,6 +231,50 @@ class TrainConfigSmokeTests(unittest.TestCase):
         self.assertIn("gp_rbf_r10_lsu1e3_nlow1e-8", proc.stdout)
         self.assertIn("[OK] dry-run complete.", proc.stdout)
 
+    def test_cli_dry_run_profile_pca_gp_tuning_sweep_skips_existing(self) -> None:
+        # The GP tuning sweep should be resumable. If a sweep tag already has a
+        # completed profile_pca_quality.json, rerunning the same grid should
+        # skip that job unless the caller explicitly asks for --force.
+        with tempfile.TemporaryDirectory() as tmp:
+            sweep_root = Path(tmp) / "sweep"
+            done = (
+                sweep_root
+                / "ramped-vc"
+                / "profileT_pca_t3Myr_k10_whitened"
+                / "gp_matern25_r10_lsu1e3_nlow1e-6"
+            )
+            done.mkdir(parents=True, exist_ok=True)
+            (done / "profile_pca_quality.json").write_text("{}", encoding="utf-8")
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "src/emulator/run_profile_pca_gp_tuning_sweep.py",
+                    "--suites",
+                    "ramped-vc",
+                    "--datasets",
+                    "profileT_pca_t3Myr_k10_whitened",
+                    "--kernels",
+                    "matern25",
+                    "--restarts",
+                    "10",
+                    "--ls-highs",
+                    "1e3",
+                    "--noise-lows",
+                    "1e-6",
+                    "--sweep-root",
+                    str(sweep_root),
+                    "--dry-run",
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(0, proc.returncode, msg=proc.stdout + "\n" + proc.stderr)
+            self.assertIn("[SKIP] existing quality report:", proc.stdout)
+            self.assertNotIn("[RUN]", proc.stdout)
+
     def test_invalid_dataset_mode_raises(self) -> None:
         with self.assertRaisesRegex(ValueError, "dataset.mode must be 'auto', 'list', or 'profile-pca'."):
             train._discover_datasets(

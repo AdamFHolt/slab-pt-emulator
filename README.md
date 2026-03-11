@@ -198,6 +198,11 @@ Run the GP tuning sweep:
 make profile-pca-gp-tuning-sweep
 ```
 
+The GP tuning sweep is resumable by default:
+
+- if a sweep tag already has `profile_pca_quality.json`, that job is skipped
+- use `--force` on the Python entrypoint if you want to rerun completed tags
+
 Write ranked summary tables from existing GP tuning reports:
 
 ```bash
