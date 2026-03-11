@@ -39,93 +39,79 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
-## Tests
+------------------------------
+Standard Depth-Based Training
+------------------------------
 
-Run smoke tests from repo root:
+## Standard Depth-Based Emulator Training
 
-```bash
-make test
-```
+This is the baseline workflow for per-depth targets such as `10km_dTdt`, `40km_dTdt`, and related variants.
 
-## Emulator Quality Gates (Step 1)
-
-Per-dataset validation thresholds for baseline GP are defined in:
-
-- `configs/emulator-quality.gp_m25.yaml`
-
-This file specifies:
-
-- metric source: `metrics.val._macro_avg` from each model `report.json`
-- thresholds per suite + dataset:
-  - `r2_min` (minimum acceptable validation R2)
-  - `rmse_max` (maximum acceptable validation RMSE)
-  - `mae_max` (maximum acceptable validation MAE)
-
-These thresholds are intended to support automated pass/fail checks in CI.
-
-Run validation against existing model reports:
+Entry point:
 
 ```bash
-make quality-check-gp-m25
+python train.py --config <config.yaml>
 ```
 
-Direct invocation (with optional summary JSON):
+### GP Commands
 
-```bash
-python src/emulator/validate_emulator_quality.py \
-  --thresholds configs/emulator-quality.gp_m25.yaml \
-  --models-root src/emulator/models \
-  --json-out plots/qc-emulator/quality-gates/gp_m25_validation.json
-```
-
-## Definition Of Done (Step 4)
-
-A change affecting emulator training, data prep, or model quality is complete when all of the following are true:
-
-- Required checks pass:
-  - `make test`
-  - `make quality-check-gp-m25` (or CI-equivalent filtered scope)
-- PR CI quality gate passes for representative subset policy:
-  - suites: `const-vc`, `ramped-vc`
-  - datasets: `40km_dTdt`
-  - gate command in CI: `make quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=40km_dTdt`
-- Canonical artifacts are present in standard locations:
-  - training reports: `src/emulator/models/<suite>/<dataset>/<model_tag>/report.json`
-  - quality-gate summary (optional JSON): `plots/qc-emulator/quality-gates/gp_m25_validation.json`
-  - emulator QC figures: `plots/qc-emulator/<suite>/`
-  - numerical QC figures: `plots/qc-numerical-mods/<suite>/`
-
-## Uniform Training Entry Point
-
-Industry-style config-driven training is available via:
+Constant-convergence suite (`const-vc`):
 
 ```bash
 python train.py --config configs/gp.const-vc.yaml
 ```
 
-Examples:
+Time-ramped suite (`ramped-vc`):
 
 ```bash
-# GP (const-vc)
-python train.py --config configs/gp.const-vc.yaml
-
-# GP (ramped-vc)
 python train.py --config configs/gp.ramped-vc.yaml
-
-# RF (const-vc)
-python train.py --config configs/rf.const-vc.yaml
-
-# RF (ramped-vc)
-python train.py --config configs/rf.ramped-vc.yaml
-
-# Preview commands only
-python train.py --config configs/gp.const-vc.yaml --dry-run
-
-# Run only selected datasets
-python train.py --config configs/gp.const-vc.yaml --datasets 10km_dTdt,20km_dTdt
 ```
 
-## Profile-PCA Multi-Time Workflow
+Makefile shortcuts:
+
+```bash
+make train-gp-const
+make train-gp-ramped
+```
+
+Dry-run previews:
+
+```bash
+python train.py --config configs/gp.const-vc.yaml --dry-run
+python train.py --config configs/gp.ramped-vc.yaml --dry-run
+```
+
+### Other Standard Depth-Based Training Commands
+
+RF configs use the same depth-based dataset layout:
+
+```bash
+python train.py --config configs/rf.const-vc.yaml
+python train.py --config configs/rf.ramped-vc.yaml
+```
+
+To run only selected depth datasets:
+
+```bash
+python train.py --config configs/gp.const-vc.yaml --datasets 10km_dTdt,20km_dTdt
+python train.py --config configs/gp.ramped-vc.yaml --datasets 40km_dTdt
+```
+
+Standard depth-based GP outputs are written under:
+
+- `src/emulator/models/<suite>/<dataset>/gp_m25/`
+
+RF outputs use the analogous layout:
+
+- `src/emulator/models/<suite>/<dataset>/rf/`
+
+--------------------
+Profile-PCA Workflow
+--------------------
+
+## Profile-PCA Workflow
+
+This is a separate workflow from the standard depth-based GP training above. It first builds profile-level PCA score datasets at one or more target times, then trains GP emulators on those PCA scores, then makes reconstruction/QC plots.
 
 The Makefile includes profile-PCA workflow targets that run across multiple target times.
 
@@ -141,17 +127,23 @@ Default PCA components:
 
 - `k=8`
 
+### Step 1: Preprocess Profile-PCA Datasets
+
 Run preprocess for all default times/suites:
 
 ```bash
 make profile-pca-preprocess
 ```
 
+### Step 2: Train GP Models on Profile-PCA Scores
+
 Run GP training for all default times/suites:
 
 ```bash
 make profile-pca-train-gp
 ```
+
+### Step 3: Generate Profile-PCA QC Plots
 
 Run profile-PCA QC plots for all default times/suites:
 
@@ -175,11 +167,28 @@ make profile-pca-qc PROFILE_K=6 PROFILE_QC_SPLIT=train
 Notes:
 
 - Dataset names are generated as `profileT_pca_t<time_label>Myr_k<K>` (e.g., `t0p5Myr`, `t3Myr`, `t5Myr`).
+- Training configs for this workflow are separate from the standard depth-based GP configs:
+  - `configs/gp.const-vc.profile-pca.yaml`
+  - `configs/gp.ramped-vc.profile-pca.yaml`
+- Preprocessed datasets are written under:
+  - `src/emulator/data/<suite>/profileT_pca_t<time_label>Myr_k<K>/`
 - `profile-pca-qc` expects corresponding trained model artifacts under:
   - `src/emulator/models/<suite>/<dataset>/gp_m25/`
 - Missing dataset/model folders are skipped with `[WARN]` messages.
 
-## From Scratch (Generalized For Either Suite)
+--------------------------------------------
+From Scratch: Full Numerical Model Pipeline
+--------------------------------------------
+
+## From Scratch: Full Numerical Model Pipeline
+
+This section is not the quick-start training path above.
+
+It is the end-to-end workflow for generating new numerical-model outputs from ASPECT, extracting cooling-rate targets, building emulator datasets from those outputs, and then training baseline depth-based emulators.
+
+Use this when you need to rebuild the data products from the raw modeling stage, not when you only want to retrain an emulator from existing prepared datasets.
+
+Generalized for either suite:
 
 Set suite once:
 
@@ -248,10 +257,10 @@ cd ../..
 Outputs under:
 - `src/emulator/data/${SUITE}/<depth>km_<variant>/`
 
-### 7) Train baseline emulator models
+### 7) Train baseline depth-based emulator models
 
 ```bash
-python train.py --config configs/gp.const-vc.yaml
+python train.py --config configs/gp.${SUITE}.yaml
 ```
 
 Outputs under:
@@ -282,6 +291,68 @@ cd ../..
 Outputs under:
 - `src/emulator/models/param-sweep/${SUITE}/40km_dTdt_thermalParam/`
 - `plots/qc-emulator/${SUITE}/param-sweep/40km_dTdt_thermalParam/`
+
+----------------------
+Tests And CI Policy
+----------------------
+
+## Tests
+
+Run smoke tests from repo root:
+
+```bash
+make test
+```
+
+## Standard Depth-Based GP Quality Gates
+
+This section applies to the standard depth-based `gp_m25` workflow. It does not define a separate quality-gate policy for the profile-PCA workflow.
+
+Per-dataset validation thresholds for baseline depth-based GP models are defined in:
+
+- `configs/emulator-quality.gp_m25.yaml`
+
+This file specifies:
+
+- metric source: `metrics.val._macro_avg` from each model `report.json`
+- thresholds per suite + dataset:
+  - `r2_min` (minimum acceptable validation R2)
+  - `rmse_max` (maximum acceptable validation RMSE)
+  - `mae_max` (maximum acceptable validation MAE)
+
+These thresholds are intended to support automated pass/fail checks in CI.
+
+Run validation against existing model reports:
+
+```bash
+make quality-check-gp-m25
+```
+
+Direct invocation (with optional summary JSON):
+
+```bash
+python src/emulator/validate_emulator_quality.py \
+  --thresholds configs/emulator-quality.gp_m25.yaml \
+  --models-root src/emulator/models \
+  --json-out plots/qc-emulator/quality-gates/gp_m25_validation.json
+```
+
+## Definition Of Done
+
+A change affecting emulator training, data prep, or model quality is complete when all of the following are true:
+
+- Required checks pass:
+  - `make test`
+  - `make quality-check-gp-m25` (or CI-equivalent filtered scope)
+- PR CI quality gate passes for representative subset policy:
+  - suites: `const-vc`, `ramped-vc`
+  - datasets: `40km_dTdt`
+  - gate command in CI: `make quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=40km_dTdt`
+- Canonical artifacts are present in standard locations:
+  - training reports: `src/emulator/models/<suite>/<dataset>/<model_tag>/report.json`
+  - quality-gate summary (optional JSON): `plots/qc-emulator/quality-gates/gp_m25_validation.json`
+  - emulator QC figures: `plots/qc-emulator/<suite>/`
+  - numerical QC figures: `plots/qc-numerical-mods/<suite>/`
 
 ## Main Scripts By Stage
 
