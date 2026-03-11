@@ -2,7 +2,8 @@ SHELL := /bin/bash
 
 .PHONY: help setup test train-gp-const train-gp-ramped train-rf-const train-rf-ramped \
         train-gp-const-dry train-gp-ramped-dry qc-num-const qc-num-ramped quality-check-gp-m25 \
-        env-status env-ensure env-doctor profile-pca-preprocess profile-pca-train-gp profile-pca-qc
+        env-status env-ensure env-doctor profile-pca-preprocess profile-pca-train-gp profile-pca-qc \
+        profile-pca-quality-report profile-pca-quality-check-gp-m25
 
 help:
 	@echo "Targets:"
@@ -23,6 +24,8 @@ help:
 	@echo "  profile-pca-preprocess - build profile-PCA datasets for PROFILE_TIMES (default: 0.5 1 2 3 4 5)"
 	@echo "  profile-pca-train-gp - train GP profile-PCA models for PROFILE_TIMES"
 	@echo "  profile-pca-qc      - generate profile-PCA QC plots for PROFILE_TIMES"
+	@echo "  profile-pca-quality-report - write profile-PCA quality JSON reports for PROFILE_TIMES"
+	@echo "  profile-pca-quality-check-gp-m25 - validate profile-PCA gp_m25 quality reports (optional QUALITY_SUITES/QUALITY_DATASETS filters)"
 
 setup:
 	python3 -m venv env
@@ -80,6 +83,7 @@ PROFILE_TIMES ?= 0.5 1 2 3 4 5
 PROFILE_K ?= 8
 PROFILE_SCORE_SPACE ?= raw
 PROFILE_QC_SPLIT ?= val
+PROFILE_MODEL_TAG ?= gp_m25
 
 profile-pca-preprocess:
 	@set -euo pipefail; \
@@ -145,3 +149,33 @@ profile-pca-qc:
 				--out-prefix "$$prefix"; \
 		done; \
 	done
+
+profile-pca-quality-report:
+	@set -euo pipefail; \
+	for suite in $(PROFILE_SUITES); do \
+		for t in $(PROFILE_TIMES); do \
+			tlabel="$$(echo "$$t" | sed 's/\./p/g')"; \
+			dname="profileT_pca_t$${tlabel}Myr_k$(PROFILE_K)"; \
+			ds="src/emulator/data/$${suite}/$${dname}"; \
+			md="src/emulator/models/$${suite}/$${dname}/$(PROFILE_MODEL_TAG)"; \
+			if [ ! -d "$$ds" ]; then \
+				echo "[WARN] skip missing dataset $$ds"; \
+				continue; \
+			fi; \
+			if [ ! -d "$$md" ]; then \
+				echo "[WARN] skip missing model $$md"; \
+				continue; \
+			fi; \
+			echo "[RUN] quality-report suite=$$suite dataset=$$dname model=$(PROFILE_MODEL_TAG)"; \
+			python3 src/emulator/evaluate_profile_pca_quality.py \
+				--dataset-dir "$$ds" \
+				--model-dir "$$md"; \
+		done; \
+	done
+
+profile-pca-quality-check-gp-m25:
+	python3 src/emulator/validate_profile_pca_quality.py \
+		--thresholds configs/profile-pca-quality.gp_m25.yaml \
+		--models-root src/emulator/models \
+		$(if $(QUALITY_SUITES),--suites $(QUALITY_SUITES),) \
+		$(if $(QUALITY_DATASETS),--datasets $(QUALITY_DATASETS),)

@@ -15,6 +15,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 class TrainConfigSmokeTests(unittest.TestCase):
     def test_configs_load(self) -> None:
+        # These are the original depth-based training configs.
+        # Loading them here protects against YAML syntax issues and accidental
+        # drift in the required top-level fields.
         for cfg_rel in (
             "configs/gp.const-vc.yaml",
             "configs/gp.ramped-vc.yaml",
@@ -25,6 +28,19 @@ class TrainConfigSmokeTests(unittest.TestCase):
             self.assertIsInstance(cfg, dict)
             self.assertIn(cfg.get("suite"), {"const-vc", "ramped-vc"})
 
+    def test_profile_pca_configs_load(self) -> None:
+        # The profile-PCA workflow uses separate configs from the standard
+        # depth-based GP workflow. This test makes sure those files still load
+        # and keep the expected dataset discovery mode.
+        for cfg_rel in (
+            "configs/gp.const-vc.profile-pca.yaml",
+            "configs/gp.ramped-vc.profile-pca.yaml",
+        ):
+            cfg = train._load_config(REPO_ROOT / cfg_rel)
+            self.assertIsInstance(cfg, dict)
+            self.assertIn(cfg.get("suite"), {"const-vc", "ramped-vc"})
+            self.assertEqual("profile-pca", cfg.get("dataset", {}).get("mode"))
+
     def test_discover_datasets_variant_filter(self) -> None:
         cfg = train._load_config(REPO_ROOT / "configs/gp.const-vc.yaml")
         names = train._discover_datasets(
@@ -34,6 +50,38 @@ class TrainConfigSmokeTests(unittest.TestCase):
         self.assertTrue(names)
         self.assertTrue(all(name.endswith("_dTdt") for name in names))
         self.assertEqual("10km_dTdt", names[0])
+
+    def test_discover_datasets_profile_pca_mode_with_prefix(self) -> None:
+        # We build a tiny fake suite directory so this test does not depend on
+        # checked-in profile-PCA data being present in the repo.
+        #
+        # The behavior we want to lock down is:
+        # - profile-pca mode ignores normal depth datasets
+        # - only profile-PCA-like dataset folders are returned
+        # - names are returned in sorted order
+        with tempfile.TemporaryDirectory() as tmp:
+            suite_dir = Path(tmp)
+            for name in (
+                "40km_dTdt",
+                "profileT_pca_t5Myr_k8",
+                "profileT_pca_t0p5Myr_k8",
+                "profileT_pca_t3Myr_k6",
+            ):
+                (suite_dir / name).mkdir(parents=True, exist_ok=True)
+
+            names = train._discover_datasets(
+                suite_dir,
+                {"mode": "profile-pca", "prefix": "profileT_pca_"},
+            )
+
+            self.assertEqual(
+                [
+                    "profileT_pca_t0p5Myr_k8",
+                    "profileT_pca_t3Myr_k6",
+                    "profileT_pca_t5Myr_k8",
+                ],
+                names,
+            )
 
     def test_build_train_cmd_gp(self) -> None:
         cfg = train._load_config(REPO_ROOT / "configs/gp.const-vc.yaml")
@@ -61,6 +109,22 @@ class TrainConfigSmokeTests(unittest.TestCase):
         self.assertIn("--rf-trees 600", cmd_text)
         self.assertIn("--rf-max-depth 40", cmd_text)
 
+    def test_build_train_cmd_profile_pca_gp(self) -> None:
+        # Profile-PCA training still funnels through the same unified training
+        # entrypoint, but it should use the dedicated profile-PCA config and a
+        # dataset name that looks nothing like the usual 10km_dTdt pattern.
+        cfg = train._load_config(REPO_ROOT / "configs/gp.const-vc.profile-pca.yaml")
+        cmd = train._build_train_cmd(
+            cfg,
+            REPO_ROOT / "src" / "emulator" / "data" / "const-vc",
+            REPO_ROOT / "src" / "emulator" / "models" / "const-vc",
+            "profileT_pca_t3Myr_k8",
+        )
+        cmd_text = " ".join(cmd)
+        self.assertIn("--model gp", cmd_text)
+        self.assertIn("--kernel matern25", cmd_text)
+        self.assertIn("--data-name profileT_pca_t3Myr_k8", cmd_text)
+
     def test_cli_dry_run_one_dataset(self) -> None:
         proc = subprocess.run(
             [
@@ -79,6 +143,30 @@ class TrainConfigSmokeTests(unittest.TestCase):
         )
         self.assertEqual(0, proc.returncode, msg=proc.stdout + "\n" + proc.stderr)
         self.assertIn("[RUN]", proc.stdout)
+        self.assertIn("[OK] dry-run complete.", proc.stdout)
+
+    def test_cli_dry_run_profile_pca_one_dataset(self) -> None:
+        # Use an explicit --datasets override so this test validates the PCA
+        # command path without requiring real profile-PCA datasets to already
+        # exist on disk in the repository.
+        proc = subprocess.run(
+            [
+                sys.executable,
+                "train.py",
+                "--config",
+                "configs/gp.const-vc.profile-pca.yaml",
+                "--dry-run",
+                "--datasets",
+                "profileT_pca_t0p5Myr_k8",
+            ],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(0, proc.returncode, msg=proc.stdout + "\n" + proc.stderr)
+        self.assertIn("[RUN]", proc.stdout)
+        self.assertIn("profileT_pca_t0p5Myr_k8", proc.stdout)
         self.assertIn("[OK] dry-run complete.", proc.stdout)
 
     def test_invalid_dataset_mode_raises(self) -> None:

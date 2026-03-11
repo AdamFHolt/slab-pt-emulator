@@ -151,6 +151,14 @@ Run profile-PCA QC plots for all default times/suites:
 make profile-pca-qc
 ```
 
+### Step 4: Write Profile-PCA Quality Reports
+
+Compute score-space and reconstructed-profile quality metrics for all default times/suites:
+
+```bash
+make profile-pca-quality-report
+```
+
 Common overrides:
 
 ```bash
@@ -162,6 +170,9 @@ make profile-pca-train-gp PROFILE_TIMES="1 2 3 4 5"
 
 # Different k and split for QC plots
 make profile-pca-qc PROFILE_K=6 PROFILE_QC_SPLIT=train
+
+# One representative CI-style subset
+make profile-pca-quality-report PROFILE_SUITES="const-vc ramped-vc" PROFILE_TIMES="3" PROFILE_K=8
 ```
 
 Notes:
@@ -174,6 +185,8 @@ Notes:
   - `src/emulator/data/<suite>/profileT_pca_t<time_label>Myr_k<K>/`
 - `profile-pca-qc` expects corresponding trained model artifacts under:
   - `src/emulator/models/<suite>/<dataset>/gp_m25/`
+- `profile-pca-quality-report` writes:
+  - `src/emulator/models/<suite>/<dataset>/gp_m25/profile_pca_quality.json`
 - Missing dataset/model folders are skipped with `[WARN]` messages.
 
 --------------------------------------------
@@ -337,6 +350,48 @@ python src/emulator/validate_emulator_quality.py \
   --json-out plots/qc-emulator/quality-gates/gp_m25_validation.json
 ```
 
+## Profile-PCA GP Quality Gates
+
+This section applies to the profile-PCA `gp_m25` workflow.
+
+The current representative threshold spec is:
+
+- `configs/profile-pca-quality.gp_m25.yaml`
+
+This initial gate covers the representative subset:
+
+- suites: `const-vc`, `ramped-vc`
+- dataset: `profileT_pca_t3Myr_k8`
+
+The profile-PCA quality report includes both:
+
+- score-space metrics on predicted PCA targets
+- reconstructed-profile metrics in temperature space
+
+Write the quality report JSON for an existing trained model:
+
+```bash
+python src/emulator/evaluate_profile_pca_quality.py \
+  --dataset-dir src/emulator/data/const-vc/profileT_pca_t3Myr_k8 \
+  --model-dir src/emulator/models/const-vc/profileT_pca_t3Myr_k8/gp_m25
+```
+
+Validate existing profile-PCA quality reports against thresholds:
+
+```bash
+make profile-pca-quality-check-gp-m25
+```
+
+Direct invocation:
+
+```bash
+python src/emulator/validate_profile_pca_quality.py \
+  --thresholds configs/profile-pca-quality.gp_m25.yaml \
+  --models-root src/emulator/models \
+  --suites const-vc,ramped-vc \
+  --datasets profileT_pca_t3Myr_k8
+```
+
 ## Definition Of Done
 
 A change affecting emulator training, data prep, or model quality is complete when all of the following are true:
@@ -344,13 +399,20 @@ A change affecting emulator training, data prep, or model quality is complete wh
 - Required checks pass:
   - `make test`
   - `make quality-check-gp-m25` (or CI-equivalent filtered scope)
+  - `make profile-pca-quality-check-gp-m25` when the change affects the profile-PCA workflow
 - PR CI quality gate passes for representative subset policy:
   - suites: `const-vc`, `ramped-vc`
   - datasets: `40km_dTdt`
   - gate command in CI: `make quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=40km_dTdt`
+  - profile-PCA representative subset:
+    - suites: `const-vc`, `ramped-vc`
+    - dataset: `profileT_pca_t3Myr_k8`
+    - gate command in CI:
+      `make profile-pca-quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=profileT_pca_t3Myr_k8`
 - Canonical artifacts are present in standard locations:
   - training reports: `src/emulator/models/<suite>/<dataset>/<model_tag>/report.json`
   - quality-gate summary (optional JSON): `plots/qc-emulator/quality-gates/gp_m25_validation.json`
+  - profile-PCA quality report: `src/emulator/models/<suite>/<dataset>/<model_tag>/profile_pca_quality.json`
   - emulator QC figures: `plots/qc-emulator/<suite>/`
   - numerical QC figures: `plots/qc-numerical-mods/<suite>/`
 
