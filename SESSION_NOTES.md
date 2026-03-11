@@ -487,3 +487,97 @@ Use this next time:
 3. Evaluate whether to trim/weight tail PCs (e.g., drop components with unstable val `R2`) and compare reconstruction impact.
 4. Add/lock `emulator-quality.profile-pca.yaml` thresholds and wire a `make` quality-check target for profile-PCA.
 5. Run/record the same baseline for whitened variants if they remain candidates (`*_wht`, `*_wht_id`), otherwise de-scope.
+
+---
+
+## Update (2026-03-11, profile-PCA defaults + GP tuning + repo cleanup)
+
+### What Was Added/Changed
+
+- Profile-PCA workflow was brought up to parity with the single-depth workflow:
+  - added profile-PCA smoke tests
+  - added synthetic preprocess tests
+  - added profile-PCA quality report generation
+  - added profile-PCA quality validation against thresholds
+- Added profile-PCA model-selection tooling:
+  - PCA representation sweep over `k` and `score_space`
+  - summary-table generation for sweep results
+- Added profile-PCA GP tuning tooling on the chosen PCA representation:
+  - resumable sweep runner
+  - summary-table generation for GP tuning results
+- Refactored emulator scripts into grouped directories:
+  - `src/emulator/single_depth/`
+  - `src/emulator/profile_pca/`
+  - `src/emulator/legacy/`
+- Removed transitional flat wrappers after updating references.
+- Added repo orientation docs:
+  - `docs/repo-map.md`
+- Added `.gitignore` coverage so generated profile-PCA datasets/models/sweep outputs stay local-only by default.
+
+### Decisions Made
+
+- Default profile-PCA setup is now:
+  - target time: `t3Myr`
+  - retained components: `k=10`
+  - score space: `whitened`
+- CI policy was trimmed to stay practical:
+  - `test` remains routine
+  - single-depth quality gate remains routine
+  - profile-PCA quality gate is manual-only (`workflow_dispatch`)
+  - profile-PCA CI representative subset is `ramped-vc` only
+- Keep generated analysis artifacts local/untracked unless there is a specific reason to version them.
+
+### Sweep Result Summary
+
+- PCA representation sweep favored `k=10`, `whitened` overall.
+- `ramped-vc` had the clearest preference for `k=10`.
+- `const-vc` differences between `k=8` and `k=10` were very small, but `k=10_whitened` remained a defensible shared default.
+- `raw` vs `whitened` changed score-space metrics strongly, but only weakly changed reconstruction-space metrics.
+- Ranking policy used:
+  1. `val_profile_rmse`
+  2. `val_profile_p95_rmse`
+
+### Current GP Tuning Status
+
+- Added `make profile-pca-gp-tuning-sweep`
+- Added `make profile-pca-gp-tuning-summary`
+- Default tuning target is:
+  - suite: `ramped-vc`
+  - dataset: `profileT_pca_t3Myr_k10_whitened`
+- Default GP tuning grid:
+  - kernels: `matern25`, `matern15`, `rbf`
+  - restarts: `10`, `25`
+  - length-scale upper bounds: `1e3`, `1e4`
+  - noise lower bounds: `1e-6`, `1e-8`
+- The tuning sweep is resumable:
+  - completed tags with `profile_pca_quality.json` are skipped on rerun
+  - use the same command again to continue an interrupted run
+
+### Important Repo State Notes
+
+- The emulator tree is now organized by workflow, but `Makefile`, `README.md`, and `docs/repo-map.md` should be checked again next session after a fresh restart to make sure all wording and references still feel clean after the refactor.
+- Generated artifacts were accidentally staged once during cleanup and then explicitly removed from tracking in a follow-up commit; local files were kept on disk.
+
+### Recent Commits (latest first)
+
+- `b6958f3` chore: ignore generated profile PCA artifacts
+- `77002ab` refactor: remove transitional emulator wrappers
+- `63e2be1` refactor: group emulator workflows by role
+- `97169ad` docs: clarify repo map and legacy helpers
+- `7ba6d26` feat: resume profile PCA GP tuning sweep
+- `4f532fb` feat: add profile PCA GP tuning sweep
+
+### Next Session TODO
+
+1. Resume the interrupted GP tuning sweep:
+   - `make profile-pca-gp-tuning-sweep`
+2. Summarize GP tuning results:
+   - `make profile-pca-gp-tuning-summary`
+3. Decide whether GP defaults should change from the current baseline based on:
+   - `val_profile_rmse`
+   - `val_profile_p95_rmse`
+4. Re-check `Makefile`, `README.md`, and `docs/repo-map.md` after the refactor and tighten any remaining naming/workflow wording if needed.
+5. After GP tuning is settled, shift from infrastructure work to science-facing use:
+   - sensitivity analysis
+   - talk figures / summary plots
+   - future Bayesian-inference framing
