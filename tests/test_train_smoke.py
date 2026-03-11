@@ -169,6 +169,34 @@ class TrainConfigSmokeTests(unittest.TestCase):
         self.assertIn("profileT_pca_t0p5Myr_k8", proc.stdout)
         self.assertIn("[OK] dry-run complete.", proc.stdout)
 
+    def test_cli_dry_run_profile_pca_sweep(self) -> None:
+        # The sweep runner is just orchestration, so a dry-run test is the
+        # right level here: it validates dataset naming, command construction,
+        # and step ordering without launching an expensive real sweep.
+        proc = subprocess.run(
+            [
+                sys.executable,
+                "src/emulator/run_profile_pca_sweep.py",
+                "--suites",
+                "const-vc",
+                "--times",
+                "3",
+                "--ks",
+                "4",
+                "--score-spaces",
+                "raw,whitened",
+                "--dry-run",
+            ],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(0, proc.returncode, msg=proc.stdout + "\n" + proc.stderr)
+        self.assertIn("profileT_pca_t3Myr_k4_raw", proc.stdout)
+        self.assertIn("profileT_pca_t3Myr_k4_whitened", proc.stdout)
+        self.assertIn("[OK] dry-run complete.", proc.stdout)
+
     def test_invalid_dataset_mode_raises(self) -> None:
         with self.assertRaisesRegex(ValueError, "dataset.mode must be 'auto', 'list', or 'profile-pca'."):
             train._discover_datasets(

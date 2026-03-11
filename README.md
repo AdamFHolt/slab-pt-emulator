@@ -159,6 +159,25 @@ Compute score-space and reconstructed-profile quality metrics for all default ti
 make profile-pca-quality-report
 ```
 
+### Optional: Profile-PCA Sweep And Ranked Summary Tables
+
+Run the first profile-PCA model-selection sweep with fixed `gp_m25` settings:
+
+```bash
+make profile-pca-sweep PROFILE_SUITES="const-vc ramped-vc" PROFILE_TIMES="3" PROFILE_SWEEP_KS="4 6 8 10" PROFILE_SWEEP_SCORE_SPACES="raw whitened"
+```
+
+Write ranked summary tables from existing sweep reports:
+
+```bash
+make profile-pca-sweep-summary PROFILE_SUITES="const-vc ramped-vc" PROFILE_SWEEP_DATASET_PATTERN="profileT_pca_t3Myr"
+```
+
+Ranking policy in the summary tables:
+
+- primary sort: validation profile RMSE
+- tie-breaker: validation profile p95 RMSE
+
 Common overrides:
 
 ```bash
@@ -173,11 +192,17 @@ make profile-pca-qc PROFILE_K=6 PROFILE_QC_SPLIT=train
 
 # One representative CI-style subset
 make profile-pca-quality-report PROFILE_SUITES="const-vc ramped-vc" PROFILE_TIMES="3" PROFILE_K=8
+
+# Sweep summary for t3Myr only
+make profile-pca-sweep-summary PROFILE_SWEEP_DATASET_PATTERN="profileT_pca_t3Myr"
 ```
 
 Notes:
 
 - Dataset names are generated as `profileT_pca_t<time_label>Myr_k<K>` (e.g., `t0p5Myr`, `t3Myr`, `t5Myr`).
+- Sweep dataset names include score-space to avoid collisions:
+  - `profileT_pca_t3Myr_k8_raw`
+  - `profileT_pca_t3Myr_k8_whitened`
 - Training configs for this workflow are separate from the standard depth-based GP configs:
   - `configs/gp.const-vc.profile-pca.yaml`
   - `configs/gp.ramped-vc.profile-pca.yaml`
@@ -187,6 +212,8 @@ Notes:
   - `src/emulator/models/<suite>/<dataset>/gp_m25/`
 - `profile-pca-quality-report` writes:
   - `src/emulator/models/<suite>/<dataset>/gp_m25/profile_pca_quality.json`
+- `profile-pca-sweep-summary` writes ranked CSV/Markdown tables under:
+  - `plots/qc-emulator/profile-pca-sweep/`
 - Missing dataset/model folders are skipped with `[WARN]` messages.
 
 --------------------------------------------

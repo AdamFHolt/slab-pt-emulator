@@ -3,7 +3,8 @@ SHELL := /bin/bash
 .PHONY: help setup test train-gp-const train-gp-ramped train-rf-const train-rf-ramped \
         train-gp-const-dry train-gp-ramped-dry qc-num-const qc-num-ramped quality-check-gp-m25 \
         env-status env-ensure env-doctor profile-pca-preprocess profile-pca-train-gp profile-pca-qc \
-        profile-pca-quality-report profile-pca-quality-check-gp-m25
+        profile-pca-quality-report profile-pca-quality-check-gp-m25 \
+        profile-pca-sweep profile-pca-sweep-summary
 
 help:
 	@echo "Targets:"
@@ -26,6 +27,8 @@ help:
 	@echo "  profile-pca-qc      - generate profile-PCA QC plots for PROFILE_TIMES"
 	@echo "  profile-pca-quality-report - write profile-PCA quality JSON reports for PROFILE_TIMES"
 	@echo "  profile-pca-quality-check-gp-m25 - validate profile-PCA gp_m25 quality reports (optional QUALITY_SUITES/QUALITY_DATASETS filters)"
+	@echo "  profile-pca-sweep   - run profile-PCA sweep over PROFILE_SWEEP_KS and PROFILE_SWEEP_SCORE_SPACES"
+	@echo "  profile-pca-sweep-summary - write ranked summary tables for profile-PCA sweep results"
 
 setup:
 	python3 -m venv env
@@ -84,6 +87,9 @@ PROFILE_K ?= 8
 PROFILE_SCORE_SPACE ?= raw
 PROFILE_QC_SPLIT ?= val
 PROFILE_MODEL_TAG ?= gp_m25
+PROFILE_SWEEP_KS ?= 4 6 8 10
+PROFILE_SWEEP_SCORE_SPACES ?= raw whitened
+PROFILE_SWEEP_DATASET_PATTERN ?= profileT_pca_t3Myr
 
 profile-pca-preprocess:
 	@set -euo pipefail; \
@@ -179,3 +185,16 @@ profile-pca-quality-check-gp-m25:
 		--models-root src/emulator/models \
 		$(if $(QUALITY_SUITES),--suites $(QUALITY_SUITES),) \
 		$(if $(QUALITY_DATASETS),--datasets $(QUALITY_DATASETS),)
+
+profile-pca-sweep:
+	python3 src/emulator/run_profile_pca_sweep.py \
+		--suites "$(PROFILE_SUITES)" \
+		--times "$(PROFILE_TIMES)" \
+		--ks "$(PROFILE_SWEEP_KS)" \
+		--score-spaces "$(PROFILE_SWEEP_SCORE_SPACES)"
+
+profile-pca-sweep-summary:
+	python3 src/emulator/summarize_profile_pca_sweep.py \
+		--models-root src/emulator/models \
+		--suites "$(PROFILE_SUITES)" \
+		--dataset-pattern "$(PROFILE_SWEEP_DATASET_PATTERN)"
