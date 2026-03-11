@@ -182,6 +182,41 @@ Ranking policy in the summary tables:
 - primary sort: validation profile RMSE
 - tie-breaker: validation profile p95 RMSE
 
+### Optional: GP Tuning Sweep On The Chosen PCA Representation
+
+After choosing a profile-PCA representation, you can run a second-stage sweep
+that keeps the dataset fixed and varies only GP settings.
+
+The current default tuning target is:
+
+- suite: `ramped-vc`
+- dataset: `profileT_pca_t3Myr_k10_whitened`
+
+Run the GP tuning sweep:
+
+```bash
+make profile-pca-gp-tuning-sweep
+```
+
+Write ranked summary tables from existing GP tuning reports:
+
+```bash
+make profile-pca-gp-tuning-summary
+```
+
+Default GP tuning grid:
+
+- kernels: `matern25`, `matern15`, `rbf`
+- restart counts: `10`, `25`
+- length-scale upper bounds: `1e3`, `1e4`
+- noise lower bounds: `1e-6`, `1e-8`
+
+Ranking policy in the GP tuning summary tables:
+
+- primary sort: validation profile RMSE
+- tie-breaker: validation profile p95 RMSE
+- second tie-breaker: validation score RMSE
+
 Common overrides:
 
 ```bash
@@ -199,6 +234,9 @@ make profile-pca-quality-report PROFILE_SUITES="const-vc ramped-vc" PROFILE_TIME
 
 # Sweep summary for t3Myr only
 make profile-pca-sweep-summary PROFILE_SWEEP_DATASET_PATTERN="profileT_pca_t3Myr"
+
+# GP tuning sweep on the chosen ramped-vc default dataset
+make profile-pca-gp-tuning-sweep PROFILE_GP_TUNING_KERNELS="matern25 rbf" PROFILE_GP_TUNING_RESTARTS="10 25"
 ```
 
 Notes:
@@ -219,6 +257,10 @@ Notes:
   - `src/emulator/models/<suite>/<dataset>/gp_m25/profile_pca_quality.json`
 - `profile-pca-sweep-summary` writes ranked CSV/Markdown tables under:
   - `plots/qc-emulator/profile-pca-sweep/`
+- `profile-pca-gp-tuning-sweep` copies each trained model into:
+  - `src/emulator/models/profile-pca-gp-sweep/<suite>/<dataset>/<tag>/`
+- `profile-pca-gp-tuning-summary` writes ranked CSV/Markdown tables under:
+  - `plots/qc-emulator/profile-pca-gp-sweep/`
 - Missing dataset/model folders are skipped with `[WARN]` messages.
 
 --------------------------------------------

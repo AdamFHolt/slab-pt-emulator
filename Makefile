@@ -4,7 +4,8 @@ SHELL := /bin/bash
         train-gp-const-dry train-gp-ramped-dry qc-num-const qc-num-ramped quality-check-gp-m25 \
         env-status env-ensure env-doctor profile-pca-preprocess profile-pca-train-gp profile-pca-qc \
         profile-pca-quality-report profile-pca-quality-check-gp-m25 \
-        profile-pca-sweep profile-pca-sweep-summary
+        profile-pca-sweep profile-pca-sweep-summary \
+        profile-pca-gp-tuning-sweep profile-pca-gp-tuning-summary
 
 help:
 	@echo "Targets:"
@@ -29,6 +30,8 @@ help:
 	@echo "  profile-pca-quality-check-gp-m25 - validate profile-PCA gp_m25 quality reports (optional QUALITY_SUITES/QUALITY_DATASETS filters)"
 	@echo "  profile-pca-sweep   - run profile-PCA sweep over PROFILE_SWEEP_KS and PROFILE_SWEEP_SCORE_SPACES"
 	@echo "  profile-pca-sweep-summary - write ranked summary tables for profile-PCA sweep results"
+	@echo "  profile-pca-gp-tuning-sweep - run GP tuning sweep on fixed profile-PCA datasets"
+	@echo "  profile-pca-gp-tuning-summary - write ranked summary tables for GP tuning sweep results"
 
 setup:
 	python3 -m venv env
@@ -90,6 +93,13 @@ PROFILE_MODEL_TAG ?= gp_m25
 PROFILE_SWEEP_KS ?= 4 6 8 10
 PROFILE_SWEEP_SCORE_SPACES ?= raw whitened
 PROFILE_SWEEP_DATASET_PATTERN ?= profileT_pca_t3Myr
+PROFILE_GP_TUNING_SUITES ?= ramped-vc
+PROFILE_GP_TUNING_DATASETS ?= profileT_pca_t3Myr_k10_whitened
+PROFILE_GP_TUNING_KERNELS ?= matern25 matern15 rbf
+PROFILE_GP_TUNING_RESTARTS ?= 10 25
+PROFILE_GP_TUNING_LS_HIGHS ?= 1e3 1e4
+PROFILE_GP_TUNING_NOISE_LOWS ?= 1e-6 1e-8
+PROFILE_GP_TUNING_DATASET_PATTERN ?= profileT_pca_t3Myr_k10_whitened
 
 profile-pca-preprocess:
 	@set -euo pipefail; \
@@ -198,3 +208,18 @@ profile-pca-sweep-summary:
 		--models-root src/emulator/models \
 		--suites "$(PROFILE_SUITES)" \
 		--dataset-pattern "$(PROFILE_SWEEP_DATASET_PATTERN)"
+
+profile-pca-gp-tuning-sweep:
+	python3 src/emulator/run_profile_pca_gp_tuning_sweep.py \
+		--suites "$(PROFILE_GP_TUNING_SUITES)" \
+		--datasets "$(PROFILE_GP_TUNING_DATASETS)" \
+		--kernels "$(PROFILE_GP_TUNING_KERNELS)" \
+		--restarts "$(PROFILE_GP_TUNING_RESTARTS)" \
+		--ls-highs "$(PROFILE_GP_TUNING_LS_HIGHS)" \
+		--noise-lows "$(PROFILE_GP_TUNING_NOISE_LOWS)"
+
+profile-pca-gp-tuning-summary:
+	python3 src/emulator/summarize_profile_pca_gp_tuning_sweep.py \
+		--sweep-root src/emulator/models/profile-pca-gp-sweep \
+		--suites "$(PROFILE_GP_TUNING_SUITES)" \
+		--dataset-pattern "$(PROFILE_GP_TUNING_DATASET_PATTERN)"

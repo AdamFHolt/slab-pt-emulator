@@ -197,6 +197,40 @@ class TrainConfigSmokeTests(unittest.TestCase):
         self.assertIn("profileT_pca_t3Myr_k4_whitened", proc.stdout)
         self.assertIn("[OK] dry-run complete.", proc.stdout)
 
+    def test_cli_dry_run_profile_pca_gp_tuning_sweep(self) -> None:
+        # This second-stage sweep keeps the PCA representation fixed and varies
+        # only GP settings. A dry-run is enough to lock down the expected job
+        # matrix, model-tag naming, and the fact that train/evaluate commands
+        # are built against the chosen profile-PCA dataset.
+        proc = subprocess.run(
+            [
+                sys.executable,
+                "src/emulator/run_profile_pca_gp_tuning_sweep.py",
+                "--suites",
+                "ramped-vc",
+                "--datasets",
+                "profileT_pca_t3Myr_k10_whitened",
+                "--kernels",
+                "matern25,rbf",
+                "--restarts",
+                "10",
+                "--ls-highs",
+                "1e3",
+                "--noise-lows",
+                "1e-6,1e-8",
+                "--dry-run",
+            ],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(0, proc.returncode, msg=proc.stdout + "\n" + proc.stderr)
+        self.assertIn("profileT_pca_t3Myr_k10_whitened", proc.stdout)
+        self.assertIn("gp_matern25_r10_lsu1e3_nlow1e-6", proc.stdout)
+        self.assertIn("gp_rbf_r10_lsu1e3_nlow1e-8", proc.stdout)
+        self.assertIn("[OK] dry-run complete.", proc.stdout)
+
     def test_invalid_dataset_mode_raises(self) -> None:
         with self.assertRaisesRegex(ValueError, "dataset.mode must be 'auto', 'list', or 'profile-pca'."):
             train._discover_datasets(
