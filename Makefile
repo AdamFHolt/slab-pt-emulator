@@ -149,16 +149,16 @@ profile-pca-qc:
 			mkdir -p "$$outdir"; \
 			prefix="$$outdir/$${dname}"; \
 			echo "[RUN] qc suite=$$suite dataset=$$dname split=$(PROFILE_QC_SPLIT)"; \
-			python3 src/emulator/plot_profile_pca_reconstruction.py \
+			python3 src/emulator/profile_pca/plot_profile_pca_reconstruction.py \
 				--dataset-dir "$$ds" \
 				--split "$(PROFILE_QC_SPLIT)" \
 				--out "$${prefix}_true-vs-recon.png"; \
-			python3 src/emulator/plot_profile_pca_emulator_reconstruction.py \
+			python3 src/emulator/profile_pca/plot_profile_pca_emulator_reconstruction.py \
 				--dataset-dir "$$ds" \
 				--model-dir "$$md" \
 				--split "$(PROFILE_QC_SPLIT)" \
 				--out "$${prefix}_raw-vs-pca-vs-emu.png"; \
-			python3 src/emulator/plot_profile_pca_score_diagnostics.py \
+			python3 src/emulator/profile_pca/plot_profile_pca_score_diagnostics.py \
 				--dataset-dir "$$ds" \
 				--model-dir "$$md" \
 				--split "$(PROFILE_QC_SPLIT)" \
