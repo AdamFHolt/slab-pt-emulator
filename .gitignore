@@ -22,3 +22,10 @@ src/build-numerical-mods/*.orig.py
 *.nc
 *.csv
 *.txt
+
+# Generated profile-PCA analysis artifacts
+src/emulator/data/*/profileT_pca_t*Myr*/
+src/emulator/models/*/profileT_pca_t*Myr*/
+src/emulator/models/profile-pca-gp-sweep/
+plots/qc-emulator/profile-pca-sweep/
+plots/qc-emulator/profile-pca-gp-sweep/
