@@ -125,6 +125,60 @@ python train.py --config configs/gp.const-vc.yaml --dry-run
 python train.py --config configs/gp.const-vc.yaml --datasets 10km_dTdt,20km_dTdt
 ```
 
+## Profile-PCA Multi-Time Workflow
+
+The Makefile includes profile-PCA workflow targets that run across multiple target times.
+
+Default time set:
+
+- `0.5, 1, 2, 3, 4, 5 Myr`
+
+Default suites:
+
+- `const-vc`, `ramped-vc`
+
+Default PCA components:
+
+- `k=8`
+
+Run preprocess for all default times/suites:
+
+```bash
+make profile-pca-preprocess
+```
+
+Run GP training for all default times/suites:
+
+```bash
+make profile-pca-train-gp
+```
+
+Run profile-PCA QC plots for all default times/suites:
+
+```bash
+make profile-pca-qc
+```
+
+Common overrides:
+
+```bash
+# One suite only
+make profile-pca-preprocess PROFILE_SUITES="const-vc"
+
+# Explicit time subset (example: 1..5 Myr)
+make profile-pca-train-gp PROFILE_TIMES="1 2 3 4 5"
+
+# Different k and split for QC plots
+make profile-pca-qc PROFILE_K=6 PROFILE_QC_SPLIT=train
+```
+
+Notes:
+
+- Dataset names are generated as `profileT_pca_t<time_label>Myr_k<K>` (e.g., `t0p5Myr`, `t3Myr`, `t5Myr`).
+- `profile-pca-qc` expects corresponding trained model artifacts under:
+  - `src/emulator/models/<suite>/<dataset>/gp_m25/`
+- Missing dataset/model folders are skipped with `[WARN]` messages.
+
 ## From Scratch (Generalized For Either Suite)
 
 Set suite once:

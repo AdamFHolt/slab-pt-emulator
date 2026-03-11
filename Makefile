@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .PHONY: help setup test train-gp-const train-gp-ramped train-rf-const train-rf-ramped \
         train-gp-const-dry train-gp-ramped-dry qc-num-const qc-num-ramped quality-check-gp-m25 \
-        env-status env-ensure env-doctor
+        env-status env-ensure env-doctor profile-pca-preprocess profile-pca-train-gp profile-pca-qc
 
 help:
 	@echo "Targets:"
@@ -20,6 +20,9 @@ help:
 	@echo "  env-status          - show active python/pip/env context"
 	@echo "  env-ensure          - create env (venv or virtualenv fallback) and install deps"
 	@echo "  env-doctor          - verify core Python imports"
+	@echo "  profile-pca-preprocess - build profile-PCA datasets for PROFILE_TIMES (default: 0.5 1 2 3 4 5)"
+	@echo "  profile-pca-train-gp - train GP profile-PCA models for PROFILE_TIMES"
+	@echo "  profile-pca-qc      - generate profile-PCA QC plots for PROFILE_TIMES"
 
 setup:
 	python3 -m venv env
@@ -68,3 +71,77 @@ env-ensure:
 
 env-doctor:
 	./dev-env.sh doctor
+
+# Profile-PCA workflow knobs (override at runtime as needed).
+# Example:
+#   make profile-pca-preprocess PROFILE_SUITES="const-vc" PROFILE_TIMES="1 2 3 4 5" PROFILE_K=8
+PROFILE_SUITES ?= const-vc ramped-vc
+PROFILE_TIMES ?= 0.5 1 2 3 4 5
+PROFILE_K ?= 8
+PROFILE_SCORE_SPACE ?= raw
+PROFILE_QC_SPLIT ?= val
+
+profile-pca-preprocess:
+	@set -euo pipefail; \
+	for suite in $(PROFILE_SUITES); do \
+		for t in $(PROFILE_TIMES); do \
+			tlabel="$$(echo "$$t" | sed 's/\./p/g')"; \
+			dname="profileT_pca_t$${tlabel}Myr_k$(PROFILE_K)"; \
+			echo "[RUN] preprocess suite=$$suite time=$$t dataset=$$dname"; \
+			python3 src/emulator/preprocess_profile_pca.py \
+				--suite "$$suite" \
+				--target-time-myr "$$t" \
+				--k "$(PROFILE_K)" \
+				--score-space "$(PROFILE_SCORE_SPACE)" \
+				--dataset-name "$$dname"; \
+		done; \
+	done
+
+profile-pca-train-gp:
+	@set -euo pipefail; \
+	for suite in $(PROFILE_SUITES); do \
+		cfg="configs/gp.$${suite}.profile-pca.yaml"; \
+		for t in $(PROFILE_TIMES); do \
+			tlabel="$$(echo "$$t" | sed 's/\./p/g')"; \
+			dname="profileT_pca_t$${tlabel}Myr_k$(PROFILE_K)"; \
+			echo "[RUN] train suite=$$suite dataset=$$dname"; \
+			python3 train.py --config "$$cfg" --datasets "$$dname"; \
+		done; \
+	done
+
+profile-pca-qc:
+	@set -euo pipefail; \
+	for suite in $(PROFILE_SUITES); do \
+		for t in $(PROFILE_TIMES); do \
+			tlabel="$$(echo "$$t" | sed 's/\./p/g')"; \
+			dname="profileT_pca_t$${tlabel}Myr_k$(PROFILE_K)"; \
+			ds="src/emulator/data/$${suite}/$${dname}"; \
+			md="src/emulator/models/$${suite}/$${dname}/gp_m25"; \
+			outdir="plots/qc-emulator/$${suite}/profile-pca"; \
+			if [ ! -d "$$ds" ]; then \
+				echo "[WARN] skip missing dataset $$ds"; \
+				continue; \
+			fi; \
+			if [ ! -d "$$md" ]; then \
+				echo "[WARN] skip missing model $$md"; \
+				continue; \
+			fi; \
+			mkdir -p "$$outdir"; \
+			prefix="$$outdir/$${dname}"; \
+			echo "[RUN] qc suite=$$suite dataset=$$dname split=$(PROFILE_QC_SPLIT)"; \
+			python3 src/emulator/plot_profile_pca_reconstruction.py \
+				--dataset-dir "$$ds" \
+				--split "$(PROFILE_QC_SPLIT)" \
+				--out "$${prefix}_true-vs-recon.png"; \
+			python3 src/emulator/plot_profile_pca_emulator_reconstruction.py \
+				--dataset-dir "$$ds" \
+				--model-dir "$$md" \
+				--split "$(PROFILE_QC_SPLIT)" \
+				--out "$${prefix}_raw-vs-pca-vs-emu.png"; \
+			python3 src/emulator/plot_profile_pca_score_diagnostics.py \
+				--dataset-dir "$$ds" \
+				--model-dir "$$md" \
+				--split "$(PROFILE_QC_SPLIT)" \
+				--out-prefix "$$prefix"; \
+		done; \
+	done
