@@ -361,7 +361,7 @@ Outputs under:
 
 ```bash
 cd src/emulator
-./preprocess_all_training.sh "${SUITE}"
+./legacy/preprocess_all_training.sh "${SUITE}"
 cd ../..
 ```
 
@@ -509,11 +509,11 @@ A change affecting emulator training, data prep, or model quality is complete wh
   - suites: `const-vc`, `ramped-vc`
   - datasets: `40km_dTdt`
   - gate command in CI: `make quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=40km_dTdt`
-  - profile-PCA representative subset:
-    - suites: `ramped-vc`
-    - dataset: `profileT_pca_t3Myr_k10`
-    - gate command in CI:
-      `make profile-pca-quality-check-gp-m25 QUALITY_SUITES=ramped-vc QUALITY_DATASETS=profileT_pca_t3Myr_k10`
+- Profile-PCA representative subset is available as a manual CI gate:
+  - suites: `ramped-vc`
+  - dataset: `profileT_pca_t3Myr_k10`
+  - manual gate command in CI:
+    `make profile-pca-quality-check-gp-m25 QUALITY_SUITES=ramped-vc QUALITY_DATASETS=profileT_pca_t3Myr_k10`
 - Canonical artifacts are present in standard locations:
   - single-depth training reports: `src/emulator/models/single_depth/<suite>/runs/<dataset>/<model_tag>/report.json`
   - quality-gate summary (optional JSON): `plots/qc-emulator/quality-gates/gp_m25_validation.json`
