@@ -403,6 +403,12 @@ Outputs under:
 - `src/emulator/models/single_depth/${SUITE}/param_sweep/40km_dTdt_thermalParam/`
 - `plots/qc-emulator/single_depth/${SUITE}/param-sweep/40km_dTdt_thermalParam/`
 
+To regenerate the standard comparison set for both suites:
+
+```bash
+bash src/emulator/single_depth/make_param_sweep_plots.sh
+```
+
 ----------------------
 Tests And CI Policy
 ----------------------
