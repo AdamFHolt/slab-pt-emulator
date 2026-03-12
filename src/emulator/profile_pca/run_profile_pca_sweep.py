@@ -147,7 +147,7 @@ def main() -> int:
                     "--noise-init",
                     "0.003",
                     "--noise-bounds",
-                    "1e-06",
+                    "1e-08",
                     "1.0",
                     "--alpha",
                     "1e-06",

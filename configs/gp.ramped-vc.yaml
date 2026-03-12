@@ -30,7 +30,7 @@ model:
   ls_init: 1.0
   ls_bounds: [1e-3, 1e3]
   noise_init: 3e-3
-  noise_bounds: [1e-6, 1.0]
+  noise_bounds: [1e-8, 1.0]
   alpha: 1e-6
 
 execution:
