@@ -17,7 +17,7 @@ Usage:
         --params ../../data/params-list.csv \
         --master ../../subd-model-runs/run-outputs/analysis/master_25km_DT1-6.csv \
         --targets dTdt_C_per_Myr \
-        --outdir src/emulator/data
+        --outdir src/emulator/data/single_depth
 """
 
 from __future__ import annotations
@@ -169,7 +169,7 @@ def main():
                         help="Include thermal parameter as a feature.")
     parser.add_argument("--add-eta-ratio", action="store_true",
                         help="Include interface viscosity ratio as a feature.")
-    parser.add_argument("--outdir", default=str(THIS_FILE.parent.parent / "data"),
+    parser.add_argument("--outdir", default=str(THIS_FILE.parent.parent / "data" / "single_depth"),
                         help="Output directory for npy/json artifacts.")
     parser.add_argument("--val-frac", type=float, default=0.15,
                         help="Validation fraction (0–1).")

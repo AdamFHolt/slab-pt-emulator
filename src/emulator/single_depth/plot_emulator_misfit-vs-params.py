@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-PLOTS_DIR_DEFAULT = Path("/home/holt/Projects/SlabPT-emulator/plots/qc-emulator")
+PLOTS_DIR_DEFAULT = Path("/home/holt/Projects/SlabPT-emulator/plots/qc-emulator/single_depth")
 
 # Params we want to display on a log-x axis (raw values)
 LOGX_PARAMS = {"eta_int", "eta_UM", "eps_trans"}
@@ -118,8 +118,8 @@ def load_bundle(data_root: Path, models_root: Path, suite: str, name: str, algo:
     """
     Load Y_true and predictions, plus metadata and model dir.
     """
-    data_path = data_root / suite / name
-    model_path = models_root / suite / name / algo
+    data_path = data_root / suite / "runs" / name
+    model_path = models_root / suite / "runs" / name / algo
 
     meta = _load_json(data_path / "metadata.json")
 
@@ -281,9 +281,9 @@ def plot_one_dataset(
 def main():
     p = argparse.ArgumentParser(description="Plot emulator misfit vs feature columns (Train & Val).")
 
-    p.add_argument("--data-root", default=str(Path(__file__).parent.parent / "data"),
+    p.add_argument("--data-root", default=str(Path(__file__).parent.parent / "data" / "single_depth"),
                    help="Root containing suite folders (e.g., ./data)")
-    p.add_argument("--models-root", default=str(Path(__file__).parent.parent / "models"),
+    p.add_argument("--models-root", default=str(Path(__file__).parent.parent / "models" / "single_depth"),
                    help="Root containing suite folders (e.g., ./models)")
 
     p.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc"])
@@ -309,7 +309,7 @@ def main():
 
     data_root = Path(args.data_root).resolve()
     models_root = Path(args.models_root).resolve()
-    suite_dir = data_root / args.suite
+    suite_dir = data_root / args.suite / "runs"
 
     if not suite_dir.exists():
         raise SystemExit(f"[ERR] Suite data directory not found: {suite_dir}")

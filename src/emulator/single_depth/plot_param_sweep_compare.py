@@ -4,7 +4,7 @@ Compare param-sweep model fits (GP/RF variants) for ONE dataset (depth + variant
 using metrics in report.json, and make quick comparison plots + a CSV table.
 
 Expected layout (your example):
-  models/param-sweep/<suite>/<data_name>/<run_tag>/report.json
+  src/emulator/models/single_depth/param-sweep/<suite>/<data_name>/<run_tag>/report.json
 
 Outputs (default):
   /home/holt/Projects/SlabPT-emulator/plots/qc-emulator/<suite>/param-sweep/<data_name>/
@@ -35,7 +35,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-PLOTS_DIR_DEFAULT = Path("/home/holt/Projects/SlabPT-emulator/plots/qc-emulator")
+PLOTS_DIR_DEFAULT = Path("/home/holt/Projects/SlabPT-emulator/plots/qc-emulator/single_depth")
 
 
 # -------------------------- helpers
@@ -170,8 +170,8 @@ def main():
     p.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc"])
     p.add_argument("--data-name", required=True,
                    help="Dataset folder name, e.g. 40km_dTdt or 40km_dTdt_thermalParam")
-    p.add_argument("--sweep-root", default=str(Path("models/param-sweep")),
-                   help="Root for sweep models (default: models/param-sweep)")
+    p.add_argument("--sweep-root", default=str(Path("src/emulator/models/single_depth")),
+                   help="Root for sweep models (default: src/emulator/models/single_depth)")
     p.add_argument("--outdir", default=str(PLOTS_DIR_DEFAULT),
                    help=f"Base plots directory (default: {PLOTS_DIR_DEFAULT})")
 
@@ -186,7 +186,7 @@ def main():
     suite = args.suite
     data_name = args.data_name
     sweep_root = Path(args.sweep_root).resolve()
-    dataset_dir = sweep_root / suite / data_name
+    dataset_dir = sweep_root / suite / "param_sweep" / data_name
 
     runs = _discover_runs(dataset_dir)
     if not runs:

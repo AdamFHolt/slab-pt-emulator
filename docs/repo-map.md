@@ -28,6 +28,16 @@ This file is a short orientation guide for the repository.
 
 ### 2. Standard Single-Depth Emulator Workflow
 
+Grouped under `src/emulator/single_depth/` plus the shared trainer in
+`src/emulator/train_emulator.py`.
+
+Default QC figure outputs now live under:
+- `plots/qc-emulator/single_depth/<suite>/`
+Default datasets/models live under:
+- `src/emulator/data/single_depth/<suite>/runs/`
+- `src/emulator/models/single_depth/<suite>/runs/`
+- `src/emulator/models/single_depth/<suite>/param_sweep/`
+
 - `src/emulator/single_depth/preprocess_single_depth_training.py`
   - build one single-depth training dataset
 - `src/emulator/train_emulator.py`
@@ -40,6 +50,18 @@ This file is a short orientation guide for the repository.
 - `configs/rf.ramped-vc.yaml`
 
 ### 3. Profile-PCA Emulator Workflow
+
+Grouped under `src/emulator/profile_pca/` plus the shared trainer in
+`src/emulator/train_emulator.py`.
+
+Default QC figure outputs live under:
+- `plots/qc-emulator/<suite>/profile-pca/`
+Default datasets/models live under:
+- `src/emulator/data/profile_pca/<suite>/runs/`
+- `src/emulator/data/profile_pca/<suite>/pca_sweep/`
+- `src/emulator/models/profile_pca/<suite>/runs/`
+- `src/emulator/models/profile_pca/<suite>/pca_sweep/`
+- `src/emulator/models/profile_pca/<suite>/gp_tuning/`
 
 - `src/emulator/profile_pca/preprocess_profile_pca.py`
   - build profile-PCA datasets
@@ -58,7 +80,7 @@ This file is a short orientation guide for the repository.
 
 These scripts are still tracked for reference, but they are not the preferred
 entrypoints for routine work now that the repo uses `Makefile` targets and
-config-driven training:
+config-driven training. They now live under `src/emulator/legacy/`:
 
 - `src/emulator/legacy/preprocess_all_training.sh`
 - `src/emulator/legacy/train_all_depths.sh`

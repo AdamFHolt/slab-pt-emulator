@@ -78,8 +78,8 @@ def main() -> int:
     ap.add_argument("--thresholds", required=True, help="YAML threshold config.")
     ap.add_argument(
         "--models-root",
-        default="src/emulator/models",
-        help="Root directory containing suite/dataset/model_tag/profile_pca_quality.json",
+        default="src/emulator/models/profile_pca",
+        help="Root directory containing suite/runs/dataset/model_tag/profile_pca_quality.json",
     )
     ap.add_argument(
         "--model-tag",
@@ -129,7 +129,7 @@ def main() -> int:
             if not isinstance(limits, dict):
                 raise ValueError(f"thresholds.{suite}.{dataset_name} must be a mapping.")
 
-            report_path = models_root / suite / dataset_name / model_tag / "profile_pca_quality.json"
+            report_path = models_root / suite / "runs" / dataset_name / model_tag / "profile_pca_quality.json"
             if not report_path.exists():
                 missing += 1
                 rows.append(

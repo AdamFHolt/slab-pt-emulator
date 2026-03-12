@@ -15,7 +15,7 @@ set -euo pipefail
 #   ./train_one_depth_param_sweep.sh ramped-vc 40 dTdt gp_rbf,gp_m15,gp_m25,rf
 #
 # Notes:
-# - Assumes you already preprocessed data into: ./data/<suite>/<depth>km_<variant>/
+# - Assumes you already preprocessed data into: ./data/single_depth/<suite>/<depth>km_<variant>/
 # - Assumes train_emulator.py creates: <out>/<data-name>/<model_dir_name>/model.joblib
 #   where model_dir_name is e.g. gp_rbf, gp_m15, gp_m25, rf (per your code).
 
@@ -26,17 +26,16 @@ ALGO_LIST_CSV="${4:-gp_rbf,gp_m15,gp_m25,rf}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-DATA_ROOT="$SCRIPT_DIR/../data/${SUITE}"
+DATA_ROOT="$SCRIPT_DIR/../data/single_depth/${SUITE}/runs"
 DATA_NAME="${DEPTH_KM}km_${VARIANT}"
 
 TRAIN_PY="$SCRIPT_DIR/../train_emulator.py"
 
 # Where train_emulator.py will write its normal structure:
-BASE_OUT_ROOT="$SCRIPT_DIR/../models/${SUITE}"
+BASE_OUT_ROOT="$SCRIPT_DIR/../models/single_depth/${SUITE}/runs"
 
 # Where *unique copies* of each run will go:
-SWEEP_ROOT="$SCRIPT_DIR/../models/param-sweep"
-SWEEP_ROOT="$SWEEP_ROOT/$SUITE"
+SWEEP_ROOT="$SCRIPT_DIR/../models/single_depth/${SUITE}/param_sweep"
 
 
 # Make sure dataset exists

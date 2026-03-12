@@ -43,7 +43,7 @@ def _parse_dataset_name(dataset_name: str) -> dict[str, Any]:
 def _discover_reports(models_root: Path, suites: list[str]) -> list[Path]:
     out: list[Path] = []
     for suite in suites:
-        suite_root = models_root / suite
+        suite_root = models_root / suite / "pca_sweep"
         if not suite_root.exists():
             continue
         out.extend(sorted(suite_root.glob("*/gp_m25/profile_pca_quality.json")))
@@ -98,7 +98,7 @@ def _write_markdown_table(df: pd.DataFrame, path: Path) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Summarize profile-PCA sweep reports into ranked tables.")
-    ap.add_argument("--models-root", default="src/emulator/models")
+    ap.add_argument("--models-root", default="src/emulator/models/profile_pca")
     ap.add_argument("--suites", default="const-vc,ramped-vc", help="Comma-separated suite list.")
     ap.add_argument("--dataset-pattern", default="profileT_pca_t3Myr", help="Keep only dataset names containing this text.")
     ap.add_argument("--outdir", default=str(PLOTS_ROOT_DEFAULT), help="Output directory for summary tables.")

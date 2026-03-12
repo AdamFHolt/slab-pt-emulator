@@ -91,6 +91,7 @@ class SummarizeProfilePCAGPTuningSweepTests(unittest.TestCase):
             self._write_quality_report(
                 sweep_root
                 / "ramped-vc"
+                / "gp_tuning"
                 / "profileT_pca_t3Myr_k10_whitened"
                 / "gp_matern25_r10_lsu1e3_nlow1e-6"
                 / "profile_pca_quality.json",
@@ -106,6 +107,7 @@ class SummarizeProfilePCAGPTuningSweepTests(unittest.TestCase):
             self._write_quality_report(
                 sweep_root
                 / "ramped-vc"
+                / "gp_tuning"
                 / "profileT_pca_t3Myr_k10_whitened"
                 / "gp_rbf_r10_lsu1e3_nlow1e-6"
                 / "profile_pca_quality.json",
@@ -121,6 +123,7 @@ class SummarizeProfilePCAGPTuningSweepTests(unittest.TestCase):
             self._write_quality_report(
                 sweep_root
                 / "ramped-vc"
+                / "gp_tuning"
                 / "profileT_pca_t3Myr_k10_whitened"
                 / "gp_matern15_r25_lsu1e4_nlow1e-8"
                 / "profile_pca_quality.json",

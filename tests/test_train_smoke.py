@@ -44,7 +44,7 @@ class TrainConfigSmokeTests(unittest.TestCase):
     def test_discover_datasets_variant_filter(self) -> None:
         cfg = train._load_config(REPO_ROOT / "configs/gp.const-vc.yaml")
         names = train._discover_datasets(
-            REPO_ROOT / "src" / "emulator" / "data" / "const-vc",
+            REPO_ROOT / "src" / "emulator" / "data" / "single_depth" / "const-vc" / "runs",
             cfg["dataset"],
         )
         self.assertTrue(names)
@@ -240,6 +240,7 @@ class TrainConfigSmokeTests(unittest.TestCase):
             done = (
                 sweep_root
                 / "ramped-vc"
+                / "gp_tuning"
                 / "profileT_pca_t3Myr_k10_whitened"
                 / "gp_matern25_r10_lsu1e3_nlow1e-6"
             )
@@ -301,8 +302,8 @@ class TrainConfigSmokeTests(unittest.TestCase):
     def test_invalid_suite_cli_fails(self) -> None:
         bad_cfg = {
             "suite": "bad-suite",
-            "data_root": "src/emulator/data",
-            "out_root": "src/emulator/models",
+            "data_root": "src/emulator/data/single_depth",
+            "out_root": "src/emulator/models/single_depth",
             "dataset": {"mode": "list", "names": ["10km_dTdt"]},
             "model": {"type": "gp"},
             "execution": {"dry_run": True},

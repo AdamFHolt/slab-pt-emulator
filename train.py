@@ -74,6 +74,16 @@ def _discover_datasets(suite_dir: Path, ds_cfg: dict[str, Any]) -> list[str]:
     return sorted(names, key=_depth_sort_key)
 
 
+def _suite_data_dir(data_root: Path, suite: str, ds_cfg: dict[str, Any]) -> Path:
+    subdir = str(ds_cfg.get("subdir", "runs")).strip()
+    return data_root / suite / subdir
+
+
+def _suite_out_dir(out_root: Path, suite: str, model_cfg: dict[str, Any]) -> Path:
+    subdir = str(model_cfg.get("subdir", "runs")).strip()
+    return out_root / suite / subdir
+
+
 def _as_cli_float_pair(vals: Any, key: str) -> tuple[str, str]:
     if not isinstance(vals, (list, tuple)) or len(vals) != 2:
         raise ValueError(f"{key} must be a list of exactly two numbers.")
@@ -138,14 +148,15 @@ def main() -> int:
     if suite not in {"const-vc", "ramped-vc"}:
         raise ValueError("suite must be 'const-vc' or 'ramped-vc'.")
 
-    data_root = Path(cfg.get("data_root", "src/emulator/data")).resolve()
-    out_root = Path(cfg.get("out_root", "src/emulator/models")).resolve()
-
-    data_root_suite = data_root / suite
-    out_root_suite = out_root / suite
-    out_root_suite.mkdir(parents=True, exist_ok=True)
+    data_root = Path(cfg.get("data_root", "src/emulator/data/single_depth")).resolve()
+    out_root = Path(cfg.get("out_root", "src/emulator/models/single_depth")).resolve()
 
     ds_cfg = dict(cfg.get("dataset", {}))
+    model_cfg = dict(cfg.get("model", {}))
+
+    data_root_suite = _suite_data_dir(data_root, suite, ds_cfg)
+    out_root_suite = _suite_out_dir(out_root, suite, model_cfg)
+    out_root_suite.mkdir(parents=True, exist_ok=True)
     dataset_names = _discover_datasets(data_root_suite, ds_cfg)
 
     if args.datasets:

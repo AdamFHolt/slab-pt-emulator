@@ -72,7 +72,7 @@ class ValidateProfilePCAQualityTests(unittest.TestCase):
     def test_validator_passes_when_all_thresholds_are_met(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
-            report_dir = tmp_path / "models" / "const-vc" / "profileT_pca_t3Myr_k8" / "gp_m25"
+            report_dir = tmp_path / "models" / "const-vc" / "runs" / "profileT_pca_t3Myr_k8" / "gp_m25"
             report_dir.mkdir(parents=True, exist_ok=True)
 
             self._write_report(
@@ -105,7 +105,7 @@ class ValidateProfilePCAQualityTests(unittest.TestCase):
     def test_validator_fails_when_profile_rmse_exceeds_threshold(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
-            report_dir = tmp_path / "models" / "const-vc" / "profileT_pca_t3Myr_k8" / "gp_m25"
+            report_dir = tmp_path / "models" / "const-vc" / "runs" / "profileT_pca_t3Myr_k8" / "gp_m25"
             report_dir.mkdir(parents=True, exist_ok=True)
 
             self._write_report(

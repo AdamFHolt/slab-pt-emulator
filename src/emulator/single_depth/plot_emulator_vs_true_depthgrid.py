@@ -21,7 +21,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-PLOTS_DIR_DEFAULT = Path("/home/holt/Projects/SlabPT-emulator/plots/qc-emulator")
+PLOTS_DIR_DEFAULT = Path("/home/holt/Projects/SlabPT-emulator/plots/qc-emulator/single_depth")
 
 
 # ------------------------- IO helpers
@@ -30,11 +30,11 @@ def load_bundle(data_root: Path, model_root: Path, suite: str, name: str, algo: 
     """
     Load true/predicted Y for one dataset name (depth folder).
     Expects:
-      data_root/<suite>/<name>/metadata.json, Y_raw.npy, train_idx.npy, val_idx.npy
-      model_root/<suite>/<name>/<algo>/yhat_train.npy, yhat_val.npy, report.json
+      data_root/<suite>/runs/<name>/metadata.json, Y_raw.npy, train_idx.npy, val_idx.npy
+      model_root/<suite>/runs/<name>/<algo>/yhat_train.npy, yhat_val.npy, report.json
     """
-    data_path = data_root / suite / name
-    model_path = model_root / suite / name / algo
+    data_path = data_root / suite / "runs" / name
+    model_path = model_root / suite / "runs" / name / algo
 
     with open(data_path / "metadata.json", "r") as f:
         meta = json.load(f)
@@ -96,9 +96,9 @@ def main():
     p = argparse.ArgumentParser(description="Plot emulator vs true across depths (Train & Val).")
 
     # roots
-    p.add_argument("--data-root", default=str(Path(__file__).parent.parent / "data"),
+    p.add_argument("--data-root", default=str(Path(__file__).parent.parent / "data" / "single_depth"),
                    help="Root containing suite folders (e.g., ./data)")
-    p.add_argument("--models-root", default=str(Path(__file__).parent.parent / "models"),
+    p.add_argument("--models-root", default=str(Path(__file__).parent.parent / "models" / "single_depth"),
                    help="Root containing suite folders (e.g., ./models)")
 
     # which suite/model variant
@@ -133,7 +133,7 @@ def main():
     if args.names:
         names = args.names
     else:
-        suite_dir = data_root / suite
+        suite_dir = data_root / suite / "runs"
         if not suite_dir.exists():
             raise SystemExit(f"[ERR] Suite data directory not found: {suite_dir}")
         # match exactly "<depth>km_<variant>" (allow more suffix if you want, but be strict by default)

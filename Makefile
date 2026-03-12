@@ -68,7 +68,7 @@ qc-num-ramped:
 quality-check-gp-m25:
 	python3 src/emulator/single_depth/validate_single_depth_quality.py \
 		--thresholds configs/emulator-quality.gp_m25.yaml \
-		--models-root src/emulator/models \
+		--models-root src/emulator/models/single_depth \
 		$(if $(QUALITY_SUITES),--suites $(QUALITY_SUITES),) \
 		$(if $(QUALITY_DATASETS),--datasets $(QUALITY_DATASETS),)
 
@@ -82,8 +82,12 @@ env-doctor:
 	./dev-env.sh doctor
 
 # Profile-PCA workflow knobs (override at runtime as needed).
+# The default named workflow uses dataset names like `profileT_pca_t3Myr_k10`
+# and applies `PROFILE_SCORE_SPACE` during preprocess without adding an
+# explicit score-space suffix. The sweep commands add `_raw` / `_whitened`
+# explicitly to keep variants separate.
 # Example:
-#   make profile-pca-preprocess PROFILE_SUITES="const-vc" PROFILE_TIMES="1 2 3 4 5" PROFILE_K=8
+#   make profile-pca-preprocess PROFILE_SUITES="const-vc" PROFILE_TIMES="1 2 3 4 5" PROFILE_K=10 PROFILE_SCORE_SPACE=whitened
 PROFILE_SUITES ?= const-vc ramped-vc
 PROFILE_TIMES ?= 0.5 1 2 3 4 5
 PROFILE_K ?= 10
@@ -135,8 +139,8 @@ profile-pca-qc:
 		for t in $(PROFILE_TIMES); do \
 			tlabel="$$(echo "$$t" | sed 's/\./p/g')"; \
 			dname="profileT_pca_t$${tlabel}Myr_k$(PROFILE_K)"; \
-			ds="src/emulator/data/$${suite}/$${dname}"; \
-			md="src/emulator/models/$${suite}/$${dname}/gp_m25"; \
+			ds="src/emulator/data/profile_pca/$${suite}/runs/$${dname}"; \
+			md="src/emulator/models/profile_pca/$${suite}/runs/$${dname}/gp_m25"; \
 			outdir="plots/qc-emulator/$${suite}/profile-pca"; \
 			if [ ! -d "$$ds" ]; then \
 				echo "[WARN] skip missing dataset $$ds"; \
@@ -172,8 +176,8 @@ profile-pca-quality-report:
 		for t in $(PROFILE_TIMES); do \
 			tlabel="$$(echo "$$t" | sed 's/\./p/g')"; \
 			dname="profileT_pca_t$${tlabel}Myr_k$(PROFILE_K)"; \
-			ds="src/emulator/data/$${suite}/$${dname}"; \
-			md="src/emulator/models/$${suite}/$${dname}/$(PROFILE_MODEL_TAG)"; \
+			ds="src/emulator/data/profile_pca/$${suite}/runs/$${dname}"; \
+			md="src/emulator/models/profile_pca/$${suite}/runs/$${dname}/$(PROFILE_MODEL_TAG)"; \
 			if [ ! -d "$$ds" ]; then \
 				echo "[WARN] skip missing dataset $$ds"; \
 				continue; \
@@ -192,7 +196,7 @@ profile-pca-quality-report:
 profile-pca-quality-check-gp-m25:
 	python3 src/emulator/profile_pca/validate_profile_pca_quality.py \
 		--thresholds configs/profile-pca-quality.gp_m25.yaml \
-		--models-root src/emulator/models \
+		--models-root src/emulator/models/profile_pca \
 		$(if $(QUALITY_SUITES),--suites $(QUALITY_SUITES),) \
 		$(if $(QUALITY_DATASETS),--datasets $(QUALITY_DATASETS),)
 
@@ -205,7 +209,7 @@ profile-pca-sweep:
 
 profile-pca-sweep-summary:
 	python3 src/emulator/profile_pca/summarize_profile_pca_sweep.py \
-		--models-root src/emulator/models \
+		--models-root src/emulator/models/profile_pca \
 		--suites "$(PROFILE_SUITES)" \
 		--dataset-pattern "$(PROFILE_SWEEP_DATASET_PATTERN)"
 
@@ -220,6 +224,6 @@ profile-pca-gp-tuning-sweep:
 
 profile-pca-gp-tuning-summary:
 	python3 src/emulator/profile_pca/summarize_profile_pca_gp_tuning_sweep.py \
-		--sweep-root src/emulator/models/profile-pca-gp-sweep \
+		--sweep-root src/emulator/models/profile_pca \
 		--suites "$(PROFILE_GP_TUNING_SUITES)" \
 		--dataset-pattern "$(PROFILE_GP_TUNING_DATASET_PATTERN)"

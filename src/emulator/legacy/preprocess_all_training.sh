@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MASTER_BASE="$SCRIPT_DIR/../../../subd-model-runs/$SUITE/analysis"
 MASTER="${MASTER_BASE}/master_DT1-10.csv"
 PARAMS="$SCRIPT_DIR/../../../data/params/params-list.$SUITE.csv"
-ODIR="$SCRIPT_DIR/../data/$SUITE"
+ODIR="$SCRIPT_DIR/../data/single_depth/$SUITE/runs"
 
 DEPTHS=(10 20 30 40 50 60 70 80)
 FEATURE_COMBOS=(

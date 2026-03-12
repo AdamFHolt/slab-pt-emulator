@@ -67,13 +67,13 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument(
         "--sweep-root",
-        default=str(EMULATOR_DIR / "models" / "profile-pca-gp-sweep"),
-        help="Root directory for copied sweep artifacts.",
+        default=str(EMULATOR_DIR / "models" / "profile_pca"),
+        help="Workflow root containing suite/gp_tuning/<dataset>/<tag> outputs.",
     )
     ap.add_argument(
         "--base-model-root",
-        default=str(EMULATOR_DIR / "models"),
-        help="Temporary training root passed to train_emulator.py before copying artifacts.",
+        default=str(EMULATOR_DIR / "models" / "profile_pca"),
+        help="Workflow root containing suite/pca_sweep and suite/runs model directories.",
     )
     ap.add_argument(
         "--skip-evaluate",
@@ -106,9 +106,11 @@ def main() -> int:
     sweep_root = Path(args.sweep_root).resolve()
 
     for suite in suites:
-        data_root = (EMULATOR_DIR / "data" / suite).resolve()
+        data_root_root = (EMULATOR_DIR / "data" / "profile_pca" / suite).resolve()
+        model_root_root = base_model_root / suite
         for dataset_name in datasets:
-            dataset_dir = data_root / dataset_name
+            dataset_subdir = "pca_sweep" if (data_root_root / "pca_sweep" / dataset_name).exists() else "runs"
+            dataset_dir = data_root_root / dataset_subdir / dataset_name
             if not args.dry_run and not dataset_dir.exists():
                 raise FileNotFoundError(f"Dataset directory not found: {dataset_dir}")
 
@@ -129,8 +131,8 @@ def main() -> int:
                                 "matern15": "gp_m15",
                                 "rbf": "gp_rbf",
                             }[kernel]
-                            trained_dir = base_model_root / suite / dataset_name / model_dir_name
-                            sweep_dir = sweep_root / suite / dataset_name / tag
+                            trained_dir = model_root_root / dataset_subdir / dataset_name / model_dir_name
+                            sweep_dir = sweep_root / suite / "gp_tuning" / dataset_name / tag
                             quality_json = sweep_dir / "profile_pca_quality.json"
 
                             if quality_json.exists() and not args.force:
@@ -141,7 +143,7 @@ def main() -> int:
                                 sys.executable,
                                 str(TRAIN_PY),
                                 "--data-root",
-                                str(data_root),
+                                str(dataset_dir.parent),
                                 "--data-name",
                                 dataset_name,
                                 "--model",
@@ -165,7 +167,7 @@ def main() -> int:
                                 "--seed",
                                 str(args.seed),
                                 "--out",
-                                str(base_model_root / suite),
+                                str(model_root_root / dataset_subdir),
                             ]
                             _run(train_cmd, dry_run=args.dry_run)
 

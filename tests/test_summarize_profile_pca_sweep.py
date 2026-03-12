@@ -86,7 +86,7 @@ class SummarizeProfilePCASweepTests(unittest.TestCase):
             # Create three sweep entries. Two belong to const-vc so we can test
             # the ranking logic directly within one suite.
             self._write_quality_report(
-                models_root / "const-vc" / "profileT_pca_t3Myr_k4_raw" / "gp_m25" / "profile_pca_quality.json",
+                models_root / "const-vc" / "pca_sweep" / "profileT_pca_t3Myr_k4_raw" / "gp_m25" / "profile_pca_quality.json",
                 suite="const-vc",
                 dataset_name="profileT_pca_t3Myr_k4_raw",
                 score_space="raw",
@@ -97,7 +97,7 @@ class SummarizeProfilePCASweepTests(unittest.TestCase):
                 val_pca_only_profile_rmse=2.0,
             )
             self._write_quality_report(
-                models_root / "const-vc" / "profileT_pca_t3Myr_k8_whitened" / "gp_m25" / "profile_pca_quality.json",
+                models_root / "const-vc" / "pca_sweep" / "profileT_pca_t3Myr_k8_whitened" / "gp_m25" / "profile_pca_quality.json",
                 suite="const-vc",
                 dataset_name="profileT_pca_t3Myr_k8_whitened",
                 score_space="whitened",
@@ -108,7 +108,7 @@ class SummarizeProfilePCASweepTests(unittest.TestCase):
                 val_pca_only_profile_rmse=1.8,
             )
             self._write_quality_report(
-                models_root / "ramped-vc" / "profileT_pca_t3Myr_k6_raw" / "gp_m25" / "profile_pca_quality.json",
+                models_root / "ramped-vc" / "pca_sweep" / "profileT_pca_t3Myr_k6_raw" / "gp_m25" / "profile_pca_quality.json",
                 suite="ramped-vc",
                 dataset_name="profileT_pca_t3Myr_k6_raw",
                 score_space="raw",

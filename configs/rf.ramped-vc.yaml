@@ -1,13 +1,15 @@
 suite: ramped-vc
 
-data_root: src/emulator/data
-out_root: src/emulator/models
+data_root: src/emulator/data/single_depth
+out_root: src/emulator/models/single_depth
 
 dataset:
+  subdir: runs
   mode: auto
   variant: dTdt_thermalParam
 
 model:
+  subdir: runs
   type: rf
   seed: 42
   rf_trees: 600

@@ -52,8 +52,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Summarize profile-PCA GP tuning sweep results.")
     ap.add_argument(
         "--sweep-root",
-        default="src/emulator/models/profile-pca-gp-sweep",
-        help="Root directory containing suite/dataset/tag/profile_pca_quality.json",
+        default="src/emulator/models/profile_pca",
+        help="Workflow root containing suite/gp_tuning/dataset/tag/profile_pca_quality.json",
     )
     ap.add_argument("--suites", default="ramped-vc", help="Comma- or space-separated suite list.")
     ap.add_argument(
@@ -71,10 +71,10 @@ def main() -> int:
 
     rows: list[dict[str, Any]] = []
     for suite in suites:
-        suite_root = sweep_root / suite
+        suite_root = sweep_root / suite / "gp_tuning"
         if not suite_root.exists():
             continue
-        for report_path in sorted(suite_root.glob("*/**/profile_pca_quality.json")):
+        for report_path in sorted(suite_root.glob("*/*/profile_pca_quality.json")):
             report = _load_json(report_path)
             dataset_name = str(report["dataset_name"])
             if args.dataset_pattern and args.dataset_pattern not in dataset_name:

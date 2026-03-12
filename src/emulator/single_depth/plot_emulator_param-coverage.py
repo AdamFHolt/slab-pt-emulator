@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-PLOTS_DIR_DEFAULT = Path("/home/holt/Projects/SlabPT-emulator/plots/qc-emulator")
+PLOTS_DIR_DEFAULT = Path("/home/holt/Projects/SlabPT-emulator/plots/qc-emulator/single_depth")
 
 # parameters to show on log axes
 LOG_AXES = {"eta_int", "eta_UM", "eps_trans"}
@@ -221,9 +221,9 @@ def plot_one_dataset(
 def main():
     p = argparse.ArgumentParser(description="Plot training vs validation coverage in parameter space.")
 
-    p.add_argument("--data-root", default=str(Path(__file__).parent.parent / "data"),
+    p.add_argument("--data-root", default=str(Path(__file__).parent.parent / "data" / "single_depth"),
                    help="Root containing suite folders (e.g., ./data)")
-    p.add_argument("--models-root", default=str(Path(__file__).parent.parent / "models"),
+    p.add_argument("--models-root", default=str(Path(__file__).parent.parent / "models" / "single_depth"),
                    help="Root containing suite folders (e.g., ./models)")
 
     p.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc"])
@@ -250,7 +250,7 @@ def main():
 
     data_root = Path(args.data_root).resolve()
     models_root = Path(args.models_root).resolve()
-    suite_dir = data_root / args.suite
+    suite_dir = data_root / args.suite / "runs"
 
     if not suite_dir.exists():
         raise SystemExit(f"[ERR] Suite data directory not found: {suite_dir}")
@@ -282,10 +282,11 @@ def main():
     plotdir.mkdir(parents=True, exist_ok=True)
 
     for name in names:
-        data_path = data_root / args.suite / name
-        model_path = models_root / args.suite / name / args.algo
+        data_path = data_root / args.suite / "runs" / name
+        model_path = models_root / args.suite / "runs" / name / args.algo
 
-        outpath = plotdir / f"{args.suite}_{name}_{args.algo}_coverage.png"
+        suffix = "_coverage_residual.png" if args.color_by == "residual" else "_coverage.png"
+        outpath = plotdir / f"{args.suite}_{name}_{args.algo}{suffix}"
         plot_one_dataset(
             suite=args.suite,
             name=name,

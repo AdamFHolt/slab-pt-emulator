@@ -7,8 +7,8 @@ set -euo pipefail
 SUITE="${1:-const-vc}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DATA_ROOT="$SCRIPT_DIR/../data/$SUITE"
-OUT_ROOT="$SCRIPT_DIR/../models/$SUITE"
+DATA_ROOT="$SCRIPT_DIR/../data/single_depth/$SUITE/runs"
+OUT_ROOT="$SCRIPT_DIR/../models/single_depth/$SUITE/runs"
 
 # GP config
 KERNEL="matern25"

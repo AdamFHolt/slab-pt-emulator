@@ -11,6 +11,13 @@ Quick orientation:
 - [`Makefile`](/home/holt/Projects/SlabPT-emulator/Makefile) is the main day-to-day command entrypoint.
 - [`train.py`](/home/holt/Projects/SlabPT-emulator/train.py) is the main config-driven training entrypoint.
 - [`docs/repo-map.md`](/home/holt/Projects/SlabPT-emulator/docs/repo-map.md) summarizes the repo structure and identifies legacy helpers.
+- Emulator scripts are grouped by workflow under:
+  - `src/emulator/single_depth/`
+  - `src/emulator/profile_pca/`
+  - `src/emulator/legacy/`
+- Workflow storage is suite-first:
+  - single-depth: `<suite>/runs/` and `<suite>/param_sweep/`
+  - profile-PCA: `<suite>/runs/`, `<suite>/pca_sweep/`, and `<suite>/gp_tuning/`
 
 ## What This Repo Does
 
@@ -105,11 +112,11 @@ python train.py --config configs/gp.ramped-vc.yaml --datasets 40km_dTdt
 
 Standard depth-based GP outputs are written under:
 
-- `src/emulator/models/<suite>/<dataset>/gp_m25/`
+- `src/emulator/models/single_depth/<suite>/runs/<dataset>/gp_m25/`
 
 RF outputs use the analogous layout:
 
-- `src/emulator/models/<suite>/<dataset>/rf/`
+- `src/emulator/models/single_depth/<suite>/runs/<dataset>/rf/`
 
 --------------------
 Profile-PCA Workflow
@@ -197,6 +204,7 @@ The current default tuning target is:
 
 - suite: `ramped-vc`
 - dataset: `profileT_pca_t3Myr_k10_whitened`
+  - this is currently treated as a GP-tuning artifact under `gp_tuning/`
 
 Run the GP tuning sweep:
 
@@ -240,8 +248,8 @@ make profile-pca-train-gp PROFILE_TIMES="1 2 3 4 5"
 # Different k and split for QC plots
 make profile-pca-qc PROFILE_K=6 PROFILE_QC_SPLIT=train
 
-# One representative CI-style subset
-make profile-pca-quality-report PROFILE_SUITES="const-vc ramped-vc" PROFILE_TIMES="3" PROFILE_K=10 PROFILE_SCORE_SPACE=whitened
+# One representative manual-CI subset
+make profile-pca-quality-report PROFILE_SUITES="ramped-vc" PROFILE_TIMES="3" PROFILE_K=10 PROFILE_SCORE_SPACE=whitened
 
 # Sweep summary for t3Myr only
 make profile-pca-sweep-summary PROFILE_SWEEP_DATASET_PATTERN="profileT_pca_t3Myr"
@@ -252,24 +260,29 @@ make profile-pca-gp-tuning-sweep PROFILE_GP_TUNING_KERNELS="matern25 rbf" PROFIL
 
 Notes:
 
-- Dataset names are generated as `profileT_pca_t<time_label>Myr_k<K>` (e.g., `t0p5Myr`, `t3Myr`, `t5Myr`).
+- The default named workflow generates dataset names as `profileT_pca_t<time_label>Myr_k<K>` (e.g., `t0p5Myr`, `t3Myr`, `t5Myr`).
 - The default profile-PCA workflow now uses `k=10` and `score_space=whitened`.
+- In the default workflow, `score_space` is applied during preprocess but is not encoded into the dataset name.
 - Sweep dataset names include score-space to avoid collisions:
   - `profileT_pca_t3Myr_k10_raw`
   - `profileT_pca_t3Myr_k10_whitened`
 - Training configs for this workflow are separate from the standard depth-based GP configs:
   - `configs/gp.const-vc.profile-pca.yaml`
   - `configs/gp.ramped-vc.profile-pca.yaml`
-- Preprocessed datasets are written under:
-  - `src/emulator/data/<suite>/profileT_pca_t<time_label>Myr_k<K>/`
-- `profile-pca-qc` expects corresponding trained model artifacts under:
-  - `src/emulator/models/<suite>/<dataset>/gp_m25/`
+- Default preprocessed datasets are written under:
+  - `src/emulator/data/profile_pca/<suite>/runs/profileT_pca_t<time_label>Myr_k<K>/`
+- Sweep datasets are written under:
+  - `src/emulator/data/profile_pca/<suite>/pca_sweep/profileT_pca_t<time_label>Myr_k<K>_<score_space>/`
+- `profile-pca-qc` expects corresponding default trained model artifacts under:
+  - `src/emulator/models/profile_pca/<suite>/runs/<dataset>/gp_m25/`
 - `profile-pca-quality-report` writes:
-  - `src/emulator/models/<suite>/<dataset>/gp_m25/profile_pca_quality.json`
+  - `src/emulator/models/profile_pca/<suite>/runs/<dataset>/gp_m25/profile_pca_quality.json`
 - `profile-pca-sweep-summary` writes ranked CSV/Markdown tables under:
   - `plots/qc-emulator/profile-pca-sweep/`
-- `profile-pca-gp-tuning-sweep` copies each trained model into:
-  - `src/emulator/models/profile-pca-gp-sweep/<suite>/<dataset>/<tag>/`
+- `profile-pca-sweep` writes exploratory model variants under:
+  - `src/emulator/models/profile_pca/<suite>/pca_sweep/<dataset>/gp_m25/`
+- `profile-pca-gp-tuning-sweep` copies each tuned model into:
+  - `src/emulator/models/profile_pca/<suite>/gp_tuning/<dataset>/<tag>/`
 - `profile-pca-gp-tuning-summary` writes ranked CSV/Markdown tables under:
   - `plots/qc-emulator/profile-pca-gp-sweep/`
 - Missing dataset/model folders are skipped with `[WARN]` messages.
@@ -353,7 +366,7 @@ cd ../..
 ```
 
 Outputs under:
-- `src/emulator/data/${SUITE}/<depth>km_<variant>/`
+- `src/emulator/data/single_depth/${SUITE}/runs/<depth>km_<variant>/`
 
 ### 7) Train baseline depth-based emulator models
 
@@ -362,7 +375,7 @@ python train.py --config configs/gp.${SUITE}.yaml
 ```
 
 Outputs under:
-- `src/emulator/models/${SUITE}/<dataset>/gp_m25/`
+- `src/emulator/models/single_depth/${SUITE}/runs/<dataset>/gp_m25/`
 
 ### 8) Emulator QC plots
 
@@ -375,20 +388,20 @@ cd ../..
 ```
 
 Outputs under:
-- `plots/qc-emulator/${SUITE}/`
+- `plots/qc-emulator/single_depth/${SUITE}/`
 
 ## Optional: Param Sweep (One Depth/Variant)
 
 ```bash
 cd src/emulator
-./train_one_depth_param-sweep.sh "${SUITE}" 40 dTdt_thermalParam gp_rbf,gp_m15,gp_m25,rf
-python plot_param_sweep_compare.py --suite "${SUITE}" --data-name 40km_dTdt_thermalParam
+./legacy/train_one_depth_param-sweep.sh "${SUITE}" 40 dTdt_thermalParam gp_rbf,gp_m15,gp_m25,rf
+python single_depth/plot_param_sweep_compare.py --suite "${SUITE}" --data-name 40km_dTdt_thermalParam
 cd ../..
 ```
 
 Outputs under:
-- `src/emulator/models/param-sweep/${SUITE}/40km_dTdt_thermalParam/`
-- `plots/qc-emulator/${SUITE}/param-sweep/40km_dTdt_thermalParam/`
+- `src/emulator/models/single_depth/${SUITE}/param_sweep/40km_dTdt_thermalParam/`
+- `plots/qc-emulator/single_depth/${SUITE}/param-sweep/40km_dTdt_thermalParam/`
 
 ----------------------
 Tests And CI Policy
@@ -431,7 +444,7 @@ Direct invocation (with optional summary JSON):
 ```bash
 python src/emulator/single_depth/validate_single_depth_quality.py \
   --thresholds configs/emulator-quality.gp_m25.yaml \
-  --models-root src/emulator/models \
+  --models-root src/emulator/models/single_depth \
   --json-out plots/qc-emulator/quality-gates/gp_m25_validation.json
 ```
 
@@ -445,7 +458,7 @@ The current representative threshold spec is:
 
 This initial gate covers the representative subset:
 
-- suites: `const-vc`, `ramped-vc`
+- suites: `ramped-vc`
 - dataset: `profileT_pca_t3Myr_k10`
 - score space: `whitened`
 
@@ -458,8 +471,8 @@ Write the quality report JSON for an existing trained model:
 
 ```bash
 python src/emulator/profile_pca/evaluate_profile_pca_quality.py \
-  --dataset-dir src/emulator/data/const-vc/profileT_pca_t3Myr_k10 \
-  --model-dir src/emulator/models/const-vc/profileT_pca_t3Myr_k10/gp_m25
+  --dataset-dir src/emulator/data/profile_pca/const-vc/runs/profileT_pca_t3Myr_k10 \
+  --model-dir src/emulator/models/profile_pca/const-vc/runs/profileT_pca_t3Myr_k10/gp_m25
 ```
 
 Validate existing profile-PCA quality reports against thresholds:
@@ -473,8 +486,8 @@ Direct invocation:
 ```bash
 python src/emulator/profile_pca/validate_profile_pca_quality.py \
   --thresholds configs/profile-pca-quality.gp_m25.yaml \
-  --models-root src/emulator/models \
-  --suites const-vc,ramped-vc \
+  --models-root src/emulator/models/profile_pca \
+  --suites ramped-vc \
   --datasets profileT_pca_t3Myr_k10
 ```
 
@@ -491,15 +504,16 @@ A change affecting emulator training, data prep, or model quality is complete wh
   - datasets: `40km_dTdt`
   - gate command in CI: `make quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=40km_dTdt`
   - profile-PCA representative subset:
-    - suites: `const-vc`, `ramped-vc`
+    - suites: `ramped-vc`
     - dataset: `profileT_pca_t3Myr_k10`
     - gate command in CI:
-      `make profile-pca-quality-check-gp-m25 QUALITY_SUITES=const-vc,ramped-vc QUALITY_DATASETS=profileT_pca_t3Myr_k10`
+      `make profile-pca-quality-check-gp-m25 QUALITY_SUITES=ramped-vc QUALITY_DATASETS=profileT_pca_t3Myr_k10`
 - Canonical artifacts are present in standard locations:
-  - training reports: `src/emulator/models/<suite>/<dataset>/<model_tag>/report.json`
+  - single-depth training reports: `src/emulator/models/single_depth/<suite>/runs/<dataset>/<model_tag>/report.json`
   - quality-gate summary (optional JSON): `plots/qc-emulator/quality-gates/gp_m25_validation.json`
-  - profile-PCA quality report: `src/emulator/models/<suite>/<dataset>/<model_tag>/profile_pca_quality.json`
-  - emulator QC figures: `plots/qc-emulator/<suite>/`
+  - profile-PCA quality report: `src/emulator/models/profile_pca/<suite>/runs/<dataset>/<model_tag>/profile_pca_quality.json`
+  - emulator single-depth QC figures: `plots/qc-emulator/single_depth/<suite>/`
+  - emulator profile-PCA QC figures: `plots/qc-emulator/<suite>/profile-pca/`
   - numerical QC figures: `plots/qc-numerical-mods/<suite>/`
 
 ## Main Scripts By Stage

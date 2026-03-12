@@ -1,10 +1,11 @@
 suite: const-vc
 
 # These point to folder roots that contain suite subfolders.
-data_root: src/emulator/data
-out_root: src/emulator/models
+data_root: src/emulator/data/profile_pca
+out_root: src/emulator/models/profile_pca
 
 dataset:
+  subdir: runs
   # profile-pca: discover profile PCA dataset folders in data_root/<suite>.
   mode: profile-pca
 
@@ -14,6 +15,7 @@ dataset:
   # pattern: "fixed-time"
 
 model:
+  subdir: runs
   type: gp
   seed: 42
   kernel: matern25

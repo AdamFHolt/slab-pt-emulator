@@ -1,10 +1,11 @@
 suite: ramped-vc
 
 # These point to folder roots that contain suite subfolders.
-data_root: src/emulator/data
-out_root: src/emulator/models
+data_root: src/emulator/data/single_depth
+out_root: src/emulator/models/single_depth
 
 dataset:
+  subdir: runs
   # auto: discover all folders in data_root/<suite>, optionally filtered
   # list: use explicit dataset.names below
   mode: auto
@@ -21,6 +22,7 @@ dataset:
   #   - 20km_dTdt
 
 model:
+  subdir: runs
   type: gp
   seed: 42
   kernel: matern25

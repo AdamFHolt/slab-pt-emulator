@@ -190,7 +190,7 @@ def main() -> int:
     ap.add_argument("--dataset-name", default=None,
                     help="Output dataset folder name. Default: profileT_pca_t<target-time>Myr")
     ap.add_argument("--outdir", default=None,
-                    help="Root for suite datasets. Default: src/emulator/data/<suite>")
+                    help="Root for suite datasets. Default: src/emulator/data/profile_pca/<suite>/runs")
     args = ap.parse_args()
 
     if args.k < 1:
@@ -216,7 +216,7 @@ def main() -> int:
         dataset_name = f"profileT_pca_t{tlabel}Myr"
 
     out_root = (Path(args.outdir).resolve() if args.outdir
-                else (REPO_ROOT / "src" / "emulator" / "data" / args.suite).resolve())
+                else (REPO_ROOT / "src" / "emulator" / "data" / "profile_pca" / args.suite).resolve())
     out_dir = out_root / dataset_name
     out_dir.mkdir(parents=True, exist_ok=True)
 

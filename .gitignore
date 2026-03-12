@@ -24,8 +24,10 @@ src/build-numerical-mods/*.orig.py
 *.txt
 
 # Generated profile-PCA analysis artifacts
-src/emulator/data/*/profileT_pca_t*Myr*/
-src/emulator/models/*/profileT_pca_t*Myr*/
-src/emulator/models/profile-pca-gp-sweep/
+src/emulator/data/profile_pca/*/runs/profileT_pca_t*Myr*/
+src/emulator/data/profile_pca/*/pca_sweep/profileT_pca_t*Myr*/
+src/emulator/models/profile_pca/*/runs/profileT_pca_t*Myr*/
+src/emulator/models/profile_pca/*/pca_sweep/profileT_pca_t*Myr*/
+src/emulator/models/profile_pca/*/gp_tuning/
 plots/qc-emulator/profile-pca-sweep/
 plots/qc-emulator/profile-pca-gp-sweep/

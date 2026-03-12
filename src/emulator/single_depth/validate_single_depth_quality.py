@@ -47,8 +47,8 @@ def main() -> int:
     )
     p.add_argument(
         "--models-root",
-        default="src/emulator/models",
-        help="Root directory containing suite/data_name/model_tag/report.json",
+        default="src/emulator/models/single_depth",
+        help="Root directory containing suite/runs/data_name/model_tag/report.json",
     )
     p.add_argument(
         "--model-tag",
@@ -119,7 +119,7 @@ def main() -> int:
             if not isinstance(limits, dict):
                 raise ValueError(f"thresholds.{suite}.{data_name} must be mapping.")
 
-            report_path = models_root / suite / data_name / model_tag / "report.json"
+            report_path = models_root / suite / "runs" / data_name / model_tag / "report.json"
             if not report_path.exists():
                 missing += 1
                 rows.append(

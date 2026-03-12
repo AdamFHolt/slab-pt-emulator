@@ -1,0 +1,115 @@
+{
+  "model_type": "gp",
+  "kernel": "matern25",
+  "n_features": 6,
+  "n_targets": 4,
+  "train_size": 423,
+  "val_size": 75,
+  "feature_cols": [
+    "v_conv",
+    "t_conv",
+    "age_SP",
+    "age_OP",
+    "dip_int",
+    "eta_UM"
+  ],
+  "target_cols": [
+    "PC1",
+    "PC2",
+    "PC3",
+    "PC4"
+  ],
+  "metrics": {
+    "target_cols": [
+      "PC1",
+      "PC2",
+      "PC3",
+      "PC4"
+    ],
+    "train": {
+      "PC1": {
+        "rmse": 15.662802107246003,
+        "mae": 9.285034184789588,
+        "r2": 0.99972635501393
+      },
+      "PC2": {
+        "rmse": 14.208831464709265,
+        "mae": 8.7091159224708,
+        "r2": 0.9938247661481658
+      },
+      "PC3": {
+        "rmse": 6.801283227661441,
+        "mae": 4.6635232544622305,
+        "r2": 0.9940032560510702
+      },
+      "PC4": {
+        "rmse": 7.804853754453119,
+        "mae": 5.3916269970416755,
+        "r2": 0.9568154200195844
+      },
+      "_macro_avg": {
+        "rmse": 11.119442638517457,
+        "mae": 7.012325089691074,
+        "r2": 0.9860924493081877
+      }
+    },
+    "val": {
+      "PC1": {
+        "rmse": 51.2500284357082,
+        "mae": 37.26782994988454,
+        "r2": 0.9974305889822364
+      },
+      "PC2": {
+        "rmse": 33.502160403876175,
+        "mae": 24.097572931118595,
+        "r2": 0.9628368076167152
+      },
+      "PC3": {
+        "rmse": 23.32412412097955,
+        "mae": 16.139125767311466,
+        "r2": 0.9393298812756394
+      },
+      "PC4": {
+        "rmse": 17.094568063382162,
+        "mae": 13.01657036631078,
+        "r2": 0.8064858294340761
+      },
+      "_macro_avg": {
+        "rmse": 31.292720255986524,
+        "mae": 22.630274753656344,
+        "r2": 0.9265207768271667
+      }
+    },
+    "gp_kernels": [
+      {
+        "kernel": "2.41**2 * Matern(length_scale=[7.56, 7.34, 11, 5.22, 5.63, 13.2], nu=2.5) + WhiteKernel(noise_level=0.000856)"
+      },
+      {
+        "kernel": "1.91**2 * Matern(length_scale=[3.44, 3.95, 7.27, 2.18, 2.18, 5.58], nu=2.5) + WhiteKernel(noise_level=0.019)"
+      },
+      {
+        "kernel": "1.39**2 * Matern(length_scale=[2.61, 4.02, 6.9, 1.94, 1.59, 5.75], nu=2.5) + WhiteKernel(noise_level=0.0178)"
+      },
+      {
+        "kernel": "1.52**2 * Matern(length_scale=[2.63, 3.46, 5.59, 0.935, 1.35, 3.16], nu=2.5) + WhiteKernel(noise_level=0.106)"
+      }
+    ]
+  },
+  "data_dir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data/ramped-vc/profileT_pca_t3Myr_k4_raw",
+  "seed": 42,
+  "gp_hparams": {
+    "ls_init": 1.0,
+    "ls_bounds": [
+      0.001,
+      1000.0
+    ],
+    "noise_init": 0.003,
+    "noise_bounds": [
+      1e-06,
+      1.0
+    ],
+    "alpha": 1e-06,
+    "restarts": 25
+  },
+  "rf_hparams": null
+}

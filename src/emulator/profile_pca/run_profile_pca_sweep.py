@@ -31,6 +31,13 @@ def _dataset_name(time_text: str, k: int, score_space: str) -> str:
     return f"profileT_pca_t{_time_label(time_text)}Myr_k{k}_{score_space}"
 
 
+def _dataset_dirs(suite: str, dataset_name: str) -> tuple[Path, Path]:
+    return (
+        EMULATOR_DIR / "data" / "profile_pca" / suite / "pca_sweep" / dataset_name,
+        EMULATOR_DIR / "models" / "profile_pca" / suite / "pca_sweep" / dataset_name,
+    )
+
+
 def _run(cmd: list[str], dry_run: bool) -> None:
     print("[RUN]", " ".join(cmd))
     if dry_run:
@@ -87,6 +94,7 @@ def main() -> int:
             raise ValueError("all k values must be >= 1")
 
     for suite, time_text, k, score_space, dataset_name in _iter_jobs(suites, times, ks, score_spaces):
+        dataset_dir, model_dir = _dataset_dirs(suite, dataset_name)
         print("------")
         print(
             f"[JOB] suite={suite} time_myr={time_text} "
@@ -108,6 +116,8 @@ def main() -> int:
                     score_space,
                     "--dataset-name",
                     dataset_name,
+                    "--outdir",
+                    str(dataset_dir.parent),
                 ],
                 dry_run=args.dry_run,
             )
@@ -116,11 +126,33 @@ def main() -> int:
             _run(
                 [
                     sys.executable,
-                    "train.py",
-                    "--config",
-                    f"configs/gp.{suite}.profile-pca.yaml",
-                    "--datasets",
+                    str(EMULATOR_DIR / "train_emulator.py"),
+                    "--data-root",
+                    str(dataset_dir.parent),
+                    "--data-name",
                     dataset_name,
+                    "--model",
+                    "gp",
+                    "--out",
+                    str(model_dir.parent),
+                    "--seed",
+                    "42",
+                    "--kernel",
+                    "matern25",
+                    "--ls-init",
+                    "1.0",
+                    "--ls-bounds",
+                    "0.001",
+                    "1000.0",
+                    "--noise-init",
+                    "0.003",
+                    "--noise-bounds",
+                    "1e-06",
+                    "1.0",
+                    "--alpha",
+                    "1e-06",
+                    "--gp-restarts",
+                    "25",
                 ],
                 dry_run=args.dry_run,
             )
@@ -131,9 +163,9 @@ def main() -> int:
                     sys.executable,
                     str(SCRIPT_DIR / "evaluate_profile_pca_quality.py"),
                     "--dataset-dir",
-                    str(EMULATOR_DIR / "data" / suite / dataset_name),
+                    str(dataset_dir),
                     "--model-dir",
-                    str(EMULATOR_DIR / "models" / suite / dataset_name / "gp_m25"),
+                    str(model_dir / "gp_m25"),
                 ],
                 dry_run=args.dry_run,
             )
