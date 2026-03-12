@@ -381,9 +381,9 @@ Outputs under:
 
 ```bash
 cd src/emulator
-./make_qc_emulator_plots.sh "${SUITE}" dTdt gp_m25
-./make_qc_emulator_plots.sh "${SUITE}" dTdt_thermalParam gp_m25
-./make_qc_emulator_plots.sh "${SUITE}" dTdt_thermalParam_etaRatio gp_m25
+./single_depth/make_qc_emulator_plots.sh "${SUITE}" dTdt gp_m25
+./single_depth/make_qc_emulator_plots.sh "${SUITE}" dTdt_thermalParam gp_m25
+./single_depth/make_qc_emulator_plots.sh "${SUITE}" dTdt_thermalParam_etaRatio gp_m25
 cd ../..
 ```
 

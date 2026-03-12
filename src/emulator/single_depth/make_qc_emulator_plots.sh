@@ -11,13 +11,12 @@ VARIANT="${2:-dTdt_thermalParam}"
 ALGO="${3:-gp_m25}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-SINGLE_DEPTH_DIR="${SCRIPT_DIR}/single_depth"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
 # Roots default relative to the repo layout, so the script works from repo root
 # and from ad hoc shells without depending on the caller's cwd.
-DATA_ROOT="${DATA_ROOT:-${SCRIPT_DIR}/data/single_depth}"
-MODELS_ROOT="${MODELS_ROOT:-${SCRIPT_DIR}/models/single_depth}"
+DATA_ROOT="${DATA_ROOT:-${REPO_ROOT}/src/emulator/data/single_depth}"
+MODELS_ROOT="${MODELS_ROOT:-${REPO_ROOT}/src/emulator/models/single_depth}"
 PLOTS_ROOT="${PLOTS_ROOT:-${REPO_ROOT}/plots/qc-emulator/single_depth}"
 
 DPI="${DPI:-220}"
@@ -41,7 +40,7 @@ echo
 # 1) Pred vs true depth grid (single figure across all depths)
 # -------------------------
 echo "[1/3] pred-vs-true depth grid"
-python "${SINGLE_DEPTH_DIR}/plot_emulator_vs_true_depthgrid.py" \
+python "${SCRIPT_DIR}/plot_emulator_vs_true_depthgrid.py" \
   --data-root "${DATA_ROOT}" \
   --models-root "${MODELS_ROOT}" \
   --suite "${SUITE}" \
@@ -56,7 +55,7 @@ echo
 # 2) Misfit vs features (one figure per depth)
 # -------------------------
 echo "[2/3] misfit-vs-features (per depth)"
-python "${SINGLE_DEPTH_DIR}/plot_emulator_misfit-vs-params.py" \
+python "${SCRIPT_DIR}/plot_emulator_misfit-vs-params.py" \
   --data-root "${DATA_ROOT}" \
   --models-root "${MODELS_ROOT}" \
   --suite "${SUITE}" \
@@ -72,7 +71,7 @@ echo
 # 3) Parameter coverage (one figure per depth)
 # -------------------------
 echo "[3/3] param coverage (per depth)"
-python "${SINGLE_DEPTH_DIR}/plot_emulator_param-coverage.py" \
+python "${SCRIPT_DIR}/plot_emulator_param-coverage.py" \
   --data-root "${DATA_ROOT}" \
   --models-root "${MODELS_ROOT}" \
   --suite "${SUITE}" \
@@ -85,7 +84,7 @@ python "${SINGLE_DEPTH_DIR}/plot_emulator_param-coverage.py" \
 if [[ "${RESIDUAL_COVERAGE}" == "1" ]]; then
   echo
   echo "[3b/3] param coverage colored by |residual| (per depth)"
-  python "${SINGLE_DEPTH_DIR}/plot_emulator_param-coverage.py" \
+  python "${SCRIPT_DIR}/plot_emulator_param-coverage.py" \
     --data-root "${DATA_ROOT}" \
     --models-root "${MODELS_ROOT}" \
     --suite "${SUITE}" \
@@ -95,7 +94,6 @@ if [[ "${RESIDUAL_COVERAGE}" == "1" ]]; then
     --outdir "${PLOTS_ROOT}" \
     --dpi "${DPI}"
 fi
-
 
 echo
 echo "== Done =="
