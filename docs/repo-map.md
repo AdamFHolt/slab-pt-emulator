@@ -39,7 +39,7 @@ Substructure:
 Default QC figure outputs now live under:
 - `plots/qc-emulator/single_depth/<suite>/`
 Science-facing figure outputs live under:
-- `plots/science-emulator/<suite>/`
+- `plots/science-emulator/single_depth/<suite>/`
 Default datasets/models live under:
 - `src/emulator/data/single_depth/<suite>/runs/`
 - `src/emulator/models/single_depth/<suite>/runs/`

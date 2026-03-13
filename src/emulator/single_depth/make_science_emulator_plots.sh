@@ -20,7 +20,7 @@ echo "suite    : ${SUITE}"
 echo "depths   : ${DEPTHS}"
 echo "variant  : ${VARIANT}"
 echo "model    : ${MODEL_TAG}"
-echo "out root : ${REPO_ROOT}/plots/science-emulator"
+echo "out root : ${REPO_ROOT}/plots/science-emulator/single_depth"
 echo
 
 echo "[1/4] all-depths sensitivity lines"

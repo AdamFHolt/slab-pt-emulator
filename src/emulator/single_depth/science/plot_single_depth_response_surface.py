@@ -77,7 +77,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--outdir",
         default=None,
-        help="Defaults to plots/science-emulator/<suite>.",
+        help="Defaults to plots/science-emulator/single_depth/<suite>.",
     )
     return p
 
@@ -90,7 +90,7 @@ def main() -> None:
 
     data_dir = Path(args.data_root).resolve() / args.suite / "runs" / args.data_name
     model_dir = Path(args.models_root).resolve() / args.suite / "runs" / args.data_name / args.model_tag
-    outdir = Path(args.outdir).resolve() if args.outdir else REPO_ROOT / "plots" / "science-emulator" / args.suite
+    outdir = Path(args.outdir).resolve() if args.outdir else REPO_ROOT / "plots" / "science-emulator" / "single_depth" / args.suite
     outdir.mkdir(parents=True, exist_ok=True)
 
     bundle = _load_dataset_bundle(data_dir)

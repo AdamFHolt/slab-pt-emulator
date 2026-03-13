@@ -94,7 +94,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--outdir",
         default=None,
-        help="Output directory. Defaults to plots/science-emulator/<suite>.",
+        help="Output directory. Defaults to plots/science-emulator/single_depth/<suite>.",
     )
     p.add_argument(
         "--top-k",
@@ -137,7 +137,7 @@ def main() -> None:
     data_dir = Path(args.data_root).resolve() / args.suite / "runs" / args.data_name
     model_dir = Path(args.models_root).resolve() / args.suite / "runs" / args.data_name / args.model_tag
     outdir = Path(args.outdir).resolve() if args.outdir else (
-        REPO_ROOT / "plots" / "science-emulator" / args.suite
+        REPO_ROOT / "plots" / "science-emulator" / "single_depth" / args.suite
     )
     outdir.mkdir(parents=True, exist_ok=True)
 
