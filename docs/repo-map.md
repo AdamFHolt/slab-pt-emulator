@@ -50,6 +50,7 @@ Default datasets/models live under:
   - QC plotting scripts and plot batch helpers
 - `src/emulator/single_depth/science/`
   - science-facing plotting scripts built on trained emulators
+  - `*_sensitivity.png` now means partial-dependence summaries, not single-case slices
 - `configs/gp.const-vc.yaml`
 - `configs/gp.ramped-vc.yaml`
 - `configs/rf.const-vc.yaml`

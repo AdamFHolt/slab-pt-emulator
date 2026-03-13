@@ -109,6 +109,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Number of evaluation points for each one-at-a-time curve.",
     )
     p.add_argument(
+        "--sample-size",
+        type=int,
+        default=64,
+        help="Number of baseline samples used to average partial-dependence curves.",
+    )
+    p.add_argument(
         "--range-quantiles",
         type=float,
         nargs=2,
@@ -157,28 +163,35 @@ def main() -> None:
     target_label = _target_label(target_col)
     label_map = _default_label_map()
 
-    # Use the median training sample as the baseline "typical case" for one-at-a-time sweeps.
-    baseline = np.median(x_train, axis=0)
+    n_baselines = min(args.sample_size, x_train.shape[0])
+    sample_idx = np.linspace(0, x_train.shape[0] - 1, n_baselines, dtype=int)
+    x_baselines = x_train[sample_idx]
 
     sweep_specs: list[dict[str, object]] = []
     for j, feat in enumerate(feature_cols):
         qmin, qmax = np.quantile(x_train[:, j], [q_low, q_high])
         x_axis = np.linspace(float(qmin), float(qmax), args.grid_size)
 
-        # Hold every other parameter fixed at the baseline and vary only one feature.
-        x_eval = np.repeat(baseline.reshape(1, -1), args.grid_size, axis=0)
-        x_eval[:, j] = x_axis
-        yhat = _predict_raw(model, x_eval, x_mean, x_std, y_mean, y_std)[:, 0]
+        curves = []
+        for baseline in x_baselines:
+            x_eval = np.repeat(baseline.reshape(1, -1), args.grid_size, axis=0)
+            x_eval[:, j] = x_axis
+            yhat = _predict_raw(model, x_eval, x_mean, x_std, y_mean, y_std)[:, 0]
+            curves.append(yhat)
+        curves_arr = np.vstack(curves)
+        mean_curve = np.mean(curves_arr, axis=0)
+        q10_curve = np.quantile(curves_arr, 0.10, axis=0)
+        q90_curve = np.quantile(curves_arr, 0.90, axis=0)
 
         sweep_specs.append(
             {
                 "feature": feat,
                 "label": label_map.get(feat, feat),
                 "x_axis": x_axis,
-                "yhat": yhat,
-                "effect_size": float(np.max(yhat) - np.min(yhat)),
-                "baseline_value": float(baseline[j]),
-                "train_values": x_train[:, j],
+                "mean_curve": mean_curve,
+                "q10_curve": q10_curve,
+                "q90_curve": q90_curve,
+                "effect_size": float(np.max(mean_curve) - np.min(mean_curve)),
             }
         )
 
@@ -223,8 +236,8 @@ def main() -> None:
         bbox={"boxstyle": "round,pad=0.3", "facecolor": "white", "edgecolor": "#BBBBBB", "alpha": 0.9},
     )
 
-    y_lo = min(float(np.min(np.asarray(spec["yhat"], dtype=float))) for spec in top_specs)
-    y_hi = max(float(np.max(np.asarray(spec["yhat"], dtype=float))) for spec in top_specs)
+    y_lo = min(float(np.min(np.asarray(spec["q10_curve"], dtype=float))) for spec in top_specs)
+    y_hi = max(float(np.max(np.asarray(spec["q90_curve"], dtype=float))) for spec in top_specs)
     y_pad = 0.05 * max(y_hi - y_lo, 1.0)
 
     for idx, spec in enumerate(top_specs):
@@ -232,15 +245,8 @@ def main() -> None:
         col = idx % n_cols
         ax = fig.add_subplot(gs[row, col])
         x_axis = spec["x_axis"]
-        yhat = spec["yhat"]
-        ax.plot(x_axis, yhat, color="#117733", lw=2.0)
-        ax.axvline(spec["baseline_value"], color="#444444", ls="--", lw=1.1, alpha=0.8)
-
-        # A light rug gives context for where training samples live without overpowering the curve.
-        train_values = np.asarray(spec["train_values"], dtype=float)
-        y_floor = float(np.min(yhat))
-        rug_height = 0.03 * max(float(np.ptp(yhat)), 1.0)
-        ax.vlines(train_values, y_floor - rug_height, y_floor, color="#999999", alpha=0.12, lw=0.8)
+        ax.fill_between(x_axis, spec["q10_curve"], spec["q90_curve"], color="#99CCEE", alpha=0.45)
+        ax.plot(x_axis, spec["mean_curve"], color="#117733", lw=2.0)
 
         ax.set_xlabel(spec["label"], fontsize=11)
         ax.set_ylabel(target_label, fontsize=11)
@@ -265,6 +271,8 @@ def main() -> None:
         col = idx % n_cols
         ax = fig.add_subplot(gs[row, col])
         ax.axis("off")
+
+    fig.text(0.01, 0.01, f"Bottom panels show mean partial dependence with 10-90% spread over {n_baselines} baseline samples.", fontsize=9)
 
     out_path = outdir / f"{args.suite}_{args.data_name}_{args.model_tag}_sensitivity.png"
     fig.savefig(out_path, dpi=200, bbox_inches="tight")

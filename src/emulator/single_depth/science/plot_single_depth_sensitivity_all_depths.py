@@ -137,10 +137,14 @@ def main() -> None:
         model_dir = models_root / dataset_dir.name / args.model_tag
         if not model_dir.exists():
             continue
+        model_path = model_dir / "model.joblib"
+        report_path = model_dir / "report.json"
+        if not model_path.exists() or not report_path.exists():
+            continue
 
         bundle = _load_bundle(dataset_dir)
-        model = joblib.load(model_dir / "model.joblib")
-        report = json.loads((model_dir / "report.json").read_text())
+        model = joblib.load(model_path)
+        report = json.loads(report_path.read_text())
 
         x_raw = np.asarray(bundle["x_raw"], dtype=float)
         x_train = x_raw[np.asarray(bundle["train_idx"], dtype=int)]
@@ -178,7 +182,7 @@ def main() -> None:
     target_col = depth_rows[0][3]
     plot_features = present_features or feature_order
 
-    vmax = float(np.nanmax(np.abs(matrix)))
+    vmax = 60.0
 
     fig, ax = plt.subplots(figsize=(8.8, 6.2), constrained_layout=True)
     im = ax.imshow(
@@ -190,7 +194,6 @@ def main() -> None:
         vmax=vmax,
         interpolation="nearest",
     )
-    ax.set_title(f"{args.suite} {args.variant}: signed sensitivity over depth", fontsize=14)
     ax.set_xlabel("Parameter", fontsize=12)
     ax.set_ylabel("Depth (km)", fontsize=12)
     ax.set_xticks(np.arange(len(plot_features)))
@@ -221,7 +224,7 @@ def main() -> None:
                     color="black" if abs(val) < vmax * 0.55 else "white",
                 )
 
-    out_path = outdir / f"{args.suite}_{args.variant}_{args.model_tag}_sensitivity_by_depth.png"
+    out_path = outdir / f"{args.suite}_{args.variant}_{args.model_tag}_sensitivity_all_depths.png"
     fig.savefig(out_path, dpi=220, bbox_inches="tight")
     plt.close(fig)
     print(f"[OK] wrote {out_path}")
