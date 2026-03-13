@@ -272,8 +272,6 @@ def main() -> None:
         ax = fig.add_subplot(gs[row, col])
         ax.axis("off")
 
-    fig.text(0.01, 0.01, f"Bottom panels show mean partial dependence with 10-90% spread over {n_baselines} baseline samples.", fontsize=9)
-
     out_path = outdir / f"{args.suite}_{args.data_name}_{args.model_tag}_sensitivity.png"
     fig.savefig(out_path, dpi=200, bbox_inches="tight")
     plt.close(fig)

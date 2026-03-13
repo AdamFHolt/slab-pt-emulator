@@ -63,7 +63,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--data-name", required=True)
     p.add_argument("--model-tag", default="gp_m25")
     p.add_argument("--x-feature", default="v_conv")
-    p.add_argument("--y-feature", default="age_SP")
+    p.add_argument("--y-feature", default="age_OP")
     p.add_argument("--grid-size", type=int, default=81)
     p.add_argument("--range-quantiles", type=float, nargs=2, default=(0.05, 0.95), metavar=("QLOW", "QHIGH"))
     p.add_argument(
@@ -129,7 +129,6 @@ def main() -> None:
     mesh = ax.contourf(xx, yy, z, levels=18, cmap="viridis")
     contour = ax.contour(xx, yy, z, levels=8, colors="white", linewidths=0.65, alpha=0.6)
     ax.clabel(contour, inline=True, fontsize=8, fmt="%.0f")
-    ax.scatter([baseline[x_idx]], [baseline[y_idx]], marker="x", s=70, c="red", linewidths=2)
     ax.set_xlabel(labels.get(args.x_feature, args.x_feature), fontsize=11)
     ax.set_ylabel(labels.get(args.y_feature, args.y_feature), fontsize=11)
     ax.tick_params(labelsize=10)

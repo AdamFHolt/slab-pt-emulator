@@ -23,17 +23,27 @@ echo "model    : ${MODEL_TAG}"
 echo "out root : ${REPO_ROOT}/plots/science-emulator"
 echo
 
-echo "[1/2] all-depths signed sensitivity summary"
-python3 "${SCIENCE_DIR}/plot_single_depth_sensitivity_all_depths.py" \
+echo "[1/3] all-depths sensitivity lines"
+python3 "${SCIENCE_DIR}/plot_single_depth_sensitivity_lines_all_depths.py" \
   --suite "${SUITE}" \
   --variant "${VARIANT}" \
   --model-tag "${MODEL_TAG}"
 
-echo "  [2/2] representative single-depth partial-dependence summaries"
+echo "  [2/3] representative single-depth partial-dependence summaries"
 for depth in ${DEPTHS}; do
   data_name="${depth}km_${VARIANT}"
   echo "    - ${data_name}"
   python3 "${SCIENCE_DIR}/plot_single_depth_sensitivity.py" \
+    --suite "${SUITE}" \
+    --data-name "${data_name}" \
+    --model-tag "${MODEL_TAG}"
+done
+
+echo "  [3/3] representative response surfaces"
+for depth in ${DEPTHS}; do
+  data_name="${depth}km_${VARIANT}"
+  echo "    - ${data_name} (${MODEL_TAG}: v_conv vs age_OP)"
+  python3 "${SCIENCE_DIR}/plot_single_depth_response_surface.py" \
     --suite "${SUITE}" \
     --data-name "${data_name}" \
     --model-tag "${MODEL_TAG}"
