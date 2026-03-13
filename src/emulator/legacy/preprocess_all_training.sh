@@ -23,7 +23,7 @@ FEATURE_COMBOS=(
 for d in "${DEPTHS[@]}"; do
   for combo in "${FEATURE_COMBOS[@]}"; do
     echo "Preprocessing for depth ${d} km with combo: ${combo}"
-    python "$SCRIPT_DIR/../single_depth/preprocess_single_depth_training.py" \
+    python "$SCRIPT_DIR/../single_depth/core/preprocess_single_depth_training.py" \
       --master "${MASTER}" \
       --params "${PARAMS}" \
       --outdir "${ODIR}" \

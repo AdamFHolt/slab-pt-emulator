@@ -13,7 +13,14 @@ Quick orientation:
 - [`docs/repo-map.md`](/home/holt/Projects/SlabPT-emulator/docs/repo-map.md) summarizes the repo structure and identifies legacy helpers.
 - Emulator scripts are grouped by workflow under:
   - `src/emulator/single_depth/`
+    - `core/`
+    - `qc/`
+    - `science/`
   - `src/emulator/profile_pca/`
+  - `core/`
+  - `qc/`
+  - `science/`
+  - `sweeps/`
   - `src/emulator/legacy/`
 - Workflow storage is suite-first:
   - single-depth: `<suite>/runs/` and `<suite>/param_sweep/`
@@ -168,6 +175,13 @@ Run profile-PCA QC plots for all default times/suites:
 make profile-pca-qc
 ```
 
+Direct shell entrypoint, one suite at a time:
+
+```bash
+bash src/emulator/profile_pca/make_qc_emulator_plots.sh const-vc
+bash src/emulator/profile_pca/make_qc_emulator_plots.sh ramped-vc
+```
+
 ### Step 4: Write Profile-PCA Quality Reports
 
 Compute score-space and reconstructed-profile quality metrics for all default times/suites:
@@ -278,13 +292,13 @@ Notes:
 - `profile-pca-quality-report` writes:
   - `src/emulator/models/profile_pca/<suite>/runs/<dataset>/gp_m25/profile_pca_quality.json`
 - `profile-pca-sweep-summary` writes ranked CSV/Markdown tables under:
-  - `plots/qc-emulator/profile-pca-sweep/`
+  - `plots/qc-emulator/profile-pca/pca-sweep/`
 - `profile-pca-sweep` writes exploratory model variants under:
   - `src/emulator/models/profile_pca/<suite>/pca_sweep/<dataset>/gp_m25/`
 - `profile-pca-gp-tuning-sweep` copies each tuned model into:
   - `src/emulator/models/profile_pca/<suite>/gp_tuning/<dataset>/<tag>/`
 - `profile-pca-gp-tuning-summary` writes ranked CSV/Markdown tables under:
-  - `plots/qc-emulator/profile-pca-gp-sweep/`
+  - `plots/qc-emulator/profile-pca/gp-tuning/`
 - Missing dataset/model folders are skipped with `[WARN]` messages.
 
 --------------------------------------------
@@ -403,10 +417,10 @@ Outputs under:
 - `src/emulator/models/single_depth/${SUITE}/param_sweep/40km_dTdt_thermalParam/`
 - `plots/qc-emulator/single_depth/${SUITE}/param-sweep/40km_dTdt_thermalParam/`
 
-To regenerate the standard comparison set for both suites:
+To regenerate the standard comparison set through the main QC wrapper:
 
 ```bash
-bash src/emulator/single_depth/make_param_sweep_plots.sh
+INCLUDE_PARAM_SWEEP=1 bash src/emulator/single_depth/make_qc_emulator_plots.sh "${SUITE}" dTdt gp_m25
 ```
 
 ----------------------
@@ -448,7 +462,7 @@ make quality-check-gp-m25
 Direct invocation (with optional summary JSON):
 
 ```bash
-python src/emulator/single_depth/validate_single_depth_quality.py \
+python src/emulator/single_depth/core/validate_single_depth_quality.py \
   --thresholds configs/emulator-quality.gp_m25.yaml \
   --models-root src/emulator/models/single_depth \
   --json-out plots/qc-emulator/quality-gates/gp_m25_validation.json
@@ -476,7 +490,7 @@ The profile-PCA quality report includes both:
 Write the quality report JSON for an existing trained model:
 
 ```bash
-python src/emulator/profile_pca/evaluate_profile_pca_quality.py \
+python src/emulator/profile_pca/core/evaluate_profile_pca_quality.py \
   --dataset-dir src/emulator/data/profile_pca/const-vc/runs/profileT_pca_t3Myr_k10 \
   --model-dir src/emulator/models/profile_pca/const-vc/runs/profileT_pca_t3Myr_k10/gp_m25
 ```
@@ -490,7 +504,7 @@ make profile-pca-quality-check-gp-m25
 Direct invocation:
 
 ```bash
-python src/emulator/profile_pca/validate_profile_pca_quality.py \
+python src/emulator/profile_pca/core/validate_profile_pca_quality.py \
   --thresholds configs/profile-pca-quality.gp_m25.yaml \
   --models-root src/emulator/models/profile_pca \
   --suites ramped-vc \
@@ -519,7 +533,7 @@ A change affecting emulator training, data prep, or model quality is complete wh
   - quality-gate summary (optional JSON): `plots/qc-emulator/quality-gates/gp_m25_validation.json`
   - profile-PCA quality report: `src/emulator/models/profile_pca/<suite>/runs/<dataset>/<model_tag>/profile_pca_quality.json`
   - emulator single-depth QC figures: `plots/qc-emulator/single_depth/<suite>/`
-  - emulator profile-PCA QC figures: `plots/qc-emulator/<suite>/profile-pca/`
+  - emulator profile-PCA QC figures: `plots/qc-emulator/profile-pca/runs/<suite>/`
   - numerical QC figures: `plots/qc-numerical-mods/<suite>/`
 
 ## Main Scripts By Stage

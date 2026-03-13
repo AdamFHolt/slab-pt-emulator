@@ -10,7 +10,7 @@ import pandas as pd
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-PLOTS_ROOT_DEFAULT = REPO_ROOT / "plots" / "qc-emulator" / "profile-pca-gp-sweep"
+PLOTS_ROOT_DEFAULT = REPO_ROOT / "plots" / "qc-emulator" / "profile-pca" / "gp-tuning"
 
 
 def _load_json(path: Path) -> dict[str, Any]:

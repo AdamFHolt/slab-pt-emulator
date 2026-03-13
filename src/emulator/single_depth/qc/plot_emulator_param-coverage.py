@@ -75,6 +75,21 @@ def _sorted_names(names: List[str]) -> List[str]:
     return [n for _, n in sorted(pairs, key=lambda t: t[0])]
 
 
+def nice_label(param: str) -> str:
+    labels = {
+        "v_conv": r"$v_{\rm conv}$ (cm/yr)",
+        "t_conv": r"$t_{\rm conv}$ (Myr)",
+        "age_SP": r"$\mathrm{age}_{\rm SP}$ (Myr)",
+        "age_OP": r"$\mathrm{age}_{\rm OP}$ (Myr)",
+        "dip_int": r"$\theta_{\rm init}$ ($^\circ$)",
+        "eta_int": r"$\eta_{\rm int}$ (Pa·s)",
+        "eta_UM": r"$\eta_{\rm UM}$ (Pa·s)",
+        "eps_trans": r"$\dot\epsilon_{\rm trans}$ (s$^{-1}$)",
+        "residual": r"Cooling-rate residual ($^\circ$C / Myr)",
+    }
+    return labels.get(param, param)
+
+
 # ------------------------- core plotting
 
 def plot_one_dataset(
@@ -162,7 +177,7 @@ def plot_one_dataset(
 
             ax.set_ylabel("count")
             if i == n - 1:
-                ax.set_xlabel(xname)
+                ax.set_xlabel(nice_label(xname))
             else:
                 ax.set_xticklabels([])
 
@@ -186,11 +201,11 @@ def plot_one_dataset(
 
             # axis labels only on outer edges
             if i == n - 1:
-                ax.set_xlabel(xname)
+                ax.set_xlabel(nice_label(xname))
             else:
                 ax.set_xticklabels([])
             if j == 0:
-                ax.set_ylabel(yname)
+                ax.set_ylabel(nice_label(yname))
             else:
                 ax.set_yticklabels([])
 
@@ -203,14 +218,14 @@ def plot_one_dataset(
         ax.grid(True, ls=":", alpha=0.25)
 
     axes[0, 0].legend(loc="upper right", frameon=False)
-    title = f"Validation Parameter Coverage — {suite}/{name}"
+    title = f"Validation parameter coverage - {suite}/{name}"
     if residuals is not None:
         title += " (colored by |residual|)"
     fig.suptitle(title, fontsize=14)
 
     if scatter_for_cbar is not None:
         cbar = fig.colorbar(scatter_for_cbar, ax=axes.ravel().tolist(), shrink=0.92, pad=0.01)
-        cbar.set_label("|residual| (target units)")
+        cbar.set_label(nice_label("residual"))
 
     outpath.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(outpath, dpi=dpi, bbox_inches="tight")

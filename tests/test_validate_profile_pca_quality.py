@@ -88,7 +88,7 @@ class ValidateProfilePCAQualityTests(unittest.TestCase):
             proc = subprocess.run(
                 [
                     sys.executable,
-                    "src/emulator/profile_pca/validate_profile_pca_quality.py",
+                    "src/emulator/profile_pca/core/validate_profile_pca_quality.py",
                     "--thresholds",
                     str(thresholds_path),
                     "--models-root",
@@ -121,7 +121,7 @@ class ValidateProfilePCAQualityTests(unittest.TestCase):
             proc = subprocess.run(
                 [
                     sys.executable,
-                    "src/emulator/profile_pca/validate_profile_pca_quality.py",
+                    "src/emulator/profile_pca/core/validate_profile_pca_quality.py",
                     "--thresholds",
                     str(thresholds_path),
                     "--models-root",

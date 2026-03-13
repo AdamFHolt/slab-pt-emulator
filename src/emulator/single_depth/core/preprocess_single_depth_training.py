@@ -274,7 +274,7 @@ def main():
 
     # Save outputs
     base_outdir = (Path(args.outdir).resolve() if args.outdir
-                   else (REPO_ROOT / "src" / "emulator" / "data" / "single_depth" / args.suite / "runs").resolve())
+                   else (repo_root / "src" / "emulator" / "data" / "single_depth" / args.suite / "runs").resolve())
     if args.depth_km is not None:
         depth_str = f"{int(args.depth_km)}km" if float(args.depth_km).is_integer() else f"{args.depth_km:g}km"
     else:

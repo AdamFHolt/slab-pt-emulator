@@ -84,7 +84,7 @@ class ProfilePCAQualityReportTests(unittest.TestCase):
             preprocess = subprocess.run(
                 [
                     sys.executable,
-                    "src/emulator/profile_pca/preprocess_profile_pca.py",
+                    "src/emulator/profile_pca/core/preprocess_profile_pca.py",
                     "--suite",
                     "const-vc",
                     "--params",
@@ -157,7 +157,7 @@ class ProfilePCAQualityReportTests(unittest.TestCase):
             eval_proc = subprocess.run(
                 [
                     sys.executable,
-                    "src/emulator/profile_pca/evaluate_profile_pca_quality.py",
+                    "src/emulator/profile_pca/core/evaluate_profile_pca_quality.py",
                     "--dataset-dir",
                     str(dataset_dir),
                     "--model-dir",

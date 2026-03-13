@@ -216,7 +216,7 @@ def main() -> int:
         dataset_name = f"profileT_pca_t{tlabel}Myr"
 
     out_root = (Path(args.outdir).resolve() if args.outdir
-                else (REPO_ROOT / "src" / "emulator" / "data" / "profile_pca" / args.suite).resolve())
+                else (REPO_ROOT / "src" / "emulator" / "data" / "profile_pca" / args.suite / "runs").resolve())
     out_dir = out_root / dataset_name
     out_dir.mkdir(parents=True, exist_ok=True)
 

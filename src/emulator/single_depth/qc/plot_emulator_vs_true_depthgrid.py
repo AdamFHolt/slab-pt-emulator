@@ -24,6 +24,14 @@ import matplotlib.pyplot as plt
 PLOTS_DIR_DEFAULT = Path("/home/holt/Projects/SlabPT-emulator/plots/qc-emulator/single_depth")
 
 
+def nice_target_label(target_name: str) -> str:
+    labels = {
+        "dTdt_C_per_Myr": r"Cooling rate ($^\circ$C / Myr)",
+        "dT_C": r"Temperature change ($^\circ$C)",
+    }
+    return labels.get(target_name, target_name)
+
+
 # ------------------------- IO helpers
 
 def load_bundle(data_root: Path, model_root: Path, suite: str, name: str, algo: str):
@@ -268,10 +276,10 @@ def main():
 
     # x-labels
     for ax in axes[-1, :]:
-        ax.set_xlabel(f"True {target_name}")
+        ax.set_xlabel(f"True {nice_target_label(target_name)}")
 
     for ax in axes[:, 0]:
-        ax.set_ylabel("Predicted")
+        ax.set_ylabel(f"Predicted {nice_target_label(target_name)}")
 
 
     # Column titles
@@ -287,7 +295,8 @@ def main():
     tr_txt = f"Train mean: R²={tr_mean['r2']:.3f}, RMSE={tr_mean['rmse']:.3g}" if tr_mean else "Train mean: (n/a)"
     va_txt = f"Val mean: R²={va_mean['r2']:.3f}, RMSE={va_mean['rmse']:.3g}" if va_mean else "Val mean: (n/a)"
     fig.suptitle(
-        f"{suite} | {args.variant} | {args.algo} | target={target_name}\n{tr_txt}   |   {va_txt}",
+        f"{suite} | {args.variant} | {args.algo}\n"
+        f"Target: {nice_target_label(target_name)}   |   {tr_txt}   |   {va_txt}",
         fontsize=12, y=0.995
     )
 

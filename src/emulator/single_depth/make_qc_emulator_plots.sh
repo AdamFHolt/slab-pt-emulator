@@ -4,7 +4,8 @@ set -euo pipefail
 # Usage:
 #   ./make_qc_emulator_plots.sh const-vc dTdt_thermalParam gp_rbf
 # Optional env overrides:
-#   DATA_ROOT=... MODELS_ROOT=... PLOTS_ROOT=... DPI=... LABEL_THRESH=... RESIDUAL_COVERAGE=0
+#   DATA_ROOT=... MODELS_ROOT=... PLOTS_ROOT=... DPI=... LABEL_THRESH=... RESIDUAL_COVERAGE=0 INCLUDE_PARAM_SWEEP=1
+#   PRED_TRUE_DEPTHS="20 30 40 50 60 70"
 
 SUITE="${1:-const-vc}"
 VARIANT="${2:-dTdt_thermalParam}"
@@ -25,6 +26,13 @@ LABEL_THRESH="${LABEL_THRESH:-8.0}"
 
 # Make residual-colored coverage plots too? (0/1)
 RESIDUAL_COVERAGE="${RESIDUAL_COVERAGE:-1}"
+INCLUDE_PARAM_SWEEP="${INCLUDE_PARAM_SWEEP:-0}"
+PRED_TRUE_DEPTHS="${PRED_TRUE_DEPTHS:-20 30 40 50 60 70}"
+
+PRED_TRUE_NAMES=()
+for depth in ${PRED_TRUE_DEPTHS}; do
+  PRED_TRUE_NAMES+=("${depth}km_${VARIANT}")
+done
 
 echo "== QC emulator plots =="
 echo "suite   : ${SUITE}"
@@ -35,18 +43,21 @@ echo "models  : ${MODELS_ROOT}"
 echo "plots   : ${PLOTS_ROOT}"
 echo "dpi     : ${DPI}"
 echo "label_th: ${LABEL_THRESH}"
+echo "param_sw: ${INCLUDE_PARAM_SWEEP}"
+echo "pvstrue : ${PRED_TRUE_DEPTHS}"
 echo
 
 # -------------------------
 # 1) Pred vs true depth grid (single figure across all depths)
 # -------------------------
-echo "[1/3] pred-vs-true depth grid"
+echo "[1/4] pred-vs-true depth grid"
 python "${QC_DIR}/plot_emulator_vs_true_depthgrid.py" \
   --data-root "${DATA_ROOT}" \
   --models-root "${MODELS_ROOT}" \
   --suite "${SUITE}" \
   --variant "${VARIANT}" \
   --algo "${ALGO}" \
+  --names "${PRED_TRUE_NAMES[@]}" \
   --outdir "${PLOTS_ROOT}" \
   --dpi "${DPI}"
 
@@ -55,7 +66,7 @@ echo
 # -------------------------
 # 2) Misfit vs features (one figure per depth)
 # -------------------------
-echo "[2/3] misfit-vs-features (per depth)"
+echo "[2/4] misfit-vs-features (per depth)"
 python "${QC_DIR}/plot_emulator_misfit-vs-params.py" \
   --data-root "${DATA_ROOT}" \
   --models-root "${MODELS_ROOT}" \
@@ -71,7 +82,7 @@ echo
 # -------------------------
 # 3) Parameter coverage (one figure per depth)
 # -------------------------
-echo "[3/3] param coverage (per depth)"
+echo "[3/4] param coverage (per depth)"
 python "${QC_DIR}/plot_emulator_param-coverage.py" \
   --data-root "${DATA_ROOT}" \
   --models-root "${MODELS_ROOT}" \
@@ -84,7 +95,7 @@ python "${QC_DIR}/plot_emulator_param-coverage.py" \
 
 if [[ "${RESIDUAL_COVERAGE}" == "1" ]]; then
   echo
-  echo "[3b/3] param coverage colored by |residual| (per depth)"
+  echo "[3b/4] param coverage colored by |residual| (per depth)"
   python "${QC_DIR}/plot_emulator_param-coverage.py" \
     --data-root "${DATA_ROOT}" \
     --models-root "${MODELS_ROOT}" \
@@ -94,6 +105,18 @@ if [[ "${RESIDUAL_COVERAGE}" == "1" ]]; then
     --color-by residual \
     --outdir "${PLOTS_ROOT}" \
     --dpi "${DPI}"
+fi
+
+if [[ "${INCLUDE_PARAM_SWEEP}" == "1" ]]; then
+  echo
+  echo "[4/4] param-sweep comparisons"
+  for dataset in 40km_dTdt 10km_dTdt_thermalParam 40km_dTdt_thermalParam 70km_dTdt_thermalParam; do
+    python "${QC_DIR}/plot_param_sweep_compare.py" \
+      --suite "${SUITE}" \
+      --data-name "${dataset}" \
+      --sweep-root "${MODELS_ROOT}" \
+      --outdir "${PLOTS_ROOT}"
+  done
 fi
 
 echo

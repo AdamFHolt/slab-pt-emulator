@@ -122,7 +122,7 @@ class SummarizeProfilePCASweepTests(unittest.TestCase):
             proc = subprocess.run(
                 [
                     sys.executable,
-                    "src/emulator/profile_pca/summarize_profile_pca_sweep.py",
+                    "src/emulator/profile_pca/sweeps/summarize_profile_pca_sweep.py",
                     "--models-root",
                     str(models_root),
                     "--suites",

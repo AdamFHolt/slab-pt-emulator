@@ -49,7 +49,8 @@ class TrainConfigSmokeTests(unittest.TestCase):
         )
         self.assertTrue(names)
         self.assertTrue(all(name.endswith("_dTdt") for name in names))
-        self.assertEqual("10km_dTdt", names[0])
+        self.assertEqual(sorted(names, key=lambda n: float(n.split("km_", 1)[0])), names)
+        self.assertIn("10km_dTdt", names)
 
     def test_discover_datasets_profile_pca_mode_with_prefix(self) -> None:
         # We build a tiny fake suite directory so this test does not depend on
@@ -176,7 +177,7 @@ class TrainConfigSmokeTests(unittest.TestCase):
         proc = subprocess.run(
             [
                 sys.executable,
-                "src/emulator/profile_pca/run_profile_pca_sweep.py",
+                "src/emulator/profile_pca/sweeps/run_profile_pca_sweep.py",
                 "--suites",
                 "const-vc",
                 "--times",
@@ -205,7 +206,7 @@ class TrainConfigSmokeTests(unittest.TestCase):
         proc = subprocess.run(
             [
                 sys.executable,
-                "src/emulator/profile_pca/run_profile_pca_gp_tuning_sweep.py",
+                "src/emulator/profile_pca/sweeps/run_profile_pca_gp_tuning_sweep.py",
                 "--suites",
                 "ramped-vc",
                 "--datasets",
@@ -250,7 +251,7 @@ class TrainConfigSmokeTests(unittest.TestCase):
             proc = subprocess.run(
                 [
                     sys.executable,
-                    "src/emulator/profile_pca/run_profile_pca_gp_tuning_sweep.py",
+                    "src/emulator/profile_pca/sweeps/run_profile_pca_gp_tuning_sweep.py",
                     "--suites",
                     "ramped-vc",
                     "--datasets",

@@ -28,18 +28,18 @@ LOGX_PARAMS = {"eta_int", "eta_UM", "eps_trans"}
 
 def nice_label(param: str) -> str:
     labels = {
-        "v_conv": r"Convergence rate (cm/yr)",
+        "v_conv": r"$v_{\rm conv}$ (cm/yr)",
         "t_conv": r"$t_{\rm conv}$ (Myr)",
         "v_conv_over_tconv": r"$v_{\rm conv}/t_{\rm conv}$",
-        "age_SP": r"Age$_{\rm SP}$ (Ma)",
-        "age_OP": r"Age$_{\rm OP}$ (Ma)",
-        "dip_int": r"Initial dip (°)",
+        "age_SP": r"$\mathrm{age}_{\rm SP}$ (Myr)",
+        "age_OP": r"$\mathrm{age}_{\rm OP}$ (Myr)",
+        "dip_int": r"$\theta_{\rm init}$ ($^\circ$)",
         "eta_int": r"$\eta_{\rm int}$ (Pa·s)",
         "eta_UM": r"$\eta_{\rm UM}$ (Pa·s)",
         "eta_ratio": r"$\eta_{\rm int}/\eta_{\rm UM}$",
         "eps_trans": r"$\dot\epsilon_{\rm trans}$ (s$^{-1}$)",
-        "thermal_param": r"$v\,\mathrm{age}_{\rm SP}\,\sin(\mathrm{dip})$",
-        "misfit": r"|Emulator − True| (°C/Myr)",
+        "thermal_param": r"$v_{\rm conv}\,\mathrm{age}_{\rm SP}\,\sin(\theta)$",
+        "misfit": r"Cooling-rate misfit ($^\circ$C / Myr)",
     }
     return labels.get(param, param)
 
@@ -266,9 +266,10 @@ def plot_one_dataset(
 
     axes[0].legend(frameon=False, loc="upper right")
 
+    target_label = "Cooling rate ($^\\circ$C / Myr)" if bundle["target_name"] == "dTdt_C_per_Myr" else bundle["target_name"]
     fig.suptitle(
-        f"Emulator misfit vs features — {bundle['data_path'].name} — {bundle['model_path'].name}\n"
-        f"target={bundle['target_name']}",
+        f"Emulator misfit vs parameters - {bundle['data_path'].name} - {bundle['model_path'].name}\n"
+        f"Target: {target_label}",
         fontsize=14
     )
 

@@ -31,6 +31,11 @@ This file is a short orientation guide for the repository.
 Grouped under `src/emulator/single_depth/` plus the shared trainer in
 `src/emulator/train_emulator.py`.
 
+Substructure:
+- `src/emulator/single_depth/core/`
+- `src/emulator/single_depth/qc/`
+- `src/emulator/single_depth/science/`
+
 Default QC figure outputs now live under:
 - `plots/qc-emulator/single_depth/<suite>/`
 Science-facing figure outputs live under:
@@ -40,17 +45,12 @@ Default datasets/models live under:
 - `src/emulator/models/single_depth/<suite>/runs/`
 - `src/emulator/models/single_depth/<suite>/param_sweep/`
 
-- `src/emulator/single_depth/preprocess_single_depth_training.py`
+- `src/emulator/single_depth/core/preprocess_single_depth_training.py`
   - build one single-depth training dataset
 - `src/emulator/train_emulator.py`
   - shared model trainer used by both workflows
-- `src/emulator/single_depth/validate_single_depth_quality.py`
+- `src/emulator/single_depth/core/validate_single_depth_quality.py`
   - validate standard single-depth model quality against thresholds
-- `src/emulator/single_depth/qc/`
-  - QC plotting scripts and plot batch helpers
-- `src/emulator/single_depth/science/`
-  - science-facing plotting scripts built on trained emulators
-  - `*_sensitivity.png` now means partial-dependence summaries, not single-case slices
 - `configs/gp.const-vc.yaml`
 - `configs/gp.ramped-vc.yaml`
 - `configs/rf.const-vc.yaml`
@@ -61,8 +61,17 @@ Default datasets/models live under:
 Grouped under `src/emulator/profile_pca/` plus the shared trainer in
 `src/emulator/train_emulator.py`.
 
+Substructure:
+- `src/emulator/profile_pca/core/`
+- `src/emulator/profile_pca/make_qc_emulator_plots.sh`
+- `src/emulator/profile_pca/qc/`
+- `src/emulator/profile_pca/science/`
+- `src/emulator/profile_pca/sweeps/`
+
 Default QC figure outputs live under:
-- `plots/qc-emulator/<suite>/profile-pca/`
+- `plots/qc-emulator/profile-pca/runs/<suite>/`
+- `plots/qc-emulator/profile-pca/pca-sweep/`
+- `plots/qc-emulator/profile-pca/gp-tuning/`
 Default datasets/models live under:
 - `src/emulator/data/profile_pca/<suite>/runs/`
 - `src/emulator/data/profile_pca/<suite>/pca_sweep/`
@@ -70,15 +79,15 @@ Default datasets/models live under:
 - `src/emulator/models/profile_pca/<suite>/pca_sweep/`
 - `src/emulator/models/profile_pca/<suite>/gp_tuning/`
 
-- `src/emulator/profile_pca/preprocess_profile_pca.py`
+- `src/emulator/profile_pca/core/preprocess_profile_pca.py`
   - build profile-PCA datasets
-- `src/emulator/profile_pca/evaluate_profile_pca_quality.py`
+- `src/emulator/profile_pca/core/evaluate_profile_pca_quality.py`
   - compute score-space and profile-space quality metrics
-- `src/emulator/profile_pca/validate_profile_pca_quality.py`
+- `src/emulator/profile_pca/core/validate_profile_pca_quality.py`
   - validate profile-PCA reports against thresholds
-- `src/emulator/profile_pca/run_profile_pca_sweep.py`
+- `src/emulator/profile_pca/sweeps/run_profile_pca_sweep.py`
   - sweep PCA representation choices (`k`, `raw` vs `whitened`)
-- `src/emulator/profile_pca/run_profile_pca_gp_tuning_sweep.py`
+- `src/emulator/profile_pca/sweeps/run_profile_pca_gp_tuning_sweep.py`
   - sweep GP settings on a fixed chosen PCA representation
 - `configs/gp.const-vc.profile-pca.yaml`
 - `configs/gp.ramped-vc.profile-pca.yaml`

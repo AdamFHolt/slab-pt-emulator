@@ -66,7 +66,7 @@ qc-num-ramped:
 	cd src/qc-numerical-mods && ./make_all_plots.sh ramped-vc
 
 quality-check-gp-m25:
-	python3 src/emulator/single_depth/validate_single_depth_quality.py \
+	python3 src/emulator/single_depth/core/validate_single_depth_quality.py \
 		--thresholds configs/emulator-quality.gp_m25.yaml \
 		--models-root src/emulator/models/single_depth \
 		$(if $(QUALITY_SUITES),--suites $(QUALITY_SUITES),) \
@@ -112,7 +112,7 @@ profile-pca-preprocess:
 			tlabel="$$(echo "$$t" | sed 's/\./p/g')"; \
 			dname="profileT_pca_t$${tlabel}Myr_k$(PROFILE_K)"; \
 			echo "[RUN] preprocess suite=$$suite time=$$t dataset=$$dname"; \
-			python3 src/emulator/profile_pca/preprocess_profile_pca.py \
+			python3 src/emulator/profile_pca/core/preprocess_profile_pca.py \
 				--suite "$$suite" \
 				--target-time-myr "$$t" \
 				--k "$(PROFILE_K)" \
@@ -141,7 +141,7 @@ profile-pca-qc:
 			dname="profileT_pca_t$${tlabel}Myr_k$(PROFILE_K)"; \
 			ds="src/emulator/data/profile_pca/$${suite}/runs/$${dname}"; \
 			md="src/emulator/models/profile_pca/$${suite}/runs/$${dname}/gp_m25"; \
-			outdir="plots/qc-emulator/$${suite}/profile-pca"; \
+			outroot="plots/qc-emulator/profile-pca/runs/$${suite}"; \
 			if [ ! -d "$$ds" ]; then \
 				echo "[WARN] skip missing dataset $$ds"; \
 				continue; \
@@ -150,23 +150,25 @@ profile-pca-qc:
 				echo "[WARN] skip missing model $$md"; \
 				continue; \
 			fi; \
-			mkdir -p "$$outdir"; \
-			prefix="$$outdir/$${dname}"; \
+			mkdir -p "$$outroot/reconstruction" "$$outroot/emulator-reconstruction" "$$outroot/score-diagnostics"; \
+			recon_prefix="$$outroot/reconstruction/$${dname}"; \
+			emu_prefix="$$outroot/emulator-reconstruction/$${dname}"; \
+			score_prefix="$$outroot/score-diagnostics/$${dname}"; \
 			echo "[RUN] qc suite=$$suite dataset=$$dname split=$(PROFILE_QC_SPLIT)"; \
-			python3 src/emulator/profile_pca/plot_profile_pca_reconstruction.py \
+			python3 src/emulator/profile_pca/qc/plot_profile_pca_reconstruction.py \
 				--dataset-dir "$$ds" \
 				--split "$(PROFILE_QC_SPLIT)" \
-				--out "$${prefix}_true-vs-recon.png"; \
-			python3 src/emulator/profile_pca/plot_profile_pca_emulator_reconstruction.py \
-				--dataset-dir "$$ds" \
-				--model-dir "$$md" \
-				--split "$(PROFILE_QC_SPLIT)" \
-				--out "$${prefix}_raw-vs-pca-vs-emu.png"; \
-			python3 src/emulator/profile_pca/plot_profile_pca_score_diagnostics.py \
+				--out "$${recon_prefix}_true-vs-recon.png"; \
+			python3 src/emulator/profile_pca/qc/plot_profile_pca_emulator_reconstruction.py \
 				--dataset-dir "$$ds" \
 				--model-dir "$$md" \
 				--split "$(PROFILE_QC_SPLIT)" \
-				--out-prefix "$$prefix"; \
+				--out "$${emu_prefix}_raw-vs-pca-vs-emu.png"; \
+			python3 src/emulator/profile_pca/qc/plot_profile_pca_score_diagnostics.py \
+				--dataset-dir "$$ds" \
+				--model-dir "$$md" \
+				--split "$(PROFILE_QC_SPLIT)" \
+				--out-prefix "$$score_prefix"; \
 		done; \
 	done
 
@@ -187,34 +189,34 @@ profile-pca-quality-report:
 				continue; \
 			fi; \
 			echo "[RUN] quality-report suite=$$suite dataset=$$dname model=$(PROFILE_MODEL_TAG)"; \
-			python3 src/emulator/profile_pca/evaluate_profile_pca_quality.py \
+			python3 src/emulator/profile_pca/core/evaluate_profile_pca_quality.py \
 				--dataset-dir "$$ds" \
 				--model-dir "$$md"; \
 		done; \
 	done
 
 profile-pca-quality-check-gp-m25:
-	python3 src/emulator/profile_pca/validate_profile_pca_quality.py \
+	python3 src/emulator/profile_pca/core/validate_profile_pca_quality.py \
 		--thresholds configs/profile-pca-quality.gp_m25.yaml \
 		--models-root src/emulator/models/profile_pca \
 		$(if $(QUALITY_SUITES),--suites $(QUALITY_SUITES),) \
 		$(if $(QUALITY_DATASETS),--datasets $(QUALITY_DATASETS),)
 
 profile-pca-sweep:
-	python3 src/emulator/profile_pca/run_profile_pca_sweep.py \
+	python3 src/emulator/profile_pca/sweeps/run_profile_pca_sweep.py \
 		--suites "$(PROFILE_SUITES)" \
 		--times "$(PROFILE_TIMES)" \
 		--ks "$(PROFILE_SWEEP_KS)" \
 		--score-spaces "$(PROFILE_SWEEP_SCORE_SPACES)"
 
 profile-pca-sweep-summary:
-	python3 src/emulator/profile_pca/summarize_profile_pca_sweep.py \
+	python3 src/emulator/profile_pca/sweeps/summarize_profile_pca_sweep.py \
 		--models-root src/emulator/models/profile_pca \
 		--suites "$(PROFILE_SUITES)" \
 		--dataset-pattern "$(PROFILE_SWEEP_DATASET_PATTERN)"
 
 profile-pca-gp-tuning-sweep:
-	python3 src/emulator/profile_pca/run_profile_pca_gp_tuning_sweep.py \
+	python3 src/emulator/profile_pca/sweeps/run_profile_pca_gp_tuning_sweep.py \
 		--suites "$(PROFILE_GP_TUNING_SUITES)" \
 		--datasets "$(PROFILE_GP_TUNING_DATASETS)" \
 		--kernels "$(PROFILE_GP_TUNING_KERNELS)" \
@@ -223,7 +225,7 @@ profile-pca-gp-tuning-sweep:
 		--noise-lows "$(PROFILE_GP_TUNING_NOISE_LOWS)"
 
 profile-pca-gp-tuning-summary:
-	python3 src/emulator/profile_pca/summarize_profile_pca_gp_tuning_sweep.py \
+	python3 src/emulator/profile_pca/sweeps/summarize_profile_pca_gp_tuning_sweep.py \
 		--sweep-root src/emulator/models/profile_pca \
 		--suites "$(PROFILE_GP_TUNING_SUITES)" \
 		--dataset-pattern "$(PROFILE_GP_TUNING_DATASET_PATTERN)"
