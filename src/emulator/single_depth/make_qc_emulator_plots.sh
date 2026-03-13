@@ -12,6 +12,7 @@ ALGO="${3:-gp_m25}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+QC_DIR="${SCRIPT_DIR}/qc"
 
 # Roots default relative to the repo layout, so the script works from repo root
 # and from ad hoc shells without depending on the caller's cwd.
@@ -40,7 +41,7 @@ echo
 # 1) Pred vs true depth grid (single figure across all depths)
 # -------------------------
 echo "[1/3] pred-vs-true depth grid"
-python "${SCRIPT_DIR}/plot_emulator_vs_true_depthgrid.py" \
+python "${QC_DIR}/plot_emulator_vs_true_depthgrid.py" \
   --data-root "${DATA_ROOT}" \
   --models-root "${MODELS_ROOT}" \
   --suite "${SUITE}" \
@@ -55,7 +56,7 @@ echo
 # 2) Misfit vs features (one figure per depth)
 # -------------------------
 echo "[2/3] misfit-vs-features (per depth)"
-python "${SCRIPT_DIR}/plot_emulator_misfit-vs-params.py" \
+python "${QC_DIR}/plot_emulator_misfit-vs-params.py" \
   --data-root "${DATA_ROOT}" \
   --models-root "${MODELS_ROOT}" \
   --suite "${SUITE}" \
@@ -71,7 +72,7 @@ echo
 # 3) Parameter coverage (one figure per depth)
 # -------------------------
 echo "[3/3] param coverage (per depth)"
-python "${SCRIPT_DIR}/plot_emulator_param-coverage.py" \
+python "${QC_DIR}/plot_emulator_param-coverage.py" \
   --data-root "${DATA_ROOT}" \
   --models-root "${MODELS_ROOT}" \
   --suite "${SUITE}" \
@@ -84,7 +85,7 @@ python "${SCRIPT_DIR}/plot_emulator_param-coverage.py" \
 if [[ "${RESIDUAL_COVERAGE}" == "1" ]]; then
   echo
   echo "[3b/3] param coverage colored by |residual| (per depth)"
-  python "${SCRIPT_DIR}/plot_emulator_param-coverage.py" \
+  python "${QC_DIR}/plot_emulator_param-coverage.py" \
     --data-root "${DATA_ROOT}" \
     --models-root "${MODELS_ROOT}" \
     --suite "${SUITE}" \

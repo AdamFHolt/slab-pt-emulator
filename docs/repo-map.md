@@ -33,6 +33,8 @@ Grouped under `src/emulator/single_depth/` plus the shared trainer in
 
 Default QC figure outputs now live under:
 - `plots/qc-emulator/single_depth/<suite>/`
+Science-facing figure outputs live under:
+- `plots/science-emulator/<suite>/`
 Default datasets/models live under:
 - `src/emulator/data/single_depth/<suite>/runs/`
 - `src/emulator/models/single_depth/<suite>/runs/`
@@ -44,6 +46,10 @@ Default datasets/models live under:
   - shared model trainer used by both workflows
 - `src/emulator/single_depth/validate_single_depth_quality.py`
   - validate standard single-depth model quality against thresholds
+- `src/emulator/single_depth/qc/`
+  - QC plotting scripts and plot batch helpers
+- `src/emulator/single_depth/science/`
+  - science-facing plotting scripts built on trained emulators
 - `configs/gp.const-vc.yaml`
 - `configs/gp.ramped-vc.yaml`
 - `configs/rf.const-vc.yaml`

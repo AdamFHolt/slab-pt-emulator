@@ -7,7 +7,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-PLOT_SCRIPT="$SCRIPT_DIR/plot_param_sweep_compare.py"
+PLOT_SCRIPT="$SCRIPT_DIR/qc/plot_param_sweep_compare.py"
 OUT_ROOT="$REPO_ROOT/plots/qc-emulator/single_depth"
 SWEEP_ROOT="$REPO_ROOT/src/emulator/models/single_depth"
 

@@ -395,7 +395,7 @@ Outputs under:
 ```bash
 cd src/emulator
 ./legacy/train_one_depth_param-sweep.sh "${SUITE}" 40 dTdt_thermalParam gp_rbf,gp_m15,gp_m25,rf
-python single_depth/plot_param_sweep_compare.py --suite "${SUITE}" --data-name 40km_dTdt_thermalParam
+python single_depth/qc/plot_param_sweep_compare.py --suite "${SUITE}" --data-name 40km_dTdt_thermalParam
 cd ../..
 ```
 
