@@ -154,7 +154,7 @@ def _train_val_split(n: int, val_frac: float, seed: int) -> Tuple[np.ndarray, np
 
 def main():
     parser = argparse.ArgumentParser(description="Preprocess Slab P–T training data.")
-    parser.add_argument("--params", default="../../data/params-list.const-vc.csv",
+    parser.add_argument("--params", default="data/params/params-list.const-vc.csv",
                         help="Path to params-list.csv (relative or absolute).")
     parser.add_argument("--master", required=True,
                         help="Path to a single master_*.csv file.")
@@ -169,7 +169,7 @@ def main():
                         help="Include thermal parameter as a feature.")
     parser.add_argument("--add-eta-ratio", action="store_true",
                         help="Include interface viscosity ratio as a feature.")
-    parser.add_argument("--outdir", default=str(THIS_FILE.parent.parent / "data" / "single_depth"),
+    parser.add_argument("--outdir", default=None,
                         help="Output directory for npy/json artifacts.")
     parser.add_argument("--val-frac", type=float, default=0.15,
                         help="Validation fraction (0–1).")
@@ -273,7 +273,8 @@ def main():
     train_idx, val_idx = _train_val_split(n_after, args.val_frac, args.seed)
 
     # Save outputs
-    base_outdir = Path(args.outdir).resolve()
+    base_outdir = (Path(args.outdir).resolve() if args.outdir
+                   else (REPO_ROOT / "src" / "emulator" / "data" / "single_depth" / args.suite / "runs").resolve())
     if args.depth_km is not None:
         depth_str = f"{int(args.depth_km)}km" if float(args.depth_km).is_integer() else f"{args.depth_km:g}km"
     else:

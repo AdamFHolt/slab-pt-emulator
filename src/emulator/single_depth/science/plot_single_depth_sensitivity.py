@@ -11,7 +11,7 @@ import numpy as np
 
 
 THIS_FILE = Path(__file__).resolve()
-REPO_ROOT = THIS_FILE.parents[3]
+REPO_ROOT = THIS_FILE.parents[4]
 
 
 def _inverse_standardize(arr_std: np.ndarray, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
@@ -61,9 +61,13 @@ def _default_label_map() -> dict[str, str]:
     }
 
 
+def _default_feature_order() -> list[str]:
+    return ["v_conv", "age_SP", "age_OP", "dip_int", "eta_UM", "t_conv"]
+
+
 def _target_label(target_col: str) -> str:
     if target_col == "dTdt_C_per_Myr":
-        return r"$dT/dt$ ($^\circ$C / Myr)"
+        return r"Cooling rate ($^\circ$C / Myr)"
     return target_col
 
 
@@ -178,7 +182,11 @@ def main() -> None:
             }
         )
 
-    ranked = sorted(sweep_specs, key=lambda item: item["effect_size"], reverse=True)
+    feature_rank = {name: idx for idx, name in enumerate(_default_feature_order())}
+    ranked = sorted(
+        sweep_specs,
+        key=lambda item: (-item["effect_size"], feature_rank.get(str(item["feature"]), 999)),
+    )
     top_specs = ranked[: max(1, min(args.top_k, len(ranked)))]
 
     n_cols = 2
@@ -234,15 +242,21 @@ def main() -> None:
         rug_height = 0.03 * max(float(np.ptp(yhat)), 1.0)
         ax.vlines(train_values, y_floor - rug_height, y_floor, color="#999999", alpha=0.12, lw=0.8)
 
-        ax.set_title(
-            f"{spec['label']} (delta={spec['effect_size']:.2f})",
-            fontsize=11,
-        )
         ax.set_xlabel(spec["label"], fontsize=11)
         ax.set_ylabel(target_label, fontsize=11)
         ax.tick_params(axis="both", labelsize=10)
         ax.set_ylim(y_lo - y_pad, y_hi + y_pad)
         ax.grid(alpha=0.25)
+        ax.text(
+            0.98,
+            0.96,
+            rf"$\Delta$={spec['effect_size']:.2f}",
+            transform=ax.transAxes,
+            ha="right",
+            va="top",
+            fontsize=9,
+            bbox={"boxstyle": "round,pad=0.2", "facecolor": "white", "edgecolor": "#CCCCCC", "alpha": 0.9},
+        )
 
     # Hide any unused subplot slots in the last row.
     total_slots = n_curve_rows * n_cols
