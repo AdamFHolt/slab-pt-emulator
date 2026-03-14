@@ -69,7 +69,7 @@ Substructure:
 - `src/emulator/profile_pca/sweeps/`
 
 Default QC figure outputs live under:
-- `plots/qc-emulator/profile-pca/runs/<suite>/`
+- `plots/qc-emulator/profile-pca/default-runs/<suite>/`
 - `plots/qc-emulator/profile-pca/pca-sweep/`
 - `plots/qc-emulator/profile-pca/gp-tuning/`
 Default datasets/models live under:

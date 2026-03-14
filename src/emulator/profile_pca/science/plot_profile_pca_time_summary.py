@@ -27,6 +27,10 @@ def _time_label(value: float) -> str:
     return f"{value:g} Myr"
 
 
+def _time_tag(value: float) -> str:
+    return f"{value:g}".replace(".", "p")
+
+
 def _load_profile_on_grid(csv_path: Path, depth_grid: np.ndarray) -> np.ndarray:
     df = pd.read_csv(csv_path)
     z = pd.to_numeric(df["depth_km"], errors="coerce").to_numpy(float)
@@ -72,7 +76,7 @@ def main() -> int:
 
     rows: list[dict[str, object]] = []
     for t in times:
-        tlabel = str(t).replace(".", "p")
+        tlabel = _time_tag(t)
         dname = f"profileT_pca_t{tlabel}Myr_k{args.k}"
         ds = data_root / dname
         md = models_root / dname / args.model_tag
@@ -115,6 +119,7 @@ def main() -> int:
                 "depth_grid": depth_grid,
                 "true_median": np.median(true_val, axis=0),
                 "emu_median": np.median(recon_pred, axis=0),
+                "rmse_depth_emu": np.sqrt(np.mean((true_val - recon_pred) ** 2, axis=0)),
                 "rmse_emu": rmse_emu,
                 "rmse_pca": rmse_pca,
             }
@@ -127,7 +132,7 @@ def main() -> int:
     cmap = plt.cm.viridis
     colors = cmap(np.linspace(0.15, 0.92, len(rows)))
 
-    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(12.2, 5.5), constrained_layout=True)
+    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(9.4, 5.5), constrained_layout=True)
 
     for color, row in zip(colors, rows):
         depth_grid = np.asarray(row["depth_grid"])
@@ -141,7 +146,7 @@ def main() -> int:
     ax0.invert_yaxis()
     ax0.grid(True, ls=":", alpha=0.35)
     ax0.set_title("Median profiles by time")
-    ax0.legend(title="Emulator", loc="lower right", fontsize=8, title_fontsize=9)
+    ax0.legend(title="Time", loc="upper right", fontsize=8, title_fontsize=9)
     ax0.text(
         0.02, 0.02,
         "Dashed = raw median\nSolid = emulator median",
@@ -152,14 +157,17 @@ def main() -> int:
         bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="0.8", alpha=0.9),
     )
 
-    tt = [float(r["time"]) for r in rows]
-    ax1.plot(tt, [float(r["rmse_emu"]) for r in rows], color="tab:orange", marker="o", lw=2.0, label="Emulator recon")
-    ax1.plot(tt, [float(r["rmse_pca"]) for r in rows], color="tab:blue", marker="o", lw=2.0, label="PCA-only baseline")
-    ax1.set_xlabel("Time (Myr)")
-    ax1.set_ylabel("Validation profile RMSE ($^\\circ$C)")
-    ax1.set_title("Reconstruction error through time")
+    for color, row in zip(colors, rows):
+        depth_grid = np.asarray(row["depth_grid"])
+        t = float(row["time"])
+        label = _time_label(t)
+        ax1.plot(np.asarray(row["rmse_depth_emu"]), depth_grid, color=color, lw=2.0, label=label)
+
+    ax1.set_xlabel("Validation profile RMSE ($^\\circ$C)")
+    ax1.set_ylabel("Depth (km)")
+    ax1.invert_yaxis()
+    ax1.set_title("Reconstruction RMSE by depth")
     ax1.grid(True, ls=":", alpha=0.35)
-    ax1.legend(loc="upper right", fontsize=9)
 
     out = Path(args.out).resolve() if args.out else (PLOTS_ROOT_DEFAULT / args.suite / f"{args.suite}_profile_pca_time_summary.png")
     out.parent.mkdir(parents=True, exist_ok=True)

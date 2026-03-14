@@ -29,11 +29,11 @@ def _load_profile_on_grid(csv_path: Path, depth_grid: np.ndarray) -> np.ndarray:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Plot raw profile vs PCA vs emulator-predicted reconstruction.")
+    ap = argparse.ArgumentParser(description="Plot raw vs PCA and raw vs emulator reconstructions with depthwise RMSE strips.")
     ap.add_argument("--dataset-dir", required=True)
-    ap.add_argument("--model-dir", required=True, help="Model artifact dir with yhat_train.npy/yhat_val.npy")
+    ap.add_argument("--model-dir", required=True)
     ap.add_argument("--split", choices=["val", "train"], default="val")
-    ap.add_argument("--n-samples", type=int, default=20)
+    ap.add_argument("--n-samples", type=int, default=25)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
@@ -67,26 +67,20 @@ def main() -> int:
 
     if pred_scores.ndim == 1:
         pred_scores = pred_scores.reshape(-1, 1)
-
     if pred_scores.shape[0] != idx.size:
         raise RuntimeError("Prediction rows do not match selected split indices.")
 
-    if score_space == "whitened":
-        pred_scores_raw = pred_scores * score_scale[None, :]
-    else:
-        pred_scores_raw = pred_scores
-
+    pred_scores_raw = pred_scores * score_scale[None, :] if score_space == "whitened" else pred_scores
     recon_pred_split = mean_profile[None, :] + pred_scores_raw @ components
     true_raw_split = true_raw[idx]
     recon_pca_split = recon_pca[idx]
 
     err_pca = true_raw_split - recon_pca_split
     err_pred = true_raw_split - recon_pred_split
-
-    rmse_pca = float(np.sqrt(np.mean(err_pca ** 2)))
-    rmse_pred = float(np.sqrt(np.mean(err_pred ** 2)))
     rmse_depth_pca = np.sqrt(np.mean(err_pca ** 2, axis=0))
     rmse_depth_pred = np.sqrt(np.mean(err_pred ** 2, axis=0))
+    rmse_pca = float(np.sqrt(np.mean(err_pca ** 2)))
+    rmse_pred = float(np.sqrt(np.mean(err_pred ** 2)))
 
     rng = np.random.default_rng(args.seed)
     if args.n_samples > 0 and idx.size > args.n_samples:
@@ -94,43 +88,86 @@ def main() -> int:
     else:
         pick_local = np.arange(idx.size)
 
-    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(12.2, 5.4), constrained_layout=True)
+    true_s = true_raw_split[pick_local]
+    pca_s = recon_pca_split[pick_local]
+    pred_s = recon_pred_split[pick_local]
 
-    for i in pick_local:
-        ax0.plot(true_raw_split[i], depth_grid, color="0.65", lw=0.9, alpha=0.45)
-        ax0.plot(recon_pca_split[i], depth_grid, color="tab:blue", lw=1.0, alpha=0.65)
-        ax0.plot(recon_pred_split[i], depth_grid, color="tab:orange", lw=1.0, alpha=0.65)
+    fig, axes = plt.subplots(
+        1,
+        4,
+        figsize=(13.2, 5.6),
+        constrained_layout=True,
+        sharey=True,
+        gridspec_kw={"width_ratios": [1.55, 0.58, 1.55, 0.58]},
+    )
+    ax0, ax1, ax2, ax3 = axes
 
-    ax0.set_xlabel("Temperature (C)")
+    for i in range(true_s.shape[0]):
+        ax0.plot(true_s[i], depth_grid, color="0.7", lw=1.0, alpha=0.45)
+        ax0.plot(pca_s[i], depth_grid, color="tab:blue", lw=1.1, alpha=0.75)
+
+        ax2.plot(true_s[i], depth_grid, color="0.7", lw=1.0, alpha=0.45)
+        ax2.plot(pred_s[i], depth_grid, color="tab:orange", lw=1.1, alpha=0.75)
+
+    ax0.set_xlabel("Temperature ($^\\circ$C)")
     ax0.set_ylabel("Depth (km)")
-    ax0.invert_yaxis()
+    ax0.set_title("Raw vs PCA reconstruction")
     ax0.grid(True, ls=":", alpha=0.35)
-    ax0.set_title(f"{args.split}: raw(gray), PCA(blue), emulator(orange)")
+    ax0.invert_yaxis()
 
-    med_true = np.median(true_raw_split, axis=0)
-    med_pca = np.median(recon_pca_split, axis=0)
-    med_pred = np.median(recon_pred_split, axis=0)
-
-    ax1.plot(med_true, depth_grid, color="0.15", lw=2.2, label="raw median")
-    ax1.plot(med_pca, depth_grid, color="tab:blue", lw=2.0, label=f"PCA median (RMSE={rmse_pca:.2f} C)")
-    ax1.plot(med_pred, depth_grid, color="tab:orange", lw=2.0, label=f"Emu median (RMSE={rmse_pred:.2f} C)")
-
-    ax1_t = ax1.twiny()
-    ax1_t.plot(rmse_depth_pca, depth_grid, color="tab:blue", ls="--", lw=1.6, alpha=0.85)
-    ax1_t.plot(rmse_depth_pred, depth_grid, color="tab:orange", ls="-", lw=1.6, alpha=0.85)
-    ax1_t.set_xlabel("RMSE by depth (C)")
-
-    ax1.set_xlabel("Temperature (C)")
-    ax1.set_ylabel("Depth (km)")
-    ax1.invert_yaxis()
+    ax1.plot(rmse_depth_pca, depth_grid, color="tab:blue", lw=2.0)
+    ax1.set_xlabel("RMSE ($^\\circ$C)")
+    ax1.set_title("")
     ax1.grid(True, ls=":", alpha=0.35)
-    ax1.set_title("Median profiles + depthwise RMSE")
-    ax1.legend(loc="lower right", fontsize=8)
+    ax1.invert_yaxis()
+    ax1.text(
+        0.50,
+        0.975,
+        f"mean = {rmse_pca:.2f} $^\\circ$C",
+        transform=ax1.transAxes,
+        ha="center",
+        va="top",
+        fontsize=8,
+    )
+
+    ax2.set_xlabel("Temperature ($^\\circ$C)")
+    ax2.set_title("Raw vs emulator reconstruction")
+    ax2.grid(True, ls=":", alpha=0.35)
+    ax2.invert_yaxis()
+
+    ax3.plot(rmse_depth_pred, depth_grid, color="tab:orange", lw=2.0)
+    ax3.set_xlabel("RMSE ($^\\circ$C)")
+    ax3.set_title("")
+    ax3.grid(True, ls=":", alpha=0.35)
+    ax3.invert_yaxis()
+    ax3.text(
+        0.50,
+        0.975,
+        f"mean = {rmse_pred:.2f} $^\\circ$C",
+        transform=ax3.transAxes,
+        ha="center",
+        va="top",
+        fontsize=8,
+    )
+
+    xmin = float(min(np.nanmin(true_s), np.nanmin(pca_s), np.nanmin(pred_s)))
+    xmax = float(max(np.nanmax(true_s), np.nanmax(pca_s), np.nanmax(pred_s)))
+    xpad = 0.03 * max(1.0, xmax - xmin)
+    for ax in (ax0, ax2):
+        ax.set_xlim(xmin - xpad, xmax + xpad)
+
+    rmse_max = float(max(np.nanmax(rmse_depth_pca), np.nanmax(rmse_depth_pred)))
+    for ax in (ax1, ax3):
+        ax.set_xlim(0.0, rmse_max * 1.05)
+
+    y0 = float(np.nanmin(depth_grid))
+    y1 = max(85.0, float(np.nanmax(depth_grid)))
+    for ax in (ax0, ax1, ax2, ax3):
+        ax.set_ylim(y1, y0)
 
     out = Path(args.out).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=220, bbox_inches="tight")
-
     print(f"[OK] Saved: {out}")
     print(f"[OK] split={args.split} rmse_pca_only_C={rmse_pca:.6f}")
     print(f"[OK] split={args.split} rmse_emu_recon_C={rmse_pred:.6f}")

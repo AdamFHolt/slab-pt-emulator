@@ -533,7 +533,7 @@ A change affecting emulator training, data prep, or model quality is complete wh
   - quality-gate summary (optional JSON): `plots/qc-emulator/quality-gates/gp_m25_validation.json`
   - profile-PCA quality report: `src/emulator/models/profile_pca/<suite>/runs/<dataset>/<model_tag>/profile_pca_quality.json`
   - emulator single-depth QC figures: `plots/qc-emulator/single_depth/<suite>/`
-  - emulator profile-PCA QC figures: `plots/qc-emulator/profile-pca/runs/<suite>/`
+  - emulator profile-PCA QC figures: `plots/qc-emulator/profile-pca/default-runs/<suite>/`
   - numerical QC figures: `plots/qc-numerical-mods/<suite>/`
 
 ## Main Scripts By Stage

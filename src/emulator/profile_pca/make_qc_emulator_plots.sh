@@ -4,7 +4,7 @@ set -euo pipefail
 # Usage:
 #   ./make_qc_emulator_plots.sh const-vc
 # Optional env overrides:
-#   DATA_ROOT=... MODELS_ROOT=... PLOTS_ROOT=... SPLIT=val DPI=220 N_SAMPLES=20 SEED=0 PROFILE_TIMES="0.5 1 2 3 4 5" PROFILE_K=10 MODEL_TAG=gp_m25
+#   DATA_ROOT=... MODELS_ROOT=... PLOTS_ROOT=... SPLIT=val DPI=220 N_SAMPLES=25 SEED=0 PROFILE_TIMES="0.5 1 2 3 4 5" PROFILE_K=10 MODEL_TAG=gp_m25
 
 SUITE="${1:-const-vc}"
 
@@ -18,14 +18,14 @@ PLOTS_ROOT="${PLOTS_ROOT:-${REPO_ROOT}/plots/qc-emulator/profile-pca}"
 
 SPLIT="${SPLIT:-val}"
 DPI="${DPI:-220}"
-N_SAMPLES="${N_SAMPLES:-20}"
+N_SAMPLES="${N_SAMPLES:-25}"
 SEED="${SEED:-0}"
 PROFILE_TIMES="${PROFILE_TIMES:-0.5 1 2 3 4 5}"
 PROFILE_K="${PROFILE_K:-10}"
 MODEL_TAG="${MODEL_TAG:-gp_m25}"
 
-RUNS_ROOT="${PLOTS_ROOT}/runs/${SUITE}"
-mkdir -p "${RUNS_ROOT}/reconstruction" "${RUNS_ROOT}/emulator-reconstruction" "${RUNS_ROOT}/score-diagnostics"
+RUNS_ROOT="${PLOTS_ROOT}/default-runs/${SUITE}"
+mkdir -p "${RUNS_ROOT}"
 
 echo "== Profile-PCA QC plots =="
 echo "suite    : ${SUITE}"
@@ -55,26 +55,19 @@ for t in ${PROFILE_TIMES}; do
   fi
 
   echo "[RUN] suite=${SUITE} dataset=${dname} split=${SPLIT}"
-  python3 "${QC_DIR}/plot_profile_pca_reconstruction.py" \
-    --dataset-dir "${ds}" \
-    --split "${SPLIT}" \
-    --n-samples "${N_SAMPLES}" \
-    --seed "${SEED}" \
-    --out "${RUNS_ROOT}/reconstruction/${dname}_true-vs-recon.png"
-
-  python3 "${QC_DIR}/plot_profile_pca_emulator_reconstruction.py" \
+  python3 "${QC_DIR}/plot_profile_pca_combined_reconstruction.py" \
     --dataset-dir "${ds}" \
     --model-dir "${md}" \
     --split "${SPLIT}" \
     --n-samples "${N_SAMPLES}" \
     --seed "${SEED}" \
-    --out "${RUNS_ROOT}/emulator-reconstruction/${dname}_raw-vs-pca-vs-emu.png"
+    --out "${RUNS_ROOT}/${dname}_combined-qc.png"
 
   python3 "${QC_DIR}/plot_profile_pca_score_diagnostics.py" \
     --dataset-dir "${ds}" \
     --model-dir "${md}" \
     --split "${SPLIT}" \
-    --out-prefix "${RUNS_ROOT}/score-diagnostics/${dname}"
+    --out-prefix "${RUNS_ROOT}/${dname}_scores"
 done
 
 echo

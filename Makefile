@@ -141,7 +141,7 @@ profile-pca-qc:
 			dname="profileT_pca_t$${tlabel}Myr_k$(PROFILE_K)"; \
 			ds="src/emulator/data/profile_pca/$${suite}/runs/$${dname}"; \
 			md="src/emulator/models/profile_pca/$${suite}/runs/$${dname}/gp_m25"; \
-			outroot="plots/qc-emulator/profile-pca/runs/$${suite}"; \
+			outroot="plots/qc-emulator/profile-pca/default-runs/$${suite}"; \
 			if [ ! -d "$$ds" ]; then \
 				echo "[WARN] skip missing dataset $$ds"; \
 				continue; \
@@ -150,20 +150,15 @@ profile-pca-qc:
 				echo "[WARN] skip missing model $$md"; \
 				continue; \
 			fi; \
-			mkdir -p "$$outroot/reconstruction" "$$outroot/emulator-reconstruction" "$$outroot/score-diagnostics"; \
-			recon_prefix="$$outroot/reconstruction/$${dname}"; \
-			emu_prefix="$$outroot/emulator-reconstruction/$${dname}"; \
-			score_prefix="$$outroot/score-diagnostics/$${dname}"; \
+			mkdir -p "$$outroot"; \
+			combined_out="$$outroot/$${dname}_combined-qc.png"; \
+			score_prefix="$$outroot/$${dname}_scores"; \
 			echo "[RUN] qc suite=$$suite dataset=$$dname split=$(PROFILE_QC_SPLIT)"; \
-			python3 src/emulator/profile_pca/qc/plot_profile_pca_reconstruction.py \
-				--dataset-dir "$$ds" \
-				--split "$(PROFILE_QC_SPLIT)" \
-				--out "$${recon_prefix}_true-vs-recon.png"; \
-			python3 src/emulator/profile_pca/qc/plot_profile_pca_emulator_reconstruction.py \
+			python3 src/emulator/profile_pca/qc/plot_profile_pca_combined_reconstruction.py \
 				--dataset-dir "$$ds" \
 				--model-dir "$$md" \
 				--split "$(PROFILE_QC_SPLIT)" \
-				--out "$${emu_prefix}_raw-vs-pca-vs-emu.png"; \
+				--out "$$combined_out"; \
 			python3 src/emulator/profile_pca/qc/plot_profile_pca_score_diagnostics.py \
 				--dataset-dir "$$ds" \
 				--model-dir "$$md" \
