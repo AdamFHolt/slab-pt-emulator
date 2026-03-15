@@ -780,3 +780,116 @@ Use this next time:
    - profile-PCA reconstruction / time-summary
    - one interaction/surface plot if it clearly helps
 4. If needed, add a small wrapper for profile-PCA science plots analogous to the single-depth science wrapper.
+
+---
+
+## Update (2026-03-14, profile-PCA science/path utilities + cleanup)
+
+### What Was Added
+
+- Added profile-PCA science wrapper:
+  - `src/emulator/profile_pca/make_science_emulator_plots.sh`
+- Added/updated profile-PCA science plot scripts:
+  - `src/emulator/profile_pca/science/plot_profile_pca_time_summary.py`
+  - `src/emulator/profile_pca/science/plot_profile_pca_sensitivity.py`
+  - `src/emulator/profile_pca/science/plot_profile_pca_profile_family.py`
+- Added profile-PCA path utilities:
+  - `src/emulator/profile_pca/utilities/compute_burial_path.py`
+  - `src/emulator/profile_pca/utilities/compute_many_burial_paths.py`
+  - `src/emulator/profile_pca/utilities/compute_burial_path_uncertain_parameter.py`
+  - `src/emulator/profile_pca/utilities/compute_example_paths.sh`
+  - `src/emulator/profile_pca/utilities/PLOT_NOTE.md`
+
+### Current Profile-PCA Science Outputs
+
+- Science plots now live under:
+  - `plots/science-emulator/profile-pca/<suite>/`
+- Wrapper command:
+  - `bash src/emulator/profile_pca/make_science_emulator_plots.sh const-vc`
+  - `bash src/emulator/profile_pca/make_science_emulator_plots.sh ramped-vc`
+- Current wrapper outputs for one suite:
+  - `*_profile_pca_time_summary.png`
+  - `*_profile_pca_0p5_3_5Myr_gp_m25_sensitivity.png`
+  - `*_profile_pca_0p5_3_5Myr_v_conv_gp_m25_profile_family.png`
+  - `*_profile_pca_0p5_3_5Myr_age_SP_gp_m25_profile_family.png`
+  - `*_profile_pca_0p5_3_5Myr_age_OP_gp_m25_profile_family.png`
+
+### Current Profile-PCA QC Outputs
+
+- Profile-PCA QC plots now live under:
+  - `plots/qc-emulator/profile-pca/default-runs/<suite>/`
+  - `plots/qc-emulator/profile-pca/pca-sweep/`
+  - `plots/qc-emulator/profile-pca/gp-tuning/`
+- Added combined QC reconstruction plot:
+  - `src/emulator/profile_pca/qc/plot_profile_pca_combined_reconstruction.py`
+- Removed older separate reconstruction plotters:
+  - `plot_profile_pca_reconstruction.py`
+  - `plot_profile_pca_emulator_reconstruction.py`
+- Profile-PCA QC wrapper:
+  - `bash src/emulator/profile_pca/make_qc_emulator_plots.sh const-vc`
+  - `bash src/emulator/profile_pca/make_qc_emulator_plots.sh ramped-vc`
+
+### Path-Utility Conventions
+
+- Path preview plots are now hardcoded to common presentation bounds:
+  - temperature: `-50 to 600 °C`
+  - depth: `0 to 60 km`
+  - time axis on right panel: `0 to 5 Myr`
+- This is documented in:
+  - `src/emulator/profile_pca/utilities/PLOT_NOTE.md`
+- `compute_burial_path.py` now supports:
+  - distinct burial and exhumation rates
+  - hold time at max depth (`--exhumation-time-myr`)
+  - smoothed burial/hold/exhumation transitions (`--transition-time-myr`)
+- Both single-path and uncertain-path utilities now mark the max-temperature point with a star.
+
+### Example Path Workflow
+
+- Helper command:
+  - `bash src/emulator/profile_pca/utilities/compute_example_paths.sh`
+- For `ramped-vc`:
+  - `SUITE=ramped-vc bash src/emulator/profile_pca/utilities/compute_example_paths.sh`
+- Current helper runs:
+  1. single-path reference case
+  2. uncertain `age_SP` case
+  3. many-path sweep
+- Current reference settings in the helper:
+  - `start_time = 0.5 Myr`
+  - `burial_rate = 3.0 cm/yr`
+  - `exhumation_rate = 1.5 cm/yr`
+  - `hold_time = 0.75 Myr`
+  - `transition_time = 0.1 Myr`
+  - `z_max = 35 km`
+  - `age_SP` is intentionally omitted in the reference case so it defaults to the training median
+- Current many-path sweep ranges:
+  - burial rate: `2 to 6 cm/yr` with 4 values
+  - max depth: `20 to 45 km` every `2.5 km`
+  - hold time: `0 to 1 Myr` with 4 values
+
+### Cleanup / Repo State
+
+- Removed repo `__pycache__` directories outside `env/`.
+- Cleaned stale references in `SESSION_NOTES.md`:
+  - old `make_param_sweep_plots.sh`
+  - old `plots/qc-emulator/profile-pca/runs/...` paths
+- Removed empty placeholder directory:
+  - `src/emulator/models/profile_pca/const-vc/gp_tuning`
+- `Makefile`, `README.md`, and `docs/repo-map.md` were rechecked and are consistent with the current workflow/layout.
+
+### Important Git Note
+
+- Commit `c45f815` accidentally included generated profile-PCA model artifacts.
+- This was corrected immediately in follow-up commit:
+  - `d1a364a` `chore: revert generated profile PCA artifacts`
+- Nothing from this latest `SESSION_NOTES.md` update is committed yet.
+
+### Suggested Next Steps
+
+1. If needed, generate the `ramped-vc` profile-PCA science plot suite with:
+   - `bash src/emulator/profile_pca/make_science_emulator_plots.sh ramped-vc`
+2. Decide which profile-PCA talk figures make the final cut:
+   - time summary
+   - 3-time sensitivity
+   - one or more profile-family plots
+   - one path utility illustration
+3. If the path utilities are now part of the talk story, consider one small wrapper or README snippet focused just on the path examples.
