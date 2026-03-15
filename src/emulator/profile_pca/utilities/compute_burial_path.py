@@ -231,6 +231,169 @@ def _pressure_from_depth(depth_km: np.ndarray, density_kg_m3: float) -> np.ndarr
     return density_kg_m3 * 9.81 * (depth_km * 1000.0) / 1.0e9
 
 
+def compute_path(
+    *,
+    suite: str,
+    k: int,
+    model_tag: str,
+    start_time_myr: float,
+    burial_rate_cm_per_yr: float,
+    exhumation_rate_cm_per_yr: float | None,
+    exhumation_time_myr: float,
+    transition_time_myr: float,
+    max_depth_km: float,
+    dt_myr: float,
+    density_kg_m3: float,
+    feature_values: dict[str, float | None],
+    data_root: Path,
+    models_root: Path,
+) -> dict[str, Any]:
+    burial_rate_km_per_myr = float(burial_rate_cm_per_yr) * 10.0
+    exhumation_rate_cm_per_yr = float(exhumation_rate_cm_per_yr) if exhumation_rate_cm_per_yr is not None else float(burial_rate_cm_per_yr)
+    exhumation_rate_km_per_myr = exhumation_rate_cm_per_yr * 10.0
+    if burial_rate_km_per_myr <= 0.0:
+        raise SystemExit("[ERR] --burial-rate-cm-per-yr must be positive")
+    if exhumation_rate_km_per_myr <= 0.0:
+        raise SystemExit("[ERR] --exhumation-rate-cm-per-yr must be positive")
+    if max_depth_km <= 0.0:
+        raise SystemExit("[ERR] --max-depth-km must be positive")
+    if dt_myr <= 0.0:
+        raise SystemExit("[ERR] --dt-myr must be positive")
+    if exhumation_time_myr < 0.0:
+        raise SystemExit("[ERR] --exhumation-time-myr must be non-negative")
+    if transition_time_myr < 0.0:
+        raise SystemExit("[ERR] --transition-time-myr must be non-negative")
+
+    available = []
+    suite_runs = models_root / suite / "runs"
+    for model_dir in sorted(suite_runs.glob(f"profileT_pca_t*Myr_k{k}/{model_tag}")):
+        try:
+            time_myr = _time_from_dataset_name(model_dir.parent.name)
+        except ValueError:
+            continue
+        available.append(time_myr)
+    if not available:
+        raise SystemExit(f"[ERR] No matching profile-PCA runs found under {suite_runs}")
+
+    anchor_times = np.asarray(sorted(set(available)), dtype=float)
+    time_min = float(anchor_times[0])
+    time_max = float(anchor_times[-1])
+
+    t_down = max_depth_km / burial_rate_km_per_myr
+    t_hold = float(exhumation_time_myr)
+    t_up = max_depth_km / exhumation_rate_km_per_myr
+    total_cycle = t_down + t_hold + t_up
+    requested_end = start_time_myr + total_cycle
+    usable_end = min(requested_end, time_max)
+    if start_time_myr < time_min or start_time_myr > time_max:
+        raise SystemExit(f"[ERR] start time {start_time_myr:g} Myr is outside available emulator time range [{time_min:g}, {time_max:g}] Myr")
+    if usable_end <= start_time_myr:
+        raise SystemExit("[ERR] No usable time window after applying model time bounds.")
+
+    run_contexts = []
+    for t in anchor_times:
+        ctx = _load_run_prediction_context(
+            suite=suite,
+            time_myr=float(t),
+            k=k,
+            model_tag=model_tag,
+            data_root=data_root,
+            models_root=models_root,
+        )
+        profile = _predict_profile(feature_values=feature_values, ctx=ctx)
+        run_contexts.append((float(t), ctx["depth_grid"], profile, ctx["meta"]))
+
+    depth_grid = run_contexts[0][1]
+    for _, dg, _, _ in run_contexts[1:]:
+        if not np.allclose(depth_grid, dg):
+            raise SystemExit("[ERR] Profile depth grids are inconsistent across times.")
+    profiles = np.vstack([item[2] for item in run_contexts])
+
+    path_times = np.arange(start_time_myr, usable_end + 0.5 * dt_myr, dt_myr)
+    path_times = np.clip(path_times, start_time_myr, usable_end)
+    path_times = np.unique(np.concatenate([path_times, np.array([start_time_myr, usable_end])]))
+    path_offsets = path_times - start_time_myr
+    path_depth, used_transition = _depth_path_smoothed(
+        path_offsets,
+        burial_rate_km_per_myr,
+        exhumation_rate_km_per_myr,
+        t_hold,
+        max_depth_km,
+        float(transition_time_myr),
+    )
+
+    interp_profiles = np.vstack([
+        _interpolate_profile_in_time(float(t), anchor_times, profiles)
+        for t in path_times
+    ])
+    path_temperature = np.array([
+        float(np.interp(d, depth_grid, profile))
+        for d, profile in zip(path_depth, interp_profiles)
+    ])
+    path_pressure_gpa = _pressure_from_depth(path_depth, density_kg_m3)
+
+    resolved_features = {}
+    feature_cols = list(run_contexts[0][3]["feature_cols"])
+    X_raw_ref = np.asarray(_load_run_prediction_context(
+        suite=suite,
+        time_myr=float(anchor_times[0]),
+        k=k,
+        model_tag=model_tag,
+        data_root=data_root,
+        models_root=models_root,
+    )["X_raw"], dtype=float)
+    for i, name in enumerate(feature_cols):
+        if feature_values.get(name) is not None:
+            resolved_features[name] = float(feature_values[name])
+        else:
+            resolved_features[name] = float(np.median(X_raw_ref[:, i]))
+
+    return {
+        "anchor_times": anchor_times,
+        "depth_grid": depth_grid,
+        "profiles": profiles,
+        "path_times": path_times,
+        "path_offsets": path_offsets,
+        "path_depth": path_depth,
+        "path_temperature": path_temperature,
+        "path_pressure_gpa": path_pressure_gpa,
+        "requested_end_time_myr": float(requested_end),
+        "used_end_time_myr": float(usable_end),
+        "truncated_to_model_time_range": bool(requested_end > time_max),
+        "burial_rate_cm_per_yr": float(burial_rate_cm_per_yr),
+        "burial_rate_km_per_myr": burial_rate_km_per_myr,
+        "exhumation_rate_cm_per_yr": exhumation_rate_cm_per_yr,
+        "exhumation_rate_km_per_myr": exhumation_rate_km_per_myr,
+        "exhumation_time_myr": t_hold,
+        "transition_time_myr_requested": float(transition_time_myr),
+        "transition_time_myr_used": float(used_transition),
+        "max_depth_km": float(max_depth_km),
+        "time_step_myr": float(dt_myr),
+        "density_kg_m3": float(density_kg_m3),
+        "resolved_feature_values": resolved_features,
+    }
+
+
+def _build_default_basename(
+    *,
+    suite: str,
+    start_time_myr: float,
+    burial_rate_cm_per_yr: float,
+    exhumation_rate_cm_per_yr: float,
+    exhumation_time_myr: float,
+    transition_time_myr_used: float,
+    max_depth_km: float,
+) -> str:
+    return (
+        f"{suite}_tstart{_time_tag(start_time_myr)}"
+        f"_vburial{_time_tag(burial_rate_cm_per_yr)}cm"
+        f"_vexhum{_time_tag(exhumation_rate_cm_per_yr)}cm"
+        f"_thold{_time_tag(exhumation_time_myr)}"
+        f"{f'_tsmooth{_time_tag(transition_time_myr_used)}' if transition_time_myr_used > 0 else ''}"
+        f"_zmax{_time_tag(max_depth_km)}km"
+    )
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Compute a burial/exhumation depth-temperature-time path from profile-PCA emulators.")
     ap.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc"])
@@ -256,22 +419,6 @@ def main() -> int:
     ap.add_argument("--eta-um", type=float, default=None)
     args = ap.parse_args()
 
-    burial_rate_km_per_myr = float(args.burial_rate_cm_per_yr) * 10.0
-    exhumation_rate_cm_per_yr = float(args.exhumation_rate_cm_per_yr) if args.exhumation_rate_cm_per_yr is not None else float(args.burial_rate_cm_per_yr)
-    exhumation_rate_km_per_myr = exhumation_rate_cm_per_yr * 10.0
-    if burial_rate_km_per_myr <= 0.0:
-        raise SystemExit("[ERR] --burial-rate-cm-per-yr must be positive")
-    if exhumation_rate_km_per_myr <= 0.0:
-        raise SystemExit("[ERR] --exhumation-rate-cm-per-yr must be positive")
-    if args.max_depth_km <= 0.0:
-        raise SystemExit("[ERR] --max-depth-km must be positive")
-    if args.dt_myr <= 0.0:
-        raise SystemExit("[ERR] --dt-myr must be positive")
-    if args.exhumation_time_myr < 0.0:
-        raise SystemExit("[ERR] --exhumation-time-myr must be non-negative")
-    if args.transition_time_myr < 0.0:
-        raise SystemExit("[ERR] --transition-time-myr must be non-negative")
-
     feature_values = {
         "v_conv": args.v_conv,
         "t_conv": args.t_conv,
@@ -280,137 +427,70 @@ def main() -> int:
         "dip_int": args.dip_int,
         "eta_UM": args.eta_um,
     }
-
     data_root = Path(args.data_root).resolve()
     models_root = Path(args.models_root).resolve()
 
-    available = []
-    suite_runs = models_root / args.suite / "runs"
-    for model_dir in sorted(suite_runs.glob(f"profileT_pca_t*Myr_k{args.k}/{args.model_tag}")):
-        try:
-            time_myr = _time_from_dataset_name(model_dir.parent.name)
-        except ValueError:
-            continue
-        available.append(time_myr)
-    if not available:
-        raise SystemExit(f"[ERR] No matching profile-PCA runs found under {suite_runs}")
-
-    anchor_times = np.asarray(sorted(set(available)), dtype=float)
-    time_min = float(anchor_times[0])
-    time_max = float(anchor_times[-1])
-
-    t_down = args.max_depth_km / burial_rate_km_per_myr
-    t_hold = float(args.exhumation_time_myr)
-    t_up = args.max_depth_km / exhumation_rate_km_per_myr
-    total_cycle = t_down + t_hold + t_up
-    requested_end = args.start_time_myr + total_cycle
-    usable_end = min(requested_end, time_max)
-    if args.start_time_myr < time_min or args.start_time_myr > time_max:
-        raise SystemExit(f"[ERR] start time {args.start_time_myr:g} Myr is outside available emulator time range [{time_min:g}, {time_max:g}] Myr")
-    if usable_end <= args.start_time_myr:
-        raise SystemExit("[ERR] No usable time window after applying model time bounds.")
-
-    run_contexts = []
-    for t in anchor_times:
-        ctx = _load_run_prediction_context(
-            suite=args.suite,
-            time_myr=float(t),
-            k=args.k,
-            model_tag=args.model_tag,
-            data_root=data_root,
-            models_root=models_root,
-        )
-        profile = _predict_profile(feature_values=feature_values, ctx=ctx)
-        run_contexts.append((float(t), ctx["depth_grid"], profile, ctx["meta"]))
-
-    depth_grid = run_contexts[0][1]
-    for _, dg, _, _ in run_contexts[1:]:
-        if not np.allclose(depth_grid, dg):
-            raise SystemExit("[ERR] Profile depth grids are inconsistent across times.")
-    profiles = np.vstack([item[2] for item in run_contexts])
-
-    path_times = np.arange(args.start_time_myr, usable_end + 0.5 * args.dt_myr, args.dt_myr)
-    path_times = np.clip(path_times, args.start_time_myr, usable_end)
-    path_times = np.unique(np.concatenate([path_times, np.array([args.start_time_myr, usable_end])]))
-    path_offsets = path_times - args.start_time_myr
-    path_depth, used_transition = _depth_path_smoothed(
-        path_offsets,
-        burial_rate_km_per_myr,
-        exhumation_rate_km_per_myr,
-        t_hold,
-        args.max_depth_km,
-        float(args.transition_time_myr),
+    result = compute_path(
+        suite=args.suite,
+        k=args.k,
+        model_tag=args.model_tag,
+        start_time_myr=args.start_time_myr,
+        burial_rate_cm_per_yr=args.burial_rate_cm_per_yr,
+        exhumation_rate_cm_per_yr=args.exhumation_rate_cm_per_yr,
+        exhumation_time_myr=args.exhumation_time_myr,
+        transition_time_myr=args.transition_time_myr,
+        max_depth_km=args.max_depth_km,
+        dt_myr=args.dt_myr,
+        density_kg_m3=args.density_kg_m3,
+        feature_values=feature_values,
+        data_root=data_root,
+        models_root=models_root,
     )
 
-    interp_profiles = np.vstack([
-        _interpolate_profile_in_time(float(t), anchor_times, profiles)
-        for t in path_times
-    ])
-    path_temperature = np.array([
-        float(np.interp(d, depth_grid, profile))
-        for d, profile in zip(path_depth, interp_profiles)
-    ])
-    path_pressure_gpa = _pressure_from_depth(path_depth, args.density_kg_m3)
-
-    basename = args.name or (
-        f"{args.suite}_tstart{_time_tag(args.start_time_myr)}"
-        f"_vburial{_time_tag(args.burial_rate_cm_per_yr)}cm"
-        f"_vexhum{_time_tag(exhumation_rate_cm_per_yr)}cm"
-        f"_thold{_time_tag(t_hold)}"
-        f"{f'_tsmooth{_time_tag(used_transition)}' if used_transition > 0 else ''}"
-        f"_zmax{_time_tag(args.max_depth_km)}km"
+    basename = args.name or _build_default_basename(
+        suite=args.suite,
+        start_time_myr=args.start_time_myr,
+        burial_rate_cm_per_yr=args.burial_rate_cm_per_yr,
+        exhumation_rate_cm_per_yr=result["exhumation_rate_cm_per_yr"],
+        exhumation_time_myr=args.exhumation_time_myr,
+        transition_time_myr_used=result["transition_time_myr_used"],
+        max_depth_km=args.max_depth_km,
     )
     outdir = Path(args.outdir).resolve() if args.outdir else (OUT_ROOT_DEFAULT / args.suite / "paths")
     outdir.mkdir(parents=True, exist_ok=True)
 
     df = pd.DataFrame(
         {
-            "time_myr": path_times,
-            "time_since_burial_start_myr": path_offsets,
-            "depth_km": path_depth,
-            "pressure_gpa": path_pressure_gpa,
-            "temperature_c": path_temperature,
+            "time_myr": result["path_times"],
+            "time_since_burial_start_myr": result["path_offsets"],
+            "depth_km": result["path_depth"],
+            "pressure_gpa": result["path_pressure_gpa"],
+            "temperature_c": result["path_temperature"],
         }
     )
     csv_path = outdir / f"{basename}_dtt.csv"
     df.to_csv(csv_path, index=False)
 
-    resolved_features = {}
-    feature_cols = list(run_contexts[0][3]["feature_cols"])
-    X_raw_ref = np.asarray(_load_run_prediction_context(
-        suite=args.suite,
-        time_myr=float(anchor_times[0]),
-        k=args.k,
-        model_tag=args.model_tag,
-        data_root=data_root,
-        models_root=models_root,
-    )["X_raw"], dtype=float)
-    for i, name in enumerate(feature_cols):
-        if feature_values.get(name) is not None:
-            resolved_features[name] = float(feature_values[name])
-        else:
-            resolved_features[name] = float(np.median(X_raw_ref[:, i]))
-
     meta = {
         "suite": args.suite,
         "k": args.k,
         "model_tag": args.model_tag,
-        "available_model_times_myr": anchor_times.tolist(),
+        "available_model_times_myr": result["anchor_times"].tolist(),
         "start_time_myr": float(args.start_time_myr),
-        "requested_end_time_myr": float(requested_end),
-        "used_end_time_myr": float(usable_end),
-        "truncated_to_model_time_range": bool(requested_end > time_max),
+        "requested_end_time_myr": result["requested_end_time_myr"],
+        "used_end_time_myr": result["used_end_time_myr"],
+        "truncated_to_model_time_range": result["truncated_to_model_time_range"],
         "burial_rate_cm_per_yr": float(args.burial_rate_cm_per_yr),
-        "burial_rate_km_per_myr": burial_rate_km_per_myr,
-        "exhumation_rate_cm_per_yr": exhumation_rate_cm_per_yr,
-        "exhumation_rate_km_per_myr": exhumation_rate_km_per_myr,
-        "exhumation_time_myr": t_hold,
-        "transition_time_myr_requested": float(args.transition_time_myr),
-        "transition_time_myr_used": float(used_transition),
+        "burial_rate_km_per_myr": result["burial_rate_km_per_myr"],
+        "exhumation_rate_cm_per_yr": result["exhumation_rate_cm_per_yr"],
+        "exhumation_rate_km_per_myr": result["exhumation_rate_km_per_myr"],
+        "exhumation_time_myr": result["exhumation_time_myr"],
+        "transition_time_myr_requested": result["transition_time_myr_requested"],
+        "transition_time_myr_used": result["transition_time_myr_used"],
         "max_depth_km": float(args.max_depth_km),
         "time_step_myr": float(args.dt_myr),
         "density_kg_m3": float(args.density_kg_m3),
-        "resolved_feature_values": resolved_features,
+        "resolved_feature_values": result["resolved_feature_values"],
         "output_csv": str(csv_path),
     }
     meta_path = outdir / f"{basename}_metadata.json"
@@ -418,16 +498,19 @@ def main() -> int:
         json.dump(meta, f, indent=2)
 
     fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(9.2, 4.8), constrained_layout=True)
-    ax0.plot(path_temperature, path_depth, color="tab:red", lw=2.2)
+    ax0.plot(result["path_temperature"], result["path_depth"], color="tab:red", lw=2.2)
+    i_star = int(np.nanargmax(result["path_temperature"]))
+    ax0.plot(result["path_temperature"][i_star], result["path_depth"][i_star], marker="*", ms=8, color="k", mec="white", mew=0.5, zorder=5)
     ax0.set_xlabel("Temperature ($^\\circ$C)")
     ax0.set_ylabel("Depth (km)")
-    ax0.set_ylim(max(85.0, float(np.nanmax(depth_grid))), 0.0)
+    ax0.set_ylim(max(85.0, float(np.nanmax(result["depth_grid"]))), 0.0)
     ax0.grid(True, ls=":", alpha=0.35)
 
-    ax1.plot(path_times, path_depth, color="tab:blue", lw=2.0)
+    ax1.plot(result["path_times"], result["path_depth"], color="tab:blue", lw=2.0)
+    ax1.plot(result["path_times"][i_star], result["path_depth"][i_star], marker="*", ms=8, color="k", mec="white", mew=0.5, zorder=5)
     ax1.set_xlabel("Time (Myr)")
     ax1.set_ylabel("Depth (km)")
-    ax1.set_ylim(max(85.0, float(np.nanmax(depth_grid))), 0.0)
+    ax1.set_ylim(max(85.0, float(np.nanmax(result["depth_grid"]))), 0.0)
     ax1.grid(True, ls=":", alpha=0.35)
 
     png_path = outdir / f"{basename}_preview.png"
@@ -436,10 +519,10 @@ def main() -> int:
     print(f"[OK] wrote path CSV: {csv_path}")
     print(f"[OK] wrote metadata: {meta_path}")
     print(f"[OK] wrote preview: {png_path}")
-    if requested_end > time_max:
+    if result["truncated_to_model_time_range"]:
         print(
-            f"[WARN] requested path extends to {requested_end:.3f} Myr, "
-            f"but model support ends at {time_max:.3f} Myr; output truncated."
+            f"[WARN] requested path extends to {result['requested_end_time_myr']:.3f} Myr, "
+            f"but model support ends at {result['anchor_times'][-1]:.3f} Myr; output truncated."
         )
     return 0
 
