@@ -14,9 +14,13 @@ from compute_burial_path import (
     DATA_ROOT_DEFAULT,
     MODELS_ROOT_DEFAULT,
     OUT_ROOT_DEFAULT,
-    _build_default_basename,
     _time_tag,
     compute_path,
+    PLOT_DEPTH_MAX_KM,
+    PLOT_TIME_MAX_MYR,
+    PLOT_TIME_MIN_MYR,
+    PLOT_TEMP_MAX_C,
+    PLOT_TEMP_MIN_C,
 )
 
 
@@ -101,7 +105,7 @@ def main() -> int:
     rows = []
     fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(9.4, 4.8), constrained_layout=True)
 
-    y_limit = max(max_depths) + 15.0
+    y_limit = PLOT_DEPTH_MAX_KM
     for i, ((vburial, zmax, thold), color) in enumerate(zip(combos, colors), start=1):
         result = compute_path(
             suite=args.suite,
@@ -169,11 +173,13 @@ def main() -> int:
 
     ax0.set_xlabel("Temperature ($^\\circ$C)")
     ax0.set_ylabel("Depth (km)")
+    ax0.set_xlim(PLOT_TEMP_MIN_C, PLOT_TEMP_MAX_C)
     ax0.set_ylim(y_limit, 0.0)
     ax0.grid(True, ls=":", alpha=0.35)
 
     ax1.set_xlabel("Time (Myr)")
     ax1.set_ylabel("Depth (km)")
+    ax1.set_xlim(PLOT_TIME_MIN_MYR, PLOT_TIME_MAX_MYR)
     ax1.set_ylim(y_limit, 0.0)
     ax1.grid(True, ls=":", alpha=0.35)
 

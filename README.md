@@ -17,10 +17,11 @@ Quick orientation:
     - `qc/`
     - `science/`
   - `src/emulator/profile_pca/`
-  - `core/`
-  - `qc/`
-  - `science/`
-  - `sweeps/`
+    - `core/`
+    - `qc/`
+    - `science/`
+    - `sweeps/`
+    - `utilities/`
   - `src/emulator/legacy/`
 - Workflow storage is suite-first:
   - single-depth: `<suite>/runs/` and `<suite>/param_sweep/`
@@ -271,6 +272,37 @@ make profile-pca-sweep-summary PROFILE_SWEEP_DATASET_PATTERN="profileT_pca_t3Myr
 # GP tuning sweep on the chosen ramped-vc default dataset
 make profile-pca-gp-tuning-sweep PROFILE_GP_TUNING_KERNELS="matern25 rbf" PROFILE_GP_TUNING_RESTARTS="10 25"
 ```
+
+### Optional: Path Utilities From The Profile-PCA Emulator
+
+The profile-PCA workflow also includes utilities for constructing illustrative
+burial/exhumation paths in physical temperature-depth-time space from a chosen
+parameter set.
+
+Utilities live under:
+
+- `src/emulator/profile_pca/utilities/`
+
+Current entrypoints:
+
+- `compute_burial_path.py`
+  - compute one burial/exhumation path and write CSV + metadata + preview
+- `compute_burial_path_uncertain_parameter.py`
+  - compute one reference path with an uncertainty envelope from one varying geodynamic parameter
+- `compute_many_burial_paths.py`
+  - sweep ranges of burial rate, max depth, and hold time and overlay many paths
+- `compute_example_paths.sh`
+  - run the current reference examples for talk/demo use
+
+Default preview outputs are written under:
+
+- `plots/science-emulator/profile-pca/<suite>/paths/`
+
+Presentation note for the current path previews:
+
+- left panel temperature-depth bounds are fixed to `-50 to 600 °C`
+- depth bounds are fixed to `0 to 60 km`
+- right-panel time bounds are fixed to `0 to 5 Myr`
 
 Notes:
 

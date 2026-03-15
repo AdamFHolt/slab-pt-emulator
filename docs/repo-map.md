@@ -67,6 +67,7 @@ Substructure:
 - `src/emulator/profile_pca/qc/`
 - `src/emulator/profile_pca/science/`
 - `src/emulator/profile_pca/sweeps/`
+- `src/emulator/profile_pca/utilities/`
 
 Default QC figure outputs live under:
 - `plots/qc-emulator/profile-pca/default-runs/<suite>/`
@@ -89,6 +90,14 @@ Default datasets/models live under:
   - sweep PCA representation choices (`k`, `raw` vs `whitened`)
 - `src/emulator/profile_pca/sweeps/run_profile_pca_gp_tuning_sweep.py`
   - sweep GP settings on a fixed chosen PCA representation
+- `src/emulator/profile_pca/utilities/compute_burial_path.py`
+  - compute one burial/exhumation path from the profile-PCA emulator
+- `src/emulator/profile_pca/utilities/compute_burial_path_uncertain_parameter.py`
+  - compute one path with an uncertainty envelope from one varying emulator parameter
+- `src/emulator/profile_pca/utilities/compute_many_burial_paths.py`
+  - compute and overlay many paths across burial-rate / depth / hold-time ranges
+- `src/emulator/profile_pca/utilities/compute_example_paths.sh`
+  - run the current reference path examples used for demos/talk figures
 - `configs/gp.const-vc.profile-pca.yaml`
 - `configs/gp.ramped-vc.profile-pca.yaml`
 

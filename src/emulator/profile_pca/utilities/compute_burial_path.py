@@ -17,6 +17,11 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 DATA_ROOT_DEFAULT = REPO_ROOT / "src" / "emulator" / "data" / "profile_pca"
 MODELS_ROOT_DEFAULT = REPO_ROOT / "src" / "emulator" / "models" / "profile_pca"
 OUT_ROOT_DEFAULT = REPO_ROOT / "plots" / "science-emulator" / "profile-pca"
+PLOT_DEPTH_MAX_KM = 60.0
+PLOT_TEMP_MIN_C = -50.0
+PLOT_TEMP_MAX_C = 600.0
+PLOT_TIME_MIN_MYR = 0.0
+PLOT_TIME_MAX_MYR = 5.0
 
 
 def _time_tag(value: float) -> str:
@@ -503,14 +508,16 @@ def main() -> int:
     ax0.plot(result["path_temperature"][i_star], result["path_depth"][i_star], marker="*", ms=8, color="k", mec="white", mew=0.5, zorder=5)
     ax0.set_xlabel("Temperature ($^\\circ$C)")
     ax0.set_ylabel("Depth (km)")
-    ax0.set_ylim(max(85.0, float(np.nanmax(result["depth_grid"]))), 0.0)
+    ax0.set_xlim(PLOT_TEMP_MIN_C, PLOT_TEMP_MAX_C)
+    ax0.set_ylim(PLOT_DEPTH_MAX_KM, 0.0)
     ax0.grid(True, ls=":", alpha=0.35)
 
     ax1.plot(result["path_times"], result["path_depth"], color="tab:blue", lw=2.0)
     ax1.plot(result["path_times"][i_star], result["path_depth"][i_star], marker="*", ms=8, color="k", mec="white", mew=0.5, zorder=5)
     ax1.set_xlabel("Time (Myr)")
     ax1.set_ylabel("Depth (km)")
-    ax1.set_ylim(max(85.0, float(np.nanmax(result["depth_grid"]))), 0.0)
+    ax1.set_xlim(PLOT_TIME_MIN_MYR, PLOT_TIME_MAX_MYR)
+    ax1.set_ylim(PLOT_DEPTH_MAX_KM, 0.0)
     ax1.grid(True, ls=":", alpha=0.35)
 
     png_path = outdir / f"{basename}_preview.png"
