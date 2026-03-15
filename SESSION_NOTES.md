@@ -258,6 +258,128 @@ Use this next time:
 
 ### Scope note
 
+---
+
+## Update (2026-03-12, profile-PCA defaults + repo layout cleanup)
+
+### Major outcomes
+
+- Profile-PCA representation sweep completed for `t3Myr` across:
+  - suites: `const-vc`, `ramped-vc`
+  - `k in {4, 6, 8, 10}`
+  - score space: `raw`, `whitened`
+- Chosen profile-PCA default:
+  - time: `t3Myr`
+  - `k=10`
+  - `score_space=whitened`
+- Added profile-PCA quality reporting and validation:
+  - `src/emulator/profile_pca/evaluate_profile_pca_quality.py`
+  - `src/emulator/profile_pca/validate_profile_pca_quality.py`
+- Added profile-PCA sweep + summary tooling:
+  - PCA representation sweep
+  - GP tuning sweep
+- GP tuning sweep completed for:
+  - suite: `ramped-vc`
+  - dataset: `profileT_pca_t3Myr_k10_whitened`
+  - grid size: 24 runs
+
+### GP tuning result
+
+- Best tuned profile-PCA GP setting:
+  - kernel: `matern25`
+  - restarts: `25`
+  - length-scale upper bound: `1e3`
+  - noise lower bound: `1e-8`
+- This was only a small improvement over the prior default, but it was the best result in the completed sweep.
+- Updated active GP defaults to use:
+  - `noise_bounds: [1e-8, 1.0]`
+
+### Repo structure cleanup completed
+
+- Emulator workflows are now grouped under:
+  - `src/emulator/single_depth/`
+  - `src/emulator/profile_pca/`
+  - `src/emulator/legacy/`
+- Emulator artifacts are now suite-first and workflow-specific:
+  - single-depth:
+    - `src/emulator/data/single_depth/<suite>/runs/`
+    - `src/emulator/models/single_depth/<suite>/runs/`
+    - `src/emulator/models/single_depth/<suite>/param_sweep/`
+  - profile-PCA:
+    - `src/emulator/data/profile_pca/<suite>/runs/`
+    - `src/emulator/data/profile_pca/<suite>/pca_sweep/`
+    - `src/emulator/models/profile_pca/<suite>/runs/`
+    - `src/emulator/models/profile_pca/<suite>/pca_sweep/`
+    - `src/emulator/models/profile_pca/<suite>/gp_tuning/`
+- Existing outputs were moved into the new structure instead of being regenerated.
+
+### Single-depth QC / plot cleanup
+
+- Single-depth QC plot outputs now live under:
+  - `plots/qc-emulator/single_depth/<suite>/`
+- Single-depth QC shell entrypoint now lives under:
+  - `src/emulator/single_depth/make_qc_emulator_plots.sh`
+- Single-depth param-sweep QC is now folded into:
+  - `src/emulator/single_depth/make_qc_emulator_plots.sh`
+  - enable with `INCLUDE_PARAM_SWEEP=1`
+
+### Tests / validation status
+
+- `python3 -m unittest discover -s tests -v`
+  - 24 tests passing after the suite-first layout move
+- Dry-run checks passed for:
+  - config-driven profile-PCA training
+  - profile-PCA sweep runner
+  - GP tuning sweep runner
+
+### Important current local state
+
+- The tracked repo structure is updated and pushed.
+- There is still expected local churn from regenerated or relocated plot outputs under:
+  - `plots/qc-emulator/single_depth/...`
+  - and deletions under the old `plots/qc-emulator/<suite>/...` layout
+- There may also be local generated model/artifact diffs from ongoing analysis runs.
+- Do not blindly commit generated plot/model churn without checking it intentionally.
+
+### Overnight rerun command
+
+Need to rerun the default profile-PCA workflow for:
+- suites: `const-vc`, `ramped-vc`
+- times: `0.5, 1, 2, 3, 4, 5 Myr`
+- default dataset naming (`profileT_pca_t<Myr>_k10`)
+- current GP default (`matern25`, `noise_low=1e-8`)
+
+Command:
+
+```bash
+make profile-pca-preprocess && make profile-pca-train-gp && make profile-pca-quality-report && make profile-pca-qc
+```
+
+### Suggested next steps
+
+1. Let the overnight full profile-PCA rerun finish.
+2. Validate the rerun outputs:
+   - `make profile-pca-quality-check-gp-m25`
+3. Check whether the new `t=0.5,1,2,3,4,5` profile-PCA runs all landed cleanly under:
+   - `src/emulator/data/profile_pca/<suite>/runs/`
+   - `src/emulator/models/profile_pca/<suite>/runs/`
+4. Decide whether to stage/commit the single-depth QC plot relocation:
+   - old `plots/qc-emulator/<suite>/...`
+   - new `plots/qc-emulator/single_depth/<suite>/...`
+5. Move on to science:
+   - parameter sensitivity for single-depth emulators
+   - parameter sensitivity for profile-PCA emulators
+6. For the upcoming short talk:
+   - prepare one clean workflow slide
+   - one reconstruction/result slide
+   - one sensitivity-motivation slide
+
+### Quick resume prompt
+
+Use this next time:
+
+> Continue from `SESSION_NOTES.md`. First check whether the overnight profile-PCA rerun completed cleanly, validate the rerun outputs, then move to parameter sensitivity analysis and talk-figure prep.
+
 - Current maintenance mode is effectively single-maintainer, so manual merge discipline is acceptable as a temporary control.
 
 ---
@@ -346,7 +468,7 @@ Use this next time:
 ### QC/Validation Additions (required for acceptance)
 
 - New QC outputs under:
-  - `plots/qc-emulator/<suite>/profile-pca/`
+  - `plots/qc-emulator/profile-pca/default-runs/<suite>/`
 - Required plots:
   - cumulative explained variance vs component count
   - reconstruction overlay (true vs reconstructed) on val set for representative runs
@@ -448,8 +570,8 @@ Use this next time:
   - `src/emulator/models/const-vc/profileT_pca_t5Myr_k8/gp_m25/`
   - `src/emulator/models/ramped-vc/profileT_pca_t5Myr_k8/gp_m25/`
 - Generated profile-PCA QC figures:
-  - `plots/qc-emulator/const-vc/profile-pca/`
-  - `plots/qc-emulator/ramped-vc/profile-pca/`
+  - `plots/qc-emulator/profile-pca/default-runs/const-vc/`
+  - `plots/qc-emulator/profile-pca/default-runs/ramped-vc/`
 
 ### Dataset Snapshot
 
@@ -581,3 +703,80 @@ Use this next time:
    - sensitivity analysis
    - talk figures / summary plots
    - future Bayesian-inference framing
+
+---
+
+## Update (2026-03-13, science plots + workflow cleanup)
+
+### What Was Cleaned Up
+
+- `src/emulator/single_depth/` now has:
+  - `core/`
+  - `qc/`
+  - `science/`
+- `src/emulator/profile_pca/` now has:
+  - `core/`
+  - `qc/`
+  - `science/`
+  - `sweeps/`
+- Added profile-PCA QC wrapper:
+  - `src/emulator/profile_pca/make_qc_emulator_plots.sh`
+- Profile-PCA QC plot outputs were reorganized under:
+  - `plots/qc-emulator/profile-pca/default-runs/<suite>/`
+  - `plots/qc-emulator/profile-pca/pca-sweep/`
+  - `plots/qc-emulator/profile-pca/gp-tuning/`
+- Single-depth science outputs now default to:
+  - `plots/science-emulator/single_depth/<suite>/`
+
+### Single-Depth Science Plot Status
+
+- Current single-depth science wrapper:
+  - `bash src/emulator/single_depth/make_science_emulator_plots.sh const-vc`
+  - `bash src/emulator/single_depth/make_science_emulator_plots.sh ramped-vc`
+- Wrapper now generates:
+  1. all-depths sensitivity lines
+  2. single-depth partial-dependence summaries at `10/40/70 km`
+  3. response surfaces at `10/40/70 km`
+  4. stacked response-surface figure at `10/40/70 km`
+- Preferred all-depths figure is now:
+  - `*_sensitivity_lines_all_depths.png`
+- The older heatmap-style all-depths figure was removed from the active workflow.
+
+### Profile-PCA Science Plot Status
+
+- Drafted and ran two first-pass science plots for `const-vc`:
+  - `plots/science-emulator/profile-pca/const-vc/const-vc_profile_pca_time_summary.png`
+  - `plots/science-emulator/profile-pca/const-vc/const-vc_profileT_pca_t3Myr_k10_gp_m25_sensitivity.png`
+- New scripts:
+  - `src/emulator/profile_pca/science/plot_profile_pca_time_summary.py`
+  - `src/emulator/profile_pca/science/plot_profile_pca_sensitivity.py`
+
+### Other Notes
+
+- Profile-PCA default run artifacts exist for both suites and all times:
+  - `0.5, 1, 2, 3, 4, 5 Myr`
+- Stray duplicate profile-PCA data dirs outside `runs/` were removed.
+- QC typography for single-depth plots was cleaned up to use nicer symbols/labels.
+- Single-depth pred-vs-true QC now defaults to representative depths:
+  - `20, 30, 40, 50, 60, 70 km`
+
+### Recent Commits
+
+- `36f5fd9` feat: add profile PCA science plots
+- `1bdecd3` refactor: align emulator workflows and plot layouts
+- `17f5d92` refactor: streamline single-depth science plots
+- `493cf5e` feat: add single-depth science plot suite
+
+### Suggested Next Steps
+
+1. Refine the two draft profile-PCA science figures for talk use:
+   - simplify titles/labels
+   - improve legend/text sizing
+   - decide whether to keep both or replace one with a cleaner reconstruction snapshot
+2. Generate the matching profile-PCA science plots for `ramped-vc`.
+3. Decide the talk figure shortlist:
+   - single-depth validation
+   - single-depth sensitivity
+   - profile-PCA reconstruction / time-summary
+   - one interaction/surface plot if it clearly helps
+4. If needed, add a small wrapper for profile-PCA science plots analogous to the single-depth science wrapper.
