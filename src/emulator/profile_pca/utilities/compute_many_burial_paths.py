@@ -16,6 +16,7 @@ from compute_burial_path import (
     OUT_ROOT_DEFAULT,
     _time_tag,
     compute_path,
+    make_path_figure,
     PLOT_DEPTH_MAX_KM,
     PLOT_TIME_MAX_MYR,
     PLOT_TIME_MIN_MYR,
@@ -103,7 +104,7 @@ def main() -> int:
     colors = cmap(np.linspace(0.12, 0.92, len(combos)))
 
     rows = []
-    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(9.4, 4.8), constrained_layout=True)
+    fig, ax0, ax1 = make_path_figure()
 
     y_limit = PLOT_DEPTH_MAX_KM
     for i, ((vburial, zmax, thold), color) in enumerate(zip(combos, colors), start=1):
@@ -125,9 +126,9 @@ def main() -> int:
         )
         path_id = f"path_{i:02d}"
         i_star = int(np.nanargmax(result["path_temperature"]))
-        ax0.plot(result["path_temperature"], result["path_depth"], color=color, lw=1.4, alpha=0.55)
+        ax0.plot(result["path_times"], result["path_depth"], color=color, lw=1.4, alpha=0.55)
         ax0.plot(
-            result["path_temperature"][i_star],
+            result["path_times"][i_star],
             result["path_depth"][i_star],
             marker="*",
             ms=5.5,
@@ -136,9 +137,9 @@ def main() -> int:
             mew=0.4,
             zorder=5,
         )
-        ax1.plot(result["path_times"], result["path_depth"], color=color, lw=1.4, alpha=0.55)
+        ax1.plot(result["path_temperature"], result["path_depth"], color=color, lw=1.4, alpha=0.55)
         ax1.plot(
-            result["path_times"][i_star],
+            result["path_temperature"][i_star],
             result["path_depth"][i_star],
             marker="*",
             ms=5.5,
@@ -171,15 +172,15 @@ def main() -> int:
                 }
             )
 
-    ax0.set_xlabel("Temperature ($^\\circ$C)")
+    ax0.set_xlabel("Time (Myr)")
     ax0.set_ylabel("Depth (km)")
-    ax0.set_xlim(PLOT_TEMP_MIN_C, PLOT_TEMP_MAX_C)
+    ax0.set_xlim(PLOT_TIME_MIN_MYR, PLOT_TIME_MAX_MYR)
     ax0.set_ylim(y_limit, 0.0)
     ax0.grid(True, ls=":", alpha=0.35)
 
-    ax1.set_xlabel("Time (Myr)")
+    ax1.set_xlabel("Temperature ($^\\circ$C)")
     ax1.set_ylabel("Depth (km)")
-    ax1.set_xlim(PLOT_TIME_MIN_MYR, PLOT_TIME_MAX_MYR)
+    ax1.set_xlim(PLOT_TEMP_MIN_C, PLOT_TEMP_MAX_C)
     ax1.set_ylim(y_limit, 0.0)
     ax1.grid(True, ls=":", alpha=0.35)
 

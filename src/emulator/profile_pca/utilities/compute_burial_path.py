@@ -22,10 +22,24 @@ PLOT_TEMP_MIN_C = -50.0
 PLOT_TEMP_MAX_C = 600.0
 PLOT_TIME_MIN_MYR = 0.0
 PLOT_TIME_MAX_MYR = 5.0
+PATH_FIGSIZE = (9.2, 4.8)
+PATH_SUBPLOTS = {
+    "left": 0.09,
+    "right": 0.98,
+    "bottom": 0.14,
+    "top": 0.97,
+    "wspace": 0.28,
+}
 
 
 def _time_tag(value: float) -> str:
     return f"{value:g}".replace(".", "p")
+
+
+def make_path_figure() -> tuple[plt.Figure, Any, Any]:
+    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=PATH_FIGSIZE, constrained_layout=False)
+    fig.subplots_adjust(**PATH_SUBPLOTS)
+    return fig, ax0, ax1
 
 
 def _time_from_dataset_name(name: str) -> float:
@@ -502,21 +516,21 @@ def main() -> int:
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
 
-    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(9.2, 4.8), constrained_layout=True)
-    ax0.plot(result["path_temperature"], result["path_depth"], color="tab:red", lw=2.2)
+    fig, ax0, ax1 = make_path_figure()
     i_star = int(np.nanargmax(result["path_temperature"]))
-    ax0.plot(result["path_temperature"][i_star], result["path_depth"][i_star], marker="*", ms=8, color="k", mec="white", mew=0.5, zorder=5)
-    ax0.set_xlabel("Temperature ($^\\circ$C)")
+    ax0.plot(result["path_times"], result["path_depth"], color="tab:blue", lw=2.0)
+    ax0.plot(result["path_times"][i_star], result["path_depth"][i_star], marker="*", ms=8, color="k", mec="white", mew=0.5, zorder=5)
+    ax0.set_xlabel("Time (Myr)")
     ax0.set_ylabel("Depth (km)")
-    ax0.set_xlim(PLOT_TEMP_MIN_C, PLOT_TEMP_MAX_C)
+    ax0.set_xlim(PLOT_TIME_MIN_MYR, PLOT_TIME_MAX_MYR)
     ax0.set_ylim(PLOT_DEPTH_MAX_KM, 0.0)
     ax0.grid(True, ls=":", alpha=0.35)
 
-    ax1.plot(result["path_times"], result["path_depth"], color="tab:blue", lw=2.0)
-    ax1.plot(result["path_times"][i_star], result["path_depth"][i_star], marker="*", ms=8, color="k", mec="white", mew=0.5, zorder=5)
-    ax1.set_xlabel("Time (Myr)")
+    ax1.plot(result["path_temperature"], result["path_depth"], color="tab:red", lw=2.2)
+    ax1.plot(result["path_temperature"][i_star], result["path_depth"][i_star], marker="*", ms=8, color="k", mec="white", mew=0.5, zorder=5)
+    ax1.set_xlabel("Temperature ($^\\circ$C)")
     ax1.set_ylabel("Depth (km)")
-    ax1.set_xlim(PLOT_TIME_MIN_MYR, PLOT_TIME_MAX_MYR)
+    ax1.set_xlim(PLOT_TEMP_MIN_C, PLOT_TEMP_MAX_C)
     ax1.set_ylim(PLOT_DEPTH_MAX_KM, 0.0)
     ax1.grid(True, ls=":", alpha=0.35)
 

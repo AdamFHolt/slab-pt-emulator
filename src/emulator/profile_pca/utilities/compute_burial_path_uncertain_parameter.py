@@ -16,6 +16,7 @@ from compute_burial_path import (
     _build_default_basename,
     _load_run_prediction_context,
     compute_path,
+    make_path_figure,
     PLOT_DEPTH_MAX_KM,
     PLOT_TIME_MAX_MYR,
     PLOT_TIME_MIN_MYR,
@@ -233,35 +234,9 @@ def main() -> int:
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
 
-    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(9.2, 4.8), constrained_layout=True)
+    fig, ax0, ax1 = make_path_figure()
 
-    ax0.fill_betweenx(
-        baseline["path_depth"],
-        temp_lo,
-        temp_hi,
-        color="0.7",
-        alpha=0.45,
-        linewidth=0,
-    )
-    ax0.plot(baseline["path_temperature"], baseline["path_depth"], color="tab:red", lw=2.2)
-    i_star = int(np.nanargmax(baseline["path_temperature"]))
-    ax0.plot(
-        baseline["path_temperature"][i_star],
-        baseline["path_depth"][i_star],
-        marker="*",
-        ms=8,
-        color="k",
-        mec="white",
-        mew=0.5,
-        zorder=5,
-    )
-    ax0.set_xlabel("Temperature ($^\\circ$C)")
-    ax0.set_ylabel("Depth (km)")
-    ax0.set_xlim(PLOT_TEMP_MIN_C, PLOT_TEMP_MAX_C)
-    ax0.set_ylim(PLOT_DEPTH_MAX_KM, 0.0)
-    ax0.grid(True, ls=":", alpha=0.35)
-
-    ax1.fill_between(
+    ax0.fill_between(
         baseline["path_times"],
         depth_lo,
         depth_hi,
@@ -269,8 +244,9 @@ def main() -> int:
         alpha=0.45,
         linewidth=0,
     )
-    ax1.plot(baseline["path_times"], baseline["path_depth"], color="tab:blue", lw=2.0)
-    ax1.plot(
+    ax0.plot(baseline["path_times"], baseline["path_depth"], color="tab:blue", lw=2.0)
+    i_star = int(np.nanargmax(baseline["path_temperature"]))
+    ax0.plot(
         baseline["path_times"][i_star],
         baseline["path_depth"][i_star],
         marker="*",
@@ -280,9 +256,34 @@ def main() -> int:
         mew=0.5,
         zorder=5,
     )
-    ax1.set_xlabel("Time (Myr)")
+    ax0.set_xlabel("Time (Myr)")
+    ax0.set_ylabel("Depth (km)")
+    ax0.set_xlim(PLOT_TIME_MIN_MYR, PLOT_TIME_MAX_MYR)
+    ax0.set_ylim(PLOT_DEPTH_MAX_KM, 0.0)
+    ax0.grid(True, ls=":", alpha=0.35)
+
+    ax1.fill_betweenx(
+        baseline["path_depth"],
+        temp_lo,
+        temp_hi,
+        color="0.7",
+        alpha=0.45,
+        linewidth=0,
+    )
+    ax1.plot(baseline["path_temperature"], baseline["path_depth"], color="tab:red", lw=2.2)
+    ax1.plot(
+        baseline["path_temperature"][i_star],
+        baseline["path_depth"][i_star],
+        marker="*",
+        ms=8,
+        color="k",
+        mec="white",
+        mew=0.5,
+        zorder=5,
+    )
+    ax1.set_xlabel("Temperature ($^\\circ$C)")
     ax1.set_ylabel("Depth (km)")
-    ax1.set_xlim(PLOT_TIME_MIN_MYR, PLOT_TIME_MAX_MYR)
+    ax1.set_xlim(PLOT_TEMP_MIN_C, PLOT_TEMP_MAX_C)
     ax1.set_ylim(PLOT_DEPTH_MAX_KM, 0.0)
     ax1.grid(True, ls=":", alpha=0.35)
     ax1.text(
