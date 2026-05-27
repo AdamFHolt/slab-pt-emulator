@@ -893,3 +893,57 @@ Use this next time:
    - one or more profile-family plots
    - one path utility illustration
 3. If the path utilities are now part of the talk story, consider one small wrapper or README snippet focused just on the path examples.
+
+---
+
+## Update (2026-03-15, talk polish + path plot alignment)
+
+### Presentation-Specific Outputs
+
+- Added a temporary presentation variant of the single-depth all-depths sensitivity figure:
+  - `plots/science-emulator/single_depth/const-vc/const-vc_dTdt_gp_m25_sensitivity_lines_all_depths_presentation.png`
+- In that variant:
+  - `v_conv` and `age_OP` retain their original colors
+  - all other parameter lines are muted gray
+  - axes / axis labels / ticks remain black
+- This was generated as a one-off presentation asset without changing the main science plotting script.
+
+### Path Plot Layout Change
+
+- Profile-PCA path preview plots now use:
+  - left panel: depth vs time
+  - right panel: temperature-depth path
+- This was applied consistently to:
+  - `compute_burial_path.py`
+  - `compute_many_burial_paths.py`
+  - `compute_burial_path_uncertain_parameter.py`
+- Added a shared fixed figure-layout helper so the three path plot types align much more cleanly for slide overlays.
+
+### Refreshed Example Path Outputs
+
+- Re-ran the `const-vc` path examples after the panel swap / layout alignment:
+  - single-path preview
+  - uncertain `age_SP` preview
+  - many-path preview
+- Re-ran the same full example suite for `ramped-vc`:
+  - `SUITE=ramped-vc bash src/emulator/profile_pca/utilities/compute_example_paths.sh`
+
+### Notes
+
+- Path plot bounds remain fixed for presentation consistency:
+  - temperature: `-50 to 600 °C`
+  - depth: `0 to 60 km`
+  - time: `0 to 5 Myr`
+- The path utilities still emit a harmless `joblib` serial-mode warning in this environment.
+
+### Recent Commit
+
+- `3e14749` `refactor: align profile PCA path plot layouts`
+
+### Suggested Next Steps
+
+1. Decide whether the path plots need one final pass for talk readability:
+   - remove or move the many-path range text
+   - further simplify colors/line weights if overlaid in slides
+2. If the presentation variant of the single-depth sensitivity figure is useful, make an equivalent `ramped-vc` version.
+3. Finalize the talk figure shortlist and stop changing infrastructure unless something blocks figure export.
