@@ -1,0 +1,33 @@
+{
+  "suite": "const-vc",
+  "k": 10,
+  "model_tag": "gp_m25",
+  "start_time_myr": 0.5,
+  "burial_rates_cm_per_yr": [
+    2.0,
+    3.333333333333333,
+    4.666666666666666,
+    6.0
+  ],
+  "max_depths_km": [
+    20.0,
+    22.5,
+    25.0,
+    27.5,
+    30.0,
+    32.5,
+    35.0,
+    37.5,
+    40.0,
+    42.5,
+    45.0
+  ],
+  "exhumation_times_myr": [
+    0.0,
+    0.3333333333333333,
+    0.6666666666666666,
+    1.0
+  ],
+  "n_paths": 176,
+  "output_csv": "/home/holt/Projects/SlabPT-emulator/plots/science-emulator/profile-pca/const-vc/paths/const-vc_manypaths_tstart0p5_nb4_nz11_nh4.csv"
+}

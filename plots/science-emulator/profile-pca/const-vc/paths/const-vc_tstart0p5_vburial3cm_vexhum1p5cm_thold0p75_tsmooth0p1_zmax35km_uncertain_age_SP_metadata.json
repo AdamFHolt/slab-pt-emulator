@@ -1,0 +1,12 @@
+{
+  "suite": "const-vc",
+  "k": 10,
+  "model_tag": "gp_m25",
+  "uncertain_feature": "age_SP",
+  "uncertain_feature_label": "$\\mathrm{age}_{\\rm SP}$",
+  "n_samples": 64,
+  "sample_min": 42.02,
+  "sample_median": 74.93,
+  "sample_max": 109.89,
+  "output_csv": "/home/holt/Projects/SlabPT-emulator/plots/science-emulator/profile-pca/const-vc/paths/const-vc_tstart0p5_vburial3cm_vexhum1p5cm_thold0p75_tsmooth0p1_zmax35km_uncertain_age_SP.csv"
+}

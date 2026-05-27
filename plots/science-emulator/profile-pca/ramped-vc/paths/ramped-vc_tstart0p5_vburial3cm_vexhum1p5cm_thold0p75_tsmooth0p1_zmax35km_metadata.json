@@ -1,0 +1,36 @@
+{
+  "suite": "ramped-vc",
+  "k": 10,
+  "model_tag": "gp_m25",
+  "available_model_times_myr": [
+    0.5,
+    1.0,
+    2.0,
+    3.0,
+    4.0,
+    5.0
+  ],
+  "start_time_myr": 0.5,
+  "requested_end_time_myr": 4.75,
+  "used_end_time_myr": 4.75,
+  "truncated_to_model_time_range": false,
+  "burial_rate_cm_per_yr": 3.0,
+  "burial_rate_km_per_myr": 30.0,
+  "exhumation_rate_cm_per_yr": 1.5,
+  "exhumation_rate_km_per_myr": 15.0,
+  "exhumation_time_myr": 0.75,
+  "transition_time_myr_requested": 0.1,
+  "transition_time_myr_used": 0.1,
+  "max_depth_km": 35.0,
+  "time_step_myr": 0.05,
+  "density_kg_m3": 3300.0,
+  "resolved_feature_values": {
+    "v_conv": 5.0,
+    "t_conv": 2.92,
+    "age_SP": 75.28,
+    "age_OP": 80.0,
+    "dip_int": 30.0,
+    "eta_UM": 1e+21
+  },
+  "output_csv": "/home/holt/Projects/SlabPT-emulator/plots/science-emulator/profile-pca/ramped-vc/paths/ramped-vc_tstart0p5_vburial3cm_vexhum1p5cm_thold0p75_tsmooth0p1_zmax35km_dtt.csv"
+}
