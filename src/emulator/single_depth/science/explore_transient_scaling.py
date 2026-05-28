@@ -236,27 +236,33 @@ def _closed_form_scaling(df: pd.DataFrame, suite: str, outdir: Path) -> None:
     p1 = -A1 * E[te]
     r2_1, rmse_1 = _scores(p1, y[te])
 
-    # Model 2: slab-top form. Geometry = slab-top (interface) temperature at
-    # vertical depth z, reached by descending the interface in t_desc ~ z/w.
-    # Cooling efficiency rises with the descent Peclet Pe = w_eff*z/kappa
-    # (fast/deep descent -> less heating en route -> colder slab top -> more
-    # cooling). dT = -A * erf(eta/2) * (1 - exp(-(Pe/p)^q)).
+    # Model 2: non-separable slab-top form (McKenzie / Molnar-England style).
+    # Geometry = slab-top (interface) T at vertical depth z, reached by descending
+    # the interface in t_desc ~ z/w. Cooling = ambient OP geotherm minus the steady
+    # slab-top temperature, whose effective thermal equilibration is reduced by
+    # advection: the descent Peclet Pe = w_eff*z/kappa shrinks the erf argument
+    # (fast/deep -> colder slab top). A finite-window transient factor
+    # tau = 1 - exp(-t_end/t_desc) accounts for the cooling being measured over a
+    # finite window rather than at steady state.
+    #   dT = -A * [erf(eta/2) - erf(eta/(2*(1 + a*Pe^b)))] * tau
     eta = z / np.sqrt(KAPPA_KM2_PER_MYR * d["age_OP"].to_numpy(float))
     Pe = w_eff * z / KAPPA_KM2_PER_MYR
+    t_desc = z / w_eff
+    tau = 1.0 - np.exp(-t_end / np.maximum(t_desc, 1e-6))
 
-    def model2(X, A, p, q):
-        Ex, Pex = X
-        return -A * Ex * (1.0 - np.exp(-((Pex / p) ** q)))
+    def model2(X, A, a, b):
+        et, pe, tf = X
+        return -A * (erf(et / 2) - erf(et / (2.0 * (1.0 + a * pe ** b)))) * tf
 
     try:
-        (A2, p2, q2), _ = curve_fit(
-            model2, (E[tr], Pe[tr]), y[tr], p0=[abs(A1), 200.0, 1.0],
-            bounds=([0.0, 1.0, 0.3], [3000.0, 1e5, 3.0]), maxfev=40000,
+        (A2, a2, b2), _ = curve_fit(
+            model2, (eta[tr], Pe[tr], tau[tr]), y[tr], p0=[1500.0, 0.4, 0.3],
+            bounds=([0.0, 1e-5, 0.1], [4000.0, 50.0, 3.0]), maxfev=60000,
         )
-        p2pred = model2((E[te], Pe[te]), A2, p2, q2)
+        p2pred = model2((eta[te], Pe[te], tau[te]), A2, a2, b2)
         r2_2, rmse_2 = _scores(p2pred, y[te])
     except Exception as exc:  # pragma: no cover
-        A2 = p2 = q2 = float("nan"); p2pred = None; r2_2 = rmse_2 = float("nan")
+        A2 = a2 = b2 = float("nan"); p2pred = None; r2_2 = rmse_2 = float("nan")
         print(f"  [model2 fit failed: {exc}]")
 
     # Context ceilings: flexible RandomForest given the same physical variable(s).
@@ -276,27 +282,31 @@ def _closed_form_scaling(df: pd.DataFrame, suite: str, outdir: Path) -> None:
           f"   η,Pe,ζ R2={ceil['eta,Pe,zeta']:.3f}")
     print(f"  Model 1  dT = -A·erf(η/2)                       A={A1:7.1f} °C "
           f"(A/T_m={A1/T_m:.2f})  R2={r2_1:.3f}  RMSE={rmse_1:5.1f} °C")
-    print(f"  Model 2  dT = -A·erf(η/2)·(1-e^(-(Pe/p)^q))     A={A2:6.0f} p={p2:6.1f} q={q2:.2f}"
-          f"  R2={r2_2:.3f}  RMSE={rmse_2:5.1f} °C")
+    print(f"  Model 2  -A·[erf(η/2)-erf(η/(2(1+a·Pe^b)))]·τ   A={A2:6.0f} a={a2:.3f} b={b2:.3f}"
+          f"  R2={r2_2:.3f}  RMSE={rmse_2:5.1f} °C  [non-separable slab-top]")
 
-    # Collapse figure: dT vs the one-variable prediction, colored by depth.
+    # Figure: closed-form slab-top prediction vs true (colored by depth) + residual.
     z_te = z[te]
+    pred = p2pred if p2pred is not None else p1
+    d_OP = float(np.sqrt(KAPPA_KM2_PER_MYR * np.median(d["age_OP"].to_numpy(float))))
     fig, (a0, a1) = plt.subplots(1, 2, figsize=(11.5, 4.8), constrained_layout=True)
-    lim = [min(y[te].min(), p1.min()), max(y[te].max(), p1.max())]
-    sc = a0.scatter(y[te], p1, c=z_te, s=7, alpha=0.5, cmap="viridis")
+    lim = [min(y[te].min(), pred.min()), max(y[te].max(), pred.max())]
+    sc = a0.scatter(y[te], pred, c=z_te, s=7, alpha=0.5, cmap="viridis")
     a0.plot(lim, lim, "k--", lw=1)
-    a0.set_xlabel("true ΔT (°C)"); a0.set_ylabel(r"closed-form $-A\,\mathrm{erf}(\eta/2)$ (°C)")
-    a0.set_title(f"{suite} Model 1 (1 constant): R²={r2_1:.3f}, RMSE={rmse_1:.0f} °C")
+    a0.set_xlabel("true ΔT (°C)")
+    a0.set_ylabel(r"closed-form ΔT (°C)")
+    a0.set_title(
+        f"{suite} slab-top closed form\n"
+        rf"$-A[\mathrm{{erf}}(\eta/2)-\mathrm{{erf}}(\eta/(2(1+a\,Pe^b)))]\tau$:  "
+        f"R²={r2_2:.3f}, RMSE={rmse_2:.0f} °C"
+    )
     a0.grid(alpha=0.25)
     cb = fig.colorbar(sc, ax=a0, fraction=0.046, pad=0.04); cb.set_label("depth (km)")
-    # Collapse: ΔT/A vs erf(η/2) should fall on the y=x line if Model 1 holds.
-    a1.scatter(E[te], -y[te] / A1, c=z_te, s=7, alpha=0.5, cmap="viridis")
-    xs = np.linspace(0, 1, 50)
-    a1.plot(xs, xs, "k--", lw=1, label="Model 1 (slope 1)")
-    a1.set_xlabel(r"$\mathrm{erf}(\eta/2)$  (initial OP geotherm shape)")
-    a1.set_ylabel(r"$-\Delta T / A$")
-    a1.set_title("collapse onto the diffusive geotherm variable")
-    a1.grid(alpha=0.25); a1.legend(fontsize=9)
+    a1.scatter(z_te, pred - y[te], s=6, alpha=0.25, color="#EE6677")
+    a1.axhline(0, color="k", lw=1)
+    a1.axvline(d_OP, color="0.4", ls=":", lw=1.2, label=rf"$\sqrt{{\kappa\,\mathrm{{age}}_{{OP}}}}$ = {d_OP:.0f} km")
+    a1.set_xlabel("depth (km)"); a1.set_ylabel("residual (pred − true, °C)")
+    a1.set_title("closed-form residual vs depth"); a1.grid(alpha=0.25); a1.legend(fontsize=9)
     f = outdir / f"{suite}_dT_closed_form.png"
     fig.savefig(f, dpi=200, bbox_inches="tight")
     plt.close(fig)

@@ -1334,37 +1334,49 @@ Anchored on the OP half-space geotherm `T_init = T_m·erf(z/(2√(κ·age_OP))) 
 T_m·erf(η/2)`. Fit held-out by run; `_closed_form_scaling()` in
 `explore_transient_scaling.py`.
 
+**The closed form (3 constants + parameter-free transient factor):**
+
+    ΔT(z) = −A · [ erf(η/2) − erf( η / (2(1 + a·Pe^b)) ) ] · τ
+      η  = z / √(κ·age_OP)         (diffusive: OP conductive-lid)
+      Pe = w·z / κ,  w = v·sinθ    (advective: slab-descent Péclet)
+      τ  = 1 − exp(−t_end / t_desc),  t_desc = z/w   (finite-window transient)
+
+Physics: cooling = ambient OP geotherm `erf(η/2)` minus the steady slab-top
+temperature, whose effective equilibration is reduced by advection (`Pe` shrinks
+the erf argument → fast/deep descent = colder slab top); `τ` accounts for the
+finite 0.5→5 Myr window vs steady state.
+
 | model / ceiling | const-vc R² | ramped-vc R² |
 |---|---|---|
-| Model 1  `ΔT = −A·erf(η/2)` (1 const) | 0.561 | 0.481 |
-| Model 2  `ΔT = −A·erf(η/2)·(1−e^(−(Pe/p)^q))` (3 const) | 0.606 | 0.671 |
-| RF{η} (flexible η-only ceiling) | 0.754 | 0.550 |
+| Model 1  `−A·erf(η/2)` (1 const) | 0.561 | 0.481 |
+| separable `−A·erf(η/2)·(1−e^(−(Pe/p)^q))` (3 const) | 0.606 | 0.671 |
+| **non-separable + τ (3 const)** | **0.868** | **0.937** |
+| RF{η} (flexible η ceiling) | 0.754 | 0.550 |
 | RF{η, Pe} | 0.890 | 0.912 |
 | RF{η, Pe, ζ} | 0.929 | 0.967 |
 
-Recovered constants are physical: `A ≈ 536 °C`, `T_m ≈ 1300 °C` (correct mantle
-value), efficiency `A/T_m ≈ 0.41`.
+Fitted: const-vc `A=1745, a=0.475, b=0.128`; ramped-vc `A=1573, a=0.397, b=0.275`.
 
-Findings (honest):
-- **Variables now physically identified and data-confirmed:** η (diffusive, OP lid)
-  + **Pe** (advective, slab-descent) — `RF{η,Pe}` (0.89/0.91) ≥ `RF{η,ζ}` (0.88/0.91),
-  and Pe is the geometry-derived variable. `ζ` adds the *finite-window transient*
-  on top (`RF{η,Pe,ζ}` → 0.93/0.97).
-- **`erf(η/2)` is the right leading shape**, and the Pe-efficiency form (Model 2)
-  beats the bare geotherm (esp. ramped 0.48→0.67) — removal efficiency rises with
-  the descent Péclet, as the slab-top physics predicts.
-- **Remaining gap is separability, not physics:** a *separable product*
-  `f(η)·g(Pe)` caps at ~0.6–0.67 vs the ~0.89 flexible-2D ceiling on the **same two
-  variables**. The true slab-top surface is **non-separable** in (η, Pe) — which is
-  exactly what the analytic McKenzie / Molnar–England slab-top solutions are. So the
-  principled completion is to adopt that non-separable analytic form, not to keep
-  adding empirical knobs to a product.
+Findings:
+- **The closed form essentially reaches the flexible ceiling.** 0.868 vs RF{η,Pe}
+  0.890 (const-vc); 0.937 vs RF{η,Pe,ζ} 0.967 (ramped-vc). Three physical constants
+  + a parameter-free transient factor capture nearly all the predictable structure.
+- **Separability was the gate, and the non-separable McKenzie/Molnar–England form
+  cleared it** (0.6–0.67 → 0.87–0.94). The advective `Pe` modulating the *effective
+  diffusion inside the erf* is the key non-separable ingredient.
+- **The transient factor τ confirms the transient story:** negligible for const-vc
+  (0.86→0.87) but decisive for ramped-vc (0.84→0.94) — velocity history is what
+  makes ramped transient, exactly the steady-state-Φ-can't-see-it point.
+- Variables fully physical: η (OP lid), Pe (slab-descent), τ (finite window). `A`
+  is an effective amplitude ~1.3–1.7·T_m (the erf-difference is smaller than
+  erf(η/2), so A compensates); `T_m≈1300 °C` recovered independently by Model 1.
 
 ### Next steps for this thread
 
-1. **Adopt the analytic slab-top solution** (McKenzie 1969 / Molnar–England 1990;
-   non-separable in η, Pe) as the closed form; fit its (few, physical) constants and
-   target the `RF{η,Pe}` ≈ 0.89–0.91 ceiling.
-2. Add the finite-window transient factor (the `ζ` content) for the last ~0.05.
-3. Emulator-based conditional crossover test (proper `z_cross ∝ √(κ·age_OP)`).
-4. ramped cumulative-convergence gain with CV (cleanest transient-vs-steady signal).
+1. Tie `A`, `a`, `b` to first principles (slab thickness, dip, κ) to remove the
+   effective-amplitude fudge and make the constants fully predictive.
+2. Confirm against held-out *full simulations* in P–T-path coordinates (not just
+   ΔT R²) — the publishability check.
+3. Cross-suite + (later) `const-vc-sh`: do `A,a,b` shift with shear heating? That
+   contrast is the likely headline.
+4. Emulator-based conditional crossover test (proper `z_cross ∝ √(κ·age_OP)`).
