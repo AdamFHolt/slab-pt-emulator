@@ -1037,3 +1037,82 @@ Four deferred threads were reviewed. Ranked by value/effort for this project:
 ### Quick Resume Prompt
 
 > Continue from `SESSION_NOTES.md` 2026-05-27 plan. Immediate priority is `const-vc-sh` data generation; in parallel, optionally start Thread #3 (Sobol sensitivity) on existing emulators. T(z,t) extension (#1) and coupled multi-output GP (#4) follow.
+
+---
+
+## Update (2026-05-28, Thread #3 kickoff — Sobol sensitivity for single-depth emulators)
+
+### Context
+
+- `const-vc-sh` data generation is still blocked on the student's shear-heating
+  model template, so this session took the parallel track: Thread #3
+  (quantitative Sobol sensitivity), which is independent of the new runs.
+- Replaces the qualitative one-at-a-time (OAT) sensitivity figure with
+  variance-based Sobol indices computed by heavily sampling the existing trained
+  single-depth GP emulators.
+
+### What Was Added
+
+- New dependency: `SALib>=1.5` (installed 1.5.2) in `requirements.txt`.
+- New scripts under `src/emulator/single_depth/science/`:
+  - `_sobol_io.py` — shared loader/predict/label helpers + `build_problem`
+    (sampling box from per-feature training quantiles `[0.01, 0.99]`).
+  - `compute_sobol_sensitivity.py` — one emulator → Sobol JSON (S1, ST, S2 with
+    conf intervals, val metrics, depth). Uses SALib `ProblemSpec`,
+    `calc_second_order=True`, fixed seed (deterministic).
+  - `plot_sobol_sensitivity.py` — per-emulator figure: ranked S1/ST bars + S2
+    interaction heatmap.
+  - `plot_sobol_vs_depth.py` — headline S1/ST-vs-depth figure per suite.
+  - `make_sobol_plots.sh` — wrapper iterating depths × suites.
+- `make sobol-sensitivity` target (override `SOBOL_SUITES`/`DEPTHS`/`N_BASE`).
+- `tests/test_sobol_smoke.py` — additive-model assertions + scaler-inversion
+  check; skips cleanly if SALib missing. Full suite now 28 tests (was 24).
+
+### Design Decisions (settled with user)
+
+- Scope: single-depth, both suites, `<depth>km_dTdt`, full 5 km grid (5..80 km).
+  `_thermalParam` variants excluded from this first pass.
+- Sampling box: central training quantiles `[0.01, 0.99]` (keeps Saltelli samples
+  inside well-supported GP regions; mirrors the OAT script's quantile policy).
+- Indices: S1, ST, **and** S2 (`calc_second_order=True`).
+- Code is feature-count agnostic (reads `feature_cols` from metadata):
+  `dTdt` const-vc = 5 params; ramped-vc = 7 (`t_conv`, `v_conv_over_tconv`).
+  N=1024 base → 12288 evals (const-vc) / 16384 evals (ramped-vc) per emulator.
+
+### Scientific Result
+
+- Clean depth-dependent control of cooling rate:
+  - shallow (≲35 km): **overriding-plate age `age_OP`** dominates (plus `age_SP`
+    at the very shallowest).
+  - deep (≳40 km): **convergence velocity `v_conv`** dominates.
+  - distinct crossover near ~40 km in both suites.
+- `ramped-vc`: `v_conv` dominates earlier/more strongly; `dip_int` (slab dip)
+  emerges at depth.
+- `ST − S1` gaps are small at most depths (cooling rate is largely additive),
+  widening near the crossover where `v_conv`/`age_OP` interact.
+- Sanity check passed: top-ranked ST params at const-vc 40 km (`v_conv`,
+  `age_OP`) match the talk's OAT/presentation figure.
+
+### Outputs
+
+- `plots/science-emulator/single_depth/<suite>/sobol/`:
+  - 16 per-emulator JSON+PNG pairs per suite.
+  - `<suite>_sobol_vs_depth_gp_m25.png` headline figure per suite.
+- Layout polish: per-emulator info box moved to mid-right so it no longer
+  overlaps the lower-right legend (verified on both 5- and 7-param panels).
+
+### Suggested Next Steps
+
+1. Profile-PCA Sobol (deliberate second pass): per-PC indices + post-
+   reconstruction Sobol vs depth, analogous tooling under
+   `src/emulator/profile_pca/science/`.
+2. Once `const-vc-sh` emulators exist, extend Sobol to it and compare rankings
+   across all three suites.
+3. Optionally consider S2 only where interactions look real (near the crossover);
+   most depths are near-additive.
+
+### Quick Resume Prompt
+
+> Continue from `SESSION_NOTES.md` 2026-05-28 update. Thread #3 (single-depth
+> Sobol) is done and committed. Next: profile-PCA Sobol second pass, and/or pick
+> up `const-vc-sh` data generation once the shear-heating template arrives.

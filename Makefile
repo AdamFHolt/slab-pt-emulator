@@ -5,7 +5,7 @@ SHELL := /bin/bash
         env-status env-ensure env-doctor profile-pca-preprocess profile-pca-train-gp profile-pca-qc \
         profile-pca-quality-report profile-pca-quality-check-gp-m25 \
         profile-pca-sweep profile-pca-sweep-summary \
-        profile-pca-gp-tuning-sweep profile-pca-gp-tuning-summary
+        profile-pca-gp-tuning-sweep profile-pca-gp-tuning-summary sobol-sensitivity
 
 help:
 	@echo "Targets:"
@@ -32,6 +32,7 @@ help:
 	@echo "  profile-pca-sweep-summary - write ranked summary tables for profile-PCA sweep results"
 	@echo "  profile-pca-gp-tuning-sweep - run GP tuning sweep on fixed profile-PCA datasets"
 	@echo "  profile-pca-gp-tuning-summary - write ranked summary tables for GP tuning sweep results"
+	@echo "  sobol-sensitivity   - compute + plot single-depth Sobol indices (override SOBOL_SUITES/DEPTHS/N_BASE)"
 
 setup:
 	python3 -m venv env
@@ -71,6 +72,12 @@ quality-check-gp-m25:
 		--models-root src/emulator/models/single_depth \
 		$(if $(QUALITY_SUITES),--suites $(QUALITY_SUITES),) \
 		$(if $(QUALITY_DATASETS),--datasets $(QUALITY_DATASETS),)
+
+sobol-sensitivity:
+	SUITES="$(if $(SOBOL_SUITES),$(SOBOL_SUITES),const-vc ramped-vc)" \
+	$(if $(DEPTHS),DEPTHS="$(DEPTHS)",) \
+	$(if $(N_BASE),N_BASE="$(N_BASE)",) \
+	bash src/emulator/single_depth/science/make_sobol_plots.sh
 
 env-status:
 	./dev-env.sh status
