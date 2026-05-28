@@ -1116,3 +1116,96 @@ Four deferred threads were reviewed. Ranked by value/effort for this project:
 > Continue from `SESSION_NOTES.md` 2026-05-28 update. Thread #3 (single-depth
 > Sobol) is done and committed. Next: profile-PCA Sobol second pass, and/or pick
 > up `const-vc-sh` data generation once the shear-heating template arrives.
+
+---
+
+## Direction Review (2026-05-28, publishability / geodynamic-insight synthesis)
+
+Stepping outside the 2026-05-27 thread ranking to ask what actually makes this
+publishable. This **updates** that ranking; read the two together.
+
+### Validation status — corrected after checking the code
+
+- **Held-out runs are real and clean.** Every dataset carries `train_idx`/
+  `val_idx`; profile-PCA holds out ~15% (`n_val=59` const-vc, `75` ramped). The
+  six time-slice datasets (`t0p5..t5Myr`) hold out the **same 59 runs in the same
+  order** (verified: `val_idx` identical across all times, `X_raw` rows match), so
+  a held-out run's full P–T–t path is reconstructable with no leakage.
+- **Physical-unit validation already exists.** `evaluate_profile_pca_quality.py`
+  reports reconstruction RMSE in °C, `rmse_by_depth`, and a PCA-truncation
+  baseline on held-out runs at each time. (An earlier worry that physical-unit /
+  depthwise validation was missing was wrong — it's there.)
+- **The one genuine gap: the time interpolation between anchors is untested.**
+  All metrics sit exactly on an anchor (t = 0.5/1/2/3/4/5 Myr), but
+  `compute_burial_path.py` builds paths by linear interpolation in score space
+  *between* anchors (`_interpolate_profile_in_time`), where a rock spends almost
+  all its time. Cheap check: hold out t = 2 Myr, predict it by interpolating the
+  t = 1 and t = 3 emulators, compare to true t = 2 profiles in °C vs depth. Small
+  error → paths trustworthy, de-prioritize T(z,t). Large error near slab top →
+  that *is* the quantified motivation for T(z,t).
+
+### Two-paper framing (recommended scope split)
+
+- **Paper 1 (methods + first insight; G-cubed / GMD):** emulator construction,
+  the time-interpolation check above, the Sobol result reframed as a scaling law,
+  and the shear-heating contrast.
+- **Paper 2 (application; EPSL / Nature Geo ambition):** Bayesian inversion of
+  observed metamorphic P–T data using the fast surrogate.
+
+### Re-prioritized science moves (highest value first)
+
+1. **Reframe Sobol as a thermal-parameter (Φ ≈ age·v_conv, + dip) scaling law.**
+   The `age_OP`→`v_conv` crossover at ~40 km and the `ST−S1` interaction gap near
+   it likely *are* the classic Φ coupling (Kirby/Stein/England). Test whether
+   emulator output collapses onto Φ. Where it collapses = recovered known physics
+   + theory-level validation; where it breaks = the interesting part (shear
+   heating, overriding-plate structure, wedge flow). Turns a bar chart into a
+   result. Doable now on existing emulators.
+2. **`const-vc-sh` shear-heating contrast is probably the headline, not "suite #3."**
+   Interface shear heating controls dehydration, the seismic–aseismic transition,
+   and the warm-forearc paradox — actively debated. `const-vc` vs `const-vc-sh`
+   in both P–T and sensitivity ranking is likely the most novel content. Treat as
+   load-bearing science, not housekeeping. (Still gated on the student's template.)
+3. **Bring in one observational dataset — even before inversion.** The repo has
+   zero contact with the rock record (grep: no Penniston-Dorland / Syracuse /
+   metamorphic-compilation references). Overlay a natural subduction P–T
+   compilation against the emulator's accessible P–T envelope: does the ensemble
+   bracket the data? A systematic miss (e.g. natural rocks hotter than the coldest
+   no-shear-heating models) is both a result and the motivation for shear heating
+   *and* for inversion. One strong figure; biggest current publishability gap.
+4. **Inversion as the methodological payoff** — and two parked items become
+   load-bearing the moment it starts:
+   - **T(z,t)** (notes' "main thrust"): needed so a rock samples a *continuous*
+     field, not the linear-in-time stitch; required to invert path *shape*.
+   - **Multi-output GP** (notes' "park"): independent-per-PC GPs give the *wrong
+     joint uncertainty* on reconstructed profiles; inversion is all about honest
+     posteriors, so un-park it as soon as inversion begins.
+
+### Two sharp cautions
+
+- **Is `dT/dt` the right primary target?** Cooling rate is not directly recorded
+  in the rock record (peak P–T and path segments are). Lean toward T(z,t)/paths as
+  the deliverable and demote `dT/dt` to a derived diagnostic before building more
+  on the cooling-rate target.
+- **Box-edge extrapolation.** Sobol box and (future) inversion posteriors can walk
+  to parameter-space corners where the GP is unconstrained. Report/gate this or the
+  inferences are soft.
+
+### Net change vs the 2026-05-27 ranking
+
+- Validation: **down** from "foundational, do first" to "one afternoon check" (the
+  time-interpolation test) — most of it already exists.
+- Quantitative sensitivity (#3): keep, but **upgrade** to the Φ-scaling framing.
+- T(z,t) (#1) and multi-output GP (#4): keep, but reframed as *prerequisites for
+  honest inversion* rather than standalone goals.
+- Bayesian inversion: **promote** from "parked future work" to the explicit
+  payoff / Paper 2 — it's the reason a fast surrogate exists.
+- New, not previously ranked: **observational anchor** (move #3 above) — the
+  single biggest lever from "tool" to "insight."
+
+### Immediate doable-now shortlist (no template needed)
+
+1. Time-interpolation hold-out check (settles T(z,t) necessity).
+2. Φ-collapse test on existing const-vc + ramped-vc emulators.
+3. Scope/sanity pass on whether `dT/dt` or T(z,t)/paths should be the headline
+   target.
