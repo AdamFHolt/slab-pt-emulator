@@ -947,3 +947,93 @@ Use this next time:
    - further simplify colors/line weights if overlaid in slides
 2. If the presentation variant of the single-depth sensitivity figure is useful, make an equivalent `ramped-vc` version.
 3. Finalize the talk figure shortlist and stop changing infrastructure unless something blocks figure export.
+
+---
+
+## Plan (2026-05-27, return to fundamentals after talk)
+
+### Context
+
+- Talk was delivered and went well.
+- Infrastructure phase (workflows, defaults, QC, science plots) is closed.
+- Repo housekeeping done in commits `a055979 -> 9175961`:
+  - relocated single-depth QC plots under `single_depth/` layout
+  - added 5-km-step single-depth runs (5/15/25/35/45/55/65/75 km, both suites)
+  - tracked profile-PCA QC plots, pruned stale `.gitignore` patterns
+  - committed science plot outputs + schematic removal
+  - logged March 15 talk-polish session
+- Next phase is scientific extension, not infrastructure.
+
+### Immediate Priority — `const-vc-sh` data generation
+
+- New third suite added: `const-vc-sh` (const-vc with shear heating).
+  - directory: `subd-model-runs/const-vc-sh/`
+  - sits alongside existing `const-vc` and `ramped-vc` — independent suite, no replacement.
+- First task is generating the numerical-model runs for this suite (upstream
+  of the emulator).
+- Once runs exist, the standard downstream pipeline applies:
+  1. QC numerical mods (`src/qc-numerical-mods/`) — health checks, profile QC.
+  2. Single-depth preprocessing + training (`src/emulator/single_depth/`).
+  3. Profile-PCA preprocessing + training (`src/emulator/profile_pca/`).
+  4. QC + science plot regeneration extended to the new suite.
+- Eventually, `const-vc-sh` becomes a third option in all wrapper scripts
+  that currently iterate over `{const-vc, ramped-vc}`.
+
+### Direction Ranking
+
+Four deferred threads were reviewed. Ranked by value/effort for this project:
+
+| # | Thread | Effort | Payoff | Status |
+|---|---|---|---|---|
+| 3 | Quantitative parameter sensitivity (Sobol indices etc.) | Low (days) | High, publishable | **Start here** |
+| 1 | T(z,t) joint depth-time functional PCA | High (weeks) | High, scientifically central | **Main thrust** |
+| 4 | Coupled multi-output GP across PCA components | Medium-high | Moderate, model-quality refinement | **Park** until #1 reconstruction-uncertainty needs it |
+| - | Bayesian inversion of observed P-T data | High | High, application-facing | **Park** for future work |
+
+### Why this order
+
+- **#3 first** because it reuses the existing emulator (just samples it heavily via `SALib` or similar), produces quantitative numbers that beat the talk-figure-level sensitivity, and gives a baseline to compare against once #1 lands.
+- **#1 as main thrust** because it is the explicit "Phase 2" of the 2026-02-20 plan and the natural next extension of the project's stated goal (emulating the full thermal field, not just fixed-time slices).
+- **#4 parked** because PC1 already captures >96% of variance, so the marginal reconstruction gain is bounded. Most concrete benefit is rescuing tail PCs (e.g. PC8 had negative val R² in the March 10 baseline) and producing honest joint profile uncertainty. Reconsider once #1 is in place and Bayesian framing comes back online — that's where joint uncertainty becomes load-bearing.
+- **Bayesian parked** explicitly as future work.
+
+### Thread Notes
+
+**#3 — Quantitative sensitivity**
+- Tooling candidate: `SALib` for Sobol indices.
+- Apply to both single-depth emulators (per depth) and profile-PCA emulators (per PC or after reconstruction).
+- Likely a new `src/emulator/{single_depth,profile_pca}/science/` script + a wrapper, output under `plots/science-emulator/.../sensitivity-sobol/` or similar.
+
+**#1 — T(z,t) extension**
+- Joint depth-time functional PCA.
+- Requires new preprocessing path producing T(z,t) snapshots across the time grid (currently only fixed-time slices are extracted).
+- Decide: stack times into one big PCA, or factorize via tensor/2D PCA? Tensor approach preserves smoothness across both axes.
+- New dataset naming (e.g. `profileTzt_pca_*`) to keep parallel to existing fixed-time path.
+- Will need new QC: reconstruction overlays vs (z,t), error decomposition by time and depth.
+
+**#4 — Coupled multi-output GP (parked)**
+- Frameworks: LMC or simpler ICM (separable kernel + task covariance matrix).
+- Cost: naive `O((k·n)^3)` vs `O(k·n^3)` for independent. Mitigatable via low-rank ICM.
+- Tooling: `sklearn` GP doesn't support multi-output GPs in this sense; would need `GPy` or `GPyTorch`. New dependency.
+- Revisit when reconstruction-uncertainty story becomes load-bearing.
+
+### Immediate Next-session Execution Checklist
+
+1. **Generate `const-vc-sh` numerical-model runs.**
+   - Decide parameter coverage (mirror existing const-vc or different?).
+   - Confirm shear-heating implementation in the model config.
+2. **Optional in parallel:** start Thread #3 (Sobol) on existing const-vc + ramped-vc emulators while shear-heating runs are computing.
+   - Decide tooling (`SALib` vs custom) and target metrics (first-order S1, total ST, optionally S2).
+   - Pick first deliverable: single-depth Sobol for one suite/depth (e.g. const-vc 40 km), validate against existing visual sensitivity.
+3. Once `const-vc-sh` runs exist:
+   - Run `src/qc-numerical-mods/` health checks; refresh QC outputs.
+   - Run single-depth preprocessing + training for the new suite.
+   - Run profile-PCA preprocessing + training (use current defaults: `t3Myr, k=10, whitened, matern25`).
+   - Regenerate QC + science plots for the new suite.
+4. Extend Sobol (Thread #3) to include `const-vc-sh` once emulators exist; compare sensitivity rankings across suites.
+5. Update wrapper scripts (`make_science_emulator_plots.sh`, `make_qc_emulator_plots.sh`) to accept `const-vc-sh` and add Makefile shortcuts.
+6. Update README / `docs/repo-map.md` once the new suite is integrated.
+
+### Quick Resume Prompt
+
+> Continue from `SESSION_NOTES.md` 2026-05-27 plan. Immediate priority is `const-vc-sh` data generation; in parallel, optionally start Thread #3 (Sobol sensitivity) on existing emulators. T(z,t) extension (#1) and coupled multi-output GP (#4) follow.
