@@ -1356,6 +1356,10 @@ finite 0.5→5 Myr window vs steady state.
 | RF{η, Pe, ζ} | 0.929 | 0.967 |
 
 Fitted: const-vc `A=1745, a=0.475, b=0.128`; ramped-vc `A=1573, a=0.397, b=0.275`.
+(The `separable` row is a comparison from the prior script iteration, commit
+`71ad9f5`; HEAD's Model 2 is the non-separable form, so that row is not
+reproducible from the current `explore_transient_scaling.py`. All other rows
+reproduce on a fresh run.)
 
 Findings:
 - **The closed form essentially reaches the flexible ceiling.** 0.868 vs RF{η,Pe}
