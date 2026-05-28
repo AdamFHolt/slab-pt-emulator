@@ -194,6 +194,111 @@ def _predict_dT_from_scaling(df: pd.DataFrame, suite: str, param_cols: list[str]
     print(f"[OK] wrote {f}")
 
 
+def _closed_form_scaling(df: pd.DataFrame, suite: str, outdir: Path) -> None:
+    """Fit physically-grounded CLOSED-FORM scalings (real coefficients).
+
+    Anchored on the overriding-plate half-space geotherm:
+        E(z) = erf( z / (2 sqrt(kappa*age_OP)) ) = erf(eta/2)   [known shape]
+    Model 1 (1 constant):  dT = -A * E
+    Model 2 (2 constants): dT = -A * E * (1 - exp(-(w_eff*dt)/(b*z)))   advective
+                                 factor -> 1 where cold has reached depth z.
+    Held-out by run; reports A (and implied efficiency A/T_m), b, R2, RMSE(°C).
+    """
+    from scipy.optimize import curve_fit
+    from scipy.special import erf
+
+    d = df.dropna(subset=["dT_C"]).copy()
+    z = d["depth_km"].to_numpy(float)
+    dt = d["dt_Myr"].to_numpy(float)
+    t_end = WINDOW_START_MYR + dt
+    sin_dip = np.sin(np.deg2rad(d["dip_int"].to_numpy(float)))
+    v_eff = _effective_velocity_cm_yr(suite, d, t_end)
+    w_eff = np.maximum(v_eff * CM_PER_YR_TO_KM_PER_MYR * sin_dip, 1e-6)
+    E = erf(z / (2.0 * np.sqrt(KAPPA_KM2_PER_MYR * d["age_OP"].to_numpy(float))))
+    y = d["dT_C"].to_numpy(float)
+
+    rng = np.random.default_rng(42)
+    runs = d["run_id"].unique()
+    rng.shuffle(runs)
+    n_test = int(0.2 * len(runs))
+    is_test = d["run_id"].isin(set(runs[:n_test].tolist())).to_numpy()
+    tr, te = ~is_test, is_test
+
+    def _scores(pred, yt):
+        rmse = float(np.sqrt(np.mean((pred - yt) ** 2)))
+        r2 = float(1 - np.sum((yt - pred) ** 2) / np.sum((yt - np.mean(yt)) ** 2))
+        return r2, rmse
+
+    T_m = float(np.nanmax(df["T1_C"]))  # deep mantle temperature from the data
+
+    # Model 1: dT = -A * E  (linear through origin -> closed-form A).
+    A1 = float(-np.sum(E[tr] * y[tr]) / np.sum(E[tr] ** 2))
+    p1 = -A1 * E[te]
+    r2_1, rmse_1 = _scores(p1, y[te])
+
+    # Model 2: depth-rising efficiency. dT = -T_m * E * [1 - (1-C0)*exp(-eta/b)],
+    # eta = z/sqrt(kappa*age_OP). Efficiency -> C0 in the shallow conductive lid,
+    # -> 1 deep (advective regime removes ~all available heat). 2 fitted constants.
+    eta = z / np.sqrt(KAPPA_KM2_PER_MYR * d["age_OP"].to_numpy(float))
+
+    def model2(X, C0, b):
+        Ex, etax = X
+        return -T_m * Ex * (1.0 - (1.0 - C0) * np.exp(-etax / b))
+
+    try:
+        (C0, b2), _ = curve_fit(
+            model2, (E[tr], eta[tr]), y[tr], p0=[0.4, 0.5],
+            bounds=([0.0, 0.05], [1.5, 10.0]), maxfev=20000,
+        )
+        p2 = model2((E[te], eta[te]), C0, b2)
+        r2_2, rmse_2 = _scores(p2, y[te])
+    except Exception as exc:  # pragma: no cover
+        C0 = b2 = float("nan"); p2 = None; r2_2 = rmse_2 = float("nan")
+        print(f"  [model2 fit failed: {exc}]")
+
+    # Context ceilings: flexible RandomForest given the same physical variable(s).
+    from sklearn.ensemble import RandomForestRegressor
+
+    zeta_cf = z / np.maximum(w_eff * dt, 1e-6)
+    ceil = {}
+    for nm, Xc in (("RF{eta}", eta[:, None]), ("RF{eta,zeta}", np.c_[eta, zeta_cf])):
+        rf = RandomForestRegressor(n_estimators=300, min_samples_leaf=5, random_state=0, n_jobs=-1)
+        rf.fit(Xc[tr], y[tr])
+        ceil[nm] = _scores(rf.predict(Xc[te]), y[te])[0]
+
+    print("\nCLOSED-FORM scaling (held-out runs):")
+    print(f"  T_m (from data) = {T_m:.0f} °C")
+    print(f"  ceilings (flexible RF):  η-only R2={ceil['RF{eta}']:.3f}   "
+          f"η+ζ R2={ceil['RF{eta,zeta}']:.3f}")
+    print(f"  Model 1  dT = -A·erf(η/2)                       A={A1:7.1f} °C "
+          f"(A/T_m={A1/T_m:.2f})  R2={r2_1:.3f}  RMSE={rmse_1:5.1f} °C")
+    print(f"  Model 2  dT = -T_m·erf(η/2)·[1-(1-C0)e^(-η/b)]  C0={C0:.2f} b={b2:.2f}"
+          f"        R2={r2_2:.3f}  RMSE={rmse_2:5.1f} °C")
+
+    # Collapse figure: dT vs the one-variable prediction, colored by depth.
+    z_te = z[te]
+    fig, (a0, a1) = plt.subplots(1, 2, figsize=(11.5, 4.8), constrained_layout=True)
+    lim = [min(y[te].min(), p1.min()), max(y[te].max(), p1.max())]
+    sc = a0.scatter(y[te], p1, c=z_te, s=7, alpha=0.5, cmap="viridis")
+    a0.plot(lim, lim, "k--", lw=1)
+    a0.set_xlabel("true ΔT (°C)"); a0.set_ylabel(r"closed-form $-A\,\mathrm{erf}(\eta/2)$ (°C)")
+    a0.set_title(f"{suite} Model 1 (1 constant): R²={r2_1:.3f}, RMSE={rmse_1:.0f} °C")
+    a0.grid(alpha=0.25)
+    cb = fig.colorbar(sc, ax=a0, fraction=0.046, pad=0.04); cb.set_label("depth (km)")
+    # Collapse: ΔT/A vs erf(η/2) should fall on the y=x line if Model 1 holds.
+    a1.scatter(E[te], -y[te] / A1, c=z_te, s=7, alpha=0.5, cmap="viridis")
+    xs = np.linspace(0, 1, 50)
+    a1.plot(xs, xs, "k--", lw=1, label="Model 1 (slope 1)")
+    a1.set_xlabel(r"$\mathrm{erf}(\eta/2)$  (initial OP geotherm shape)")
+    a1.set_ylabel(r"$-\Delta T / A$")
+    a1.set_title("collapse onto the diffusive geotherm variable")
+    a1.grid(alpha=0.25); a1.legend(fontsize=9)
+    f = outdir / f"{suite}_dT_closed_form.png"
+    fig.savefig(f, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[OK] wrote {f}")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--suite", default="const-vc")
@@ -290,6 +395,9 @@ def main() -> None:
 
     # --- Predictive test: can the dimensionless groups predict dT? ---
     _predict_dT_from_scaling(df, args.suite, param_cols, outdir)
+
+    # --- Closed-form physically-grounded scaling (real coefficients) ---
+    _closed_form_scaling(df, args.suite, outdir)
 
     # --- dip-tracks-velocity check from existing Sobol JSONs ---
     sobol_dir = REPO_ROOT / "plots" / "science-emulator" / "single_depth" / args.suite / "sobol"

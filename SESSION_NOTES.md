@@ -1311,12 +1311,39 @@ Findings:
   shifted shallower (~31 km), plausibly the ramp moving the advective onset — not
   over-interpreted yet.
 
+### Closed-form law — first pass (physically grounded, real coefficients)
+
+Anchored on the overriding-plate half-space geotherm
+`T_init(z) = T_m·erf(z/(2√(κ·age_OP))) = T_m·erf(η/2)` (known shape, not empirical).
+Fit held-out by run; `_closed_form_scaling()` in `explore_transient_scaling.py`,
+figure `<suite>_dT_closed_form.png`.
+
+| model | const-vc R² | notes |
+|---|---|---|
+| Model 1  `ΔT = −A·erf(η/2)` (1 constant) | 0.561 | `A=536 °C`, `T_m≈1300 °C` recovered, efficiency `A/T_m≈0.41` |
+| flexible RF{η} (η-only ceiling) | 0.754 | best any function of η alone can do |
+| flexible RF{η, ζ} | 0.881 | adding the advective variable |
+| Model 2  `ΔT=−T_m·erf(η/2)·[1−(1−C0)e^(−η/b)]` | 0.351 | efficiency-knob guess; **worse** on held-out — rejected |
+
+Findings (honest):
+- **`erf(η/2)` is the right leading variable**, but the bare-proportional form
+  under-fits (0.56 vs the 0.75 η-only ceiling). The collapse plot shows shallow
+  points on the slope-1 line and **deep points above it** — i.e. removal efficiency
+  **rises with depth** (`ΔT = T_m·erf(η/2)·C(η)`, `C` increasing), so a constant
+  amplitude under-predicts deep cooling.
+- **A faithful closed form is necessarily two-variable:** a diffusive term in η
+  (geotherm; ~0.75 ceiling) + an *irreducibly advective* term in ζ (the last ~0.13,
+  the `v_conv` physics).
+- Fixed-form efficiency knobs (Model 2) are the "empirical params far from physics"
+  trap and didn't help. **Getting the two functional forms right needs the
+  governing-equation / geometry derivation** (where the cold boundary sits; is `z`
+  vertical depth or slab-normal distance), not more knobs. That is the gate.
+
 ### Next steps for this thread
 
-1. Emulator-based conditional crossover test (proper `z_cross ∝ √(κ·age_OP)` test).
-2. Add an amplitude scale / refine the advective group to close the last S3→R6 gap
-   where physically warranted (vs. accepting age_SP/eta as out-of-scope).
-3. Quantify the ramped cumulative-convergence gain more carefully (CV, not single
-   split) — it is the cleanest transient-vs-steady-state evidence.
-4. Confirm model geometry (z = depth below surface; vertical advection v·sinθ;
-   window timing 0.5→5 Myr) against the model setup before formalizing.
+1. **Pin the model geometry** (cold-boundary location; z definition; advection
+   direction/window) — prerequisite for a principled 2-variable closed form.
+2. Derive the advective term from the governing balance (cold-front penetration),
+   target the η+ζ ≈ 0.88 ceiling with ≤2 physically-named constants.
+3. Emulator-based conditional crossover test (proper `z_cross ∝ √(κ·age_OP)`).
+4. ramped cumulative-convergence gain with CV (cleanest transient-vs-steady signal).
