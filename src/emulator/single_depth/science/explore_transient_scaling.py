@@ -236,24 +236,27 @@ def _closed_form_scaling(df: pd.DataFrame, suite: str, outdir: Path) -> None:
     p1 = -A1 * E[te]
     r2_1, rmse_1 = _scores(p1, y[te])
 
-    # Model 2: depth-rising efficiency. dT = -T_m * E * [1 - (1-C0)*exp(-eta/b)],
-    # eta = z/sqrt(kappa*age_OP). Efficiency -> C0 in the shallow conductive lid,
-    # -> 1 deep (advective regime removes ~all available heat). 2 fitted constants.
+    # Model 2: slab-top form. Geometry = slab-top (interface) temperature at
+    # vertical depth z, reached by descending the interface in t_desc ~ z/w.
+    # Cooling efficiency rises with the descent Peclet Pe = w_eff*z/kappa
+    # (fast/deep descent -> less heating en route -> colder slab top -> more
+    # cooling). dT = -A * erf(eta/2) * (1 - exp(-(Pe/p)^q)).
     eta = z / np.sqrt(KAPPA_KM2_PER_MYR * d["age_OP"].to_numpy(float))
+    Pe = w_eff * z / KAPPA_KM2_PER_MYR
 
-    def model2(X, C0, b):
-        Ex, etax = X
-        return -T_m * Ex * (1.0 - (1.0 - C0) * np.exp(-etax / b))
+    def model2(X, A, p, q):
+        Ex, Pex = X
+        return -A * Ex * (1.0 - np.exp(-((Pex / p) ** q)))
 
     try:
-        (C0, b2), _ = curve_fit(
-            model2, (E[tr], eta[tr]), y[tr], p0=[0.4, 0.5],
-            bounds=([0.0, 0.05], [1.5, 10.0]), maxfev=20000,
+        (A2, p2, q2), _ = curve_fit(
+            model2, (E[tr], Pe[tr]), y[tr], p0=[abs(A1), 200.0, 1.0],
+            bounds=([0.0, 1.0, 0.3], [3000.0, 1e5, 3.0]), maxfev=40000,
         )
-        p2 = model2((E[te], eta[te]), C0, b2)
-        r2_2, rmse_2 = _scores(p2, y[te])
+        p2pred = model2((E[te], Pe[te]), A2, p2, q2)
+        r2_2, rmse_2 = _scores(p2pred, y[te])
     except Exception as exc:  # pragma: no cover
-        C0 = b2 = float("nan"); p2 = None; r2_2 = rmse_2 = float("nan")
+        A2 = p2 = q2 = float("nan"); p2pred = None; r2_2 = rmse_2 = float("nan")
         print(f"  [model2 fit failed: {exc}]")
 
     # Context ceilings: flexible RandomForest given the same physical variable(s).
@@ -261,19 +264,20 @@ def _closed_form_scaling(df: pd.DataFrame, suite: str, outdir: Path) -> None:
 
     zeta_cf = z / np.maximum(w_eff * dt, 1e-6)
     ceil = {}
-    for nm, Xc in (("RF{eta}", eta[:, None]), ("RF{eta,zeta}", np.c_[eta, zeta_cf])):
+    for nm, Xc in (("eta", eta[:, None]), ("eta,Pe", np.c_[eta, Pe]),
+                   ("eta,Pe,zeta", np.c_[eta, Pe, zeta_cf])):
         rf = RandomForestRegressor(n_estimators=300, min_samples_leaf=5, random_state=0, n_jobs=-1)
         rf.fit(Xc[tr], y[tr])
         ceil[nm] = _scores(rf.predict(Xc[te]), y[te])[0]
 
     print("\nCLOSED-FORM scaling (held-out runs):")
     print(f"  T_m (from data) = {T_m:.0f} °C")
-    print(f"  ceilings (flexible RF):  η-only R2={ceil['RF{eta}']:.3f}   "
-          f"η+ζ R2={ceil['RF{eta,zeta}']:.3f}")
+    print(f"  ceilings (flexible RF):  η R2={ceil['eta']:.3f}   η,Pe R2={ceil['eta,Pe']:.3f}"
+          f"   η,Pe,ζ R2={ceil['eta,Pe,zeta']:.3f}")
     print(f"  Model 1  dT = -A·erf(η/2)                       A={A1:7.1f} °C "
           f"(A/T_m={A1/T_m:.2f})  R2={r2_1:.3f}  RMSE={rmse_1:5.1f} °C")
-    print(f"  Model 2  dT = -T_m·erf(η/2)·[1-(1-C0)e^(-η/b)]  C0={C0:.2f} b={b2:.2f}"
-          f"        R2={r2_2:.3f}  RMSE={rmse_2:5.1f} °C")
+    print(f"  Model 2  dT = -A·erf(η/2)·(1-e^(-(Pe/p)^q))     A={A2:6.0f} p={p2:6.1f} q={q2:.2f}"
+          f"  R2={r2_2:.3f}  RMSE={rmse_2:5.1f} °C")
 
     # Collapse figure: dT vs the one-variable prediction, colored by depth.
     z_te = z[te]

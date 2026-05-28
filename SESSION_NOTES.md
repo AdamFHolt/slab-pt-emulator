@@ -1311,39 +1311,60 @@ Findings:
   shifted shallower (~31 km), plausibly the ramp moving the advective onset — not
   over-interpreted yet.
 
-### Closed-form law — first pass (physically grounded, real coefficients)
+### Geometry clarified (2026-05-28)
 
-Anchored on the overriding-plate half-space geotherm
-`T_init(z) = T_m·erf(z/(2√(κ·age_OP))) = T_m·erf(η/2)` (known shape, not empirical).
-Fit held-out by run; `_closed_form_scaling()` in `explore_transient_scaling.py`,
-figure `<suite>_dT_closed_form.png`.
+The sampled quantity is the **slab-top (interface) temperature** at vertical depth
+`z` — top of the crustal layer — NOT a fixed point in the overriding plate. This
+makes the physics the classic transient slab-top problem and explains the Sobol
+result exactly:
+- shallow: slab top sits against the OP base → controlled by the OP geotherm
+  (`age_OP`), scale `√(κ·age_OP)` (= the crossover);
+- deep: a parcel reaches `z` by descending the interface in `t_desc ≈ z/w`
+  (`w = v·sinθ`); heating en route is set by the **descent Péclet** `Pe = w·z/κ`
+  (fast/deep → cold slab top → `v_conv` dominates) — McKenzie / Molnar–England;
+- `age_SP` weak because the slab *top* equilibrates to the wedge far faster than
+  the slab core.
 
-| model | const-vc R² | notes |
+This corrected the advective variable: the right one is **`Pe = w·z/κ`**, not the
+window-penetration `ζ = z/(w·Δt)` used in the first pass.
+
+### Closed-form law — physically grounded (real coefficients)
+
+Anchored on the OP half-space geotherm `T_init = T_m·erf(z/(2√(κ·age_OP))) =
+T_m·erf(η/2)`. Fit held-out by run; `_closed_form_scaling()` in
+`explore_transient_scaling.py`.
+
+| model / ceiling | const-vc R² | ramped-vc R² |
 |---|---|---|
-| Model 1  `ΔT = −A·erf(η/2)` (1 constant) | 0.561 | `A=536 °C`, `T_m≈1300 °C` recovered, efficiency `A/T_m≈0.41` |
-| flexible RF{η} (η-only ceiling) | 0.754 | best any function of η alone can do |
-| flexible RF{η, ζ} | 0.881 | adding the advective variable |
-| Model 2  `ΔT=−T_m·erf(η/2)·[1−(1−C0)e^(−η/b)]` | 0.351 | efficiency-knob guess; **worse** on held-out — rejected |
+| Model 1  `ΔT = −A·erf(η/2)` (1 const) | 0.561 | 0.481 |
+| Model 2  `ΔT = −A·erf(η/2)·(1−e^(−(Pe/p)^q))` (3 const) | 0.606 | 0.671 |
+| RF{η} (flexible η-only ceiling) | 0.754 | 0.550 |
+| RF{η, Pe} | 0.890 | 0.912 |
+| RF{η, Pe, ζ} | 0.929 | 0.967 |
+
+Recovered constants are physical: `A ≈ 536 °C`, `T_m ≈ 1300 °C` (correct mantle
+value), efficiency `A/T_m ≈ 0.41`.
 
 Findings (honest):
-- **`erf(η/2)` is the right leading variable**, but the bare-proportional form
-  under-fits (0.56 vs the 0.75 η-only ceiling). The collapse plot shows shallow
-  points on the slope-1 line and **deep points above it** — i.e. removal efficiency
-  **rises with depth** (`ΔT = T_m·erf(η/2)·C(η)`, `C` increasing), so a constant
-  amplitude under-predicts deep cooling.
-- **A faithful closed form is necessarily two-variable:** a diffusive term in η
-  (geotherm; ~0.75 ceiling) + an *irreducibly advective* term in ζ (the last ~0.13,
-  the `v_conv` physics).
-- Fixed-form efficiency knobs (Model 2) are the "empirical params far from physics"
-  trap and didn't help. **Getting the two functional forms right needs the
-  governing-equation / geometry derivation** (where the cold boundary sits; is `z`
-  vertical depth or slab-normal distance), not more knobs. That is the gate.
+- **Variables now physically identified and data-confirmed:** η (diffusive, OP lid)
+  + **Pe** (advective, slab-descent) — `RF{η,Pe}` (0.89/0.91) ≥ `RF{η,ζ}` (0.88/0.91),
+  and Pe is the geometry-derived variable. `ζ` adds the *finite-window transient*
+  on top (`RF{η,Pe,ζ}` → 0.93/0.97).
+- **`erf(η/2)` is the right leading shape**, and the Pe-efficiency form (Model 2)
+  beats the bare geotherm (esp. ramped 0.48→0.67) — removal efficiency rises with
+  the descent Péclet, as the slab-top physics predicts.
+- **Remaining gap is separability, not physics:** a *separable product*
+  `f(η)·g(Pe)` caps at ~0.6–0.67 vs the ~0.89 flexible-2D ceiling on the **same two
+  variables**. The true slab-top surface is **non-separable** in (η, Pe) — which is
+  exactly what the analytic McKenzie / Molnar–England slab-top solutions are. So the
+  principled completion is to adopt that non-separable analytic form, not to keep
+  adding empirical knobs to a product.
 
 ### Next steps for this thread
 
-1. **Pin the model geometry** (cold-boundary location; z definition; advection
-   direction/window) — prerequisite for a principled 2-variable closed form.
-2. Derive the advective term from the governing balance (cold-front penetration),
-   target the η+ζ ≈ 0.88 ceiling with ≤2 physically-named constants.
+1. **Adopt the analytic slab-top solution** (McKenzie 1969 / Molnar–England 1990;
+   non-separable in η, Pe) as the closed form; fit its (few, physical) constants and
+   target the `RF{η,Pe}` ≈ 0.89–0.91 ceiling.
+2. Add the finite-window transient factor (the `ζ` content) for the last ~0.05.
 3. Emulator-based conditional crossover test (proper `z_cross ∝ √(κ·age_OP)`).
 4. ramped cumulative-convergence gain with CV (cleanest transient-vs-steady signal).
