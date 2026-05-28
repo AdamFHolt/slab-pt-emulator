@@ -1206,6 +1206,117 @@ publishable. This **updates** that ranking; read the two together.
 ### Immediate doable-now shortlist (no template needed)
 
 1. Time-interpolation hold-out check (settles T(z,t) necessity).
-2. Φ-collapse test on existing const-vc + ramped-vc emulators.
+2. ~~Φ-collapse test~~ → transient scaling, see correction below.
 3. Scope/sanity pass on whether `dT/dt` or T(z,t)/paths should be the headline
    target.
+
+---
+
+## Correction + First Result (2026-05-28, transient cooling scaling — NOT steady-state Φ)
+
+### Correction
+
+- The thermal parameter Φ = age·v_conv·sinθ is a **steady-state** scaling (depth of
+  slab isotherms at equilibrium; Kirby/Stein/England). The emulator target here is
+  **transient cooling**: `dTdt_C_per_Myr` = ΔT over a finite ~4.5 Myr window
+  (`master_DT1-10.csv`: `T1_C, T2_C, dT_C, dt_Myr`; `dt_Myr ≈ 4.50`, ~constant).
+  A naive Φ-collapse is dimensionally/physically wrong. The right move is to build
+  a **transient** dimensionless group and let the Sobol indices pick which one
+  governs which depth.
+
+### Candidate transient groups
+
+- Diffusive / initial-condition: `δ_OP = √(κ·age_OP)` (overriding-plate conductive
+  lid thickness); similarity variable `η = z / √(κ·age_OP)`.
+- Advective penetration: `L_adv = v_conv·sinθ·Δt`; variable `ζ = z / L_adv` or
+  depth-local Péclet `Pe(z) = v_conv·sinθ·z/κ`.
+- (κ = 1e-6 m²/s = 31.5 km²/Myr; z = depth below surface; vertical advection
+  ~ v·sinθ — geometry assumptions to confirm against the model setup.)
+
+### First result (const-vc, raw ensemble, exploratory)
+
+Script: `src/emulator/single_depth/science/explore_transient_scaling.py`
+(outputs under `plots/science-emulator/single_depth/const-vc/scaling/`).
+
+- **The age_OP → v_conv control crossover sits at the OP conductive-lid thickness.**
+  Cross-run correlation of cooling with `age_OP` vs `v·sinθ` crosses at
+  **z ≈ 42.7 km**; `√(κ·age_OP_median) = 43.5 km`. Near-exact, with a *standard,
+  untuned* κ. The advective scale `L_adv ≈ 155 km` is far deeper — so the crossover
+  is set by the **diffusive/initial OP scale, not advective penetration**. This is
+  the clean physical interpretation of the Sobol ~40 km crossover.
+- **Shallow cooling collapses on `η = z/√(κ·age_OP)`** (diffusive regime); curves
+  fan out for `η ≳ 1.5` (advective regime needs `ζ`/Pe instead) — consistent with a
+  two-regime similarity picture.
+- **Dip co-emerges with v_conv only in the advective (deep) regime** and is inert
+  shallow — consistent with both entering via `w = v·sinθ`. NOTE: the raw Sobol
+  `ST_dip/ST_vconv` ratio is *not* depth-invariant (rises ~0.005→0.14 with depth),
+  but that reflects Sobol's **range-weighting** (dip's sampled range gives less
+  variance than v_conv's), not the functional form. Test the grouping by collapsing
+  on `w` directly, not via the ST ratio.
+
+### Honest caveats
+
+- The split-by-age_OP **conditional test is confounded** by range restriction
+  (correlating against a variable whose range you just truncated) and gave an
+  inverted, artifactual result — treat as inconclusive. A valid test of
+  `z_cross ∝ √(κ·age_OP)` should be **emulator-based**: hold other params fixed,
+  vary age_OP, find where ∂(cooling)/∂age_OP and ∂(cooling)/∂(v·sinθ) cross, and
+  check the crossover moves like `√(κ·age_OP)`. This is the right next step before
+  claiming a law rather than a median coincidence.
+- All exploratory: raw-ensemble correlations, standard κ, assumed geometry.
+
+### Why this matters
+
+- A *transient* forearc-cooling scaling is novel (steady-state Φ is textbook), it is
+  built entirely from existing assets (ensemble + Sobol), and the crossover =
+  √(κ·age_OP) result is a clean, reportable anchor for Paper 1:
+  "Sobol indices reveal a two-regime (diffusive OP-lid vs advective) control on
+  transient forearc cooling, with the regime boundary at the OP conductive-lid
+  thickness."
+
+### Predictive test — can the groups actually predict ΔT?
+
+Fit the same learner (RandomForest) on different feature sets, split by run
+(no depth leakage), held-out R²/RMSE(°C) on ΔT = `dT_C`. Velocity ramp confirmed
+from the ASPECT `.prm`: `v(t) = v_conv·min(t/t_conv, 1)` (linear to v_conv over
+t_conv, then constant); cooling window ≈ 0.5→5.0 Myr (snapshots 1–10, dt≈4.5).
+So cumulative convergence `D(t)=v_conv·t²/(2 t_conv)` (ramping) else
+`v_conv·(t−t_conv/2)`, effective velocity `v_eff=D(t_end)/t_end`.
+
+| feature set | const-vc R² | ramped-vc R² |
+|---|---|---|
+| S2  {η, ζ}                | 0.881 | 0.900 (instantaneous v) |
+| S2cum {η, ζ_cum}          | —     | **0.914** |
+| S3  {η, ζ, Pe}            | **0.929** | **0.967** (ζ,Pe from v_eff) |
+| R3  {age_OP, v_conv, dip, z} | 0.938 | 0.933 |
+| R6  {all raw params + z}  | 0.977 | 0.972 |
+
+Findings:
+- **Two groups predict ~88–90% of held-out ΔT variance; three groups recover the
+  raw ingredients.** S3 ≈ R3 for const-vc (0.929 vs 0.938) — to good approximation
+  ΔT is a function of {η, ζ, Pe}. Error is **regime-localized**: residuals ~0 above
+  √(κ·age_OP), fanning out below it (advective regime); the depth-colored
+  predicted-vs-true scatter shows shallow points on the 1:1 line, deep points
+  under-predicted.
+- **Velocity history matters (transient signature confirmed).** ramped-vc:
+  cumulative > instantaneous (0.914 > 0.900), and S3cum (0.967) **beats** R3 (0.933)
+  and nearly equals R6 (0.972) — because `v_eff` encodes the `t_conv` ramp that the
+  raw `{age_OP, v_conv, dip, z}` set does not. Steady-state Φ cannot see this.
+- **What the scaling can't capture:** R6 − R3 (~0.94→0.97) is the `age_SP` / `eta_UM`
+  signal, which the age_OP/convergence scaling omits entirely — a bound on the
+  approach, not a defect.
+- RMSE: S3 ~30–40 °C on a several-hundred-°C ΔT range — good first cut, not yet
+  petrology-grade.
+- Note: const-vc crossover 42.7 km ≈ √(κ·age_OP)=43.5 km; ramped-vc crossover is
+  shifted shallower (~31 km), plausibly the ramp moving the advective onset — not
+  over-interpreted yet.
+
+### Next steps for this thread
+
+1. Emulator-based conditional crossover test (proper `z_cross ∝ √(κ·age_OP)` test).
+2. Add an amplitude scale / refine the advective group to close the last S3→R6 gap
+   where physically warranted (vs. accepting age_SP/eta as out-of-scope).
+3. Quantify the ramped cumulative-convergence gain more carefully (CV, not single
+   split) — it is the cleanest transient-vs-steady-state evidence.
+4. Confirm model geometry (z = depth below surface; vertical advection v·sinθ;
+   window timing 0.5→5 Myr) against the model setup before formalizing.
