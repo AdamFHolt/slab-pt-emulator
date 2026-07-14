@@ -1,6 +1,6 @@
 # Slab-P-T Emulator
 
-End-to-end pipeline for building surrogate emulators of slab thermal evolution from ASPECT model outputs.
+Surrogate emulators of slab thermal evolution from ASPECT model outputs.
 
 Supported experiment suites:
 - `const-vc` (constant convergence rate)
