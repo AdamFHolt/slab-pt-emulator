@@ -1,0 +1,31 @@
+# Profile-PCA GP training for the extended const-vc 0.5-10 Myr window.
+#
+# Identical model settings to configs/gp.const-vc.profile-pca.yaml (10 PCs are
+# fixed by the dataset, Matern 5/2, 25 restarts, seed 42, 85/15 split by run).
+# Only the dataset/model roots differ, so the 20-time series is built beside
+# the original 6-time artifacts instead of overwriting them.
+
+suite: const-vc
+
+data_root: src/emulator/data/profile_pca_10myr
+out_root: src/emulator/models/profile_pca_10myr
+
+dataset:
+  subdir: runs
+  mode: profile-pca
+
+model:
+  subdir: runs
+  type: gp
+  seed: 42
+  kernel: matern25
+  gp_restarts: 25
+  ls_init: 1.0
+  ls_bounds: [1e-3, 1e3]
+  noise_init: 3e-3
+  noise_bounds: [1e-8, 1.0]
+  alpha: 1e-6
+
+execution:
+  fail_fast: true
+  dry_run: false

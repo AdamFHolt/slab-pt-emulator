@@ -77,7 +77,8 @@ def _read_profile_file(path: Path) -> tuple[float, np.ndarray, np.ndarray]:
     return float(tuniq[0]), depth_unique, temp_unique
 
 
-def _discover_profile_slices(analysis_dir: Path, target_time_myr: float, tol_myr: float) -> list[ProfileSlice]:
+def _discover_profile_slices(analysis_dir: Path, target_time_myr: float, tol_myr: float,
+                             keep_run_ids: set[str] | None = None) -> list[ProfileSlice]:
     out: list[ProfileSlice] = []
     for run_dir in sorted(analysis_dir.glob("run_*")):
         if not run_dir.is_dir():
@@ -87,6 +88,8 @@ def _discover_profile_slices(analysis_dir: Path, target_time_myr: float, tol_myr
         if not m:
             continue
         run_id = m.group(1).zfill(3)
+        if keep_run_ids is not None and run_id not in keep_run_ids:
+            continue
 
         best: tuple[float, Path, float, np.ndarray, np.ndarray] | None = None
         for p in sorted(run_dir.glob("Tprof_*.csv")):
@@ -191,6 +194,10 @@ def main() -> int:
                     help="Output dataset folder name. Default: profileT_pca_t<target-time>Myr")
     ap.add_argument("--outdir", default=None,
                     help="Root for suite datasets. Default: src/emulator/data/profile_pca/<suite>/runs")
+    ap.add_argument("--runs-file", default=None,
+                    help=("Optional text file with one run id per line (e.g. 000). Only these runs are "
+                          "used. Pin this to a fixed run set when several target times must share an "
+                          "identical train/val split."))
     args = ap.parse_args()
 
     if args.k < 1:
@@ -225,7 +232,20 @@ def main() -> int:
     if not feat_cols:
         raise ValueError("No expected feature columns found in params file.")
 
-    slices = _discover_profile_slices(analysis_root, args.target_time_myr, args.time_tol_myr)
+    run_id_filter: set[str] | None = None
+    if args.runs_file:
+        runs_path = Path(args.runs_file).resolve()
+        if not runs_path.exists():
+            raise FileNotFoundError(f"Runs file not found: {runs_path}")
+        run_id_filter = {
+            line.strip().replace("run_", "").zfill(3)
+            for line in runs_path.read_text().splitlines()
+            if line.strip()
+        }
+        if not run_id_filter:
+            raise ValueError(f"Runs file is empty: {runs_path}")
+
+    slices = _discover_profile_slices(analysis_root, args.target_time_myr, args.time_tol_myr, run_id_filter)
     if not slices:
         raise RuntimeError("No profile slices matched target time within tolerance.")
 

@@ -29,3 +29,14 @@ src/emulator/data/profile_pca/*/pca_sweep/profileT_pca_t*Myr*/
 src/emulator/models/profile_pca/*/runs/profileT_pca_t*Myr*/
 src/emulator/models/profile_pca/*/pca_sweep/profileT_pca_t*Myr*/
 src/emulator/models/profile_pca/*/gp_tuning/
+
+# Extended 0.5-10 Myr profile-PCA artifacts (steps 1-20)
+src/emulator/data/profile_pca_10myr/
+src/emulator/models/profile_pca_10myr/
+# Extended-window single-depth artifacts (0.5-10 Myr and 5-10 Myr)
+src/emulator/data/single_depth_dt1-20/
+src/emulator/data/single_depth_dt10-20/
+src/emulator/models/single_depth_dt1-20/
+src/emulator/models/single_depth_dt10-20/
+# Postprocessing driver logs
+subd-model-runs/*/analysis/logs-extend/

@@ -1,0 +1,31 @@
+# Single-depth GP training for the const-vc mean cooling rate over 5-10 Myr (steps 10-20).
+#
+# Model settings are identical to configs/gp.const-vc.yaml; only the dataset
+# and model roots differ, so these window variants live beside the original
+# 0.5-5 Myr artifacts instead of overwriting them.
+
+suite: const-vc
+
+data_root: src/emulator/data/single_depth_dt10-20
+out_root: src/emulator/models/single_depth_dt10-20
+
+dataset:
+  subdir: runs
+  mode: auto
+  variant: dTdt
+
+model:
+  subdir: runs
+  type: gp
+  seed: 42
+  kernel: matern25
+  gp_restarts: 25
+  ls_init: 1.0
+  ls_bounds: [1e-3, 1e3]
+  noise_init: 3e-3
+  noise_bounds: [1e-8, 1.0]
+  alpha: 1e-6
+
+execution:
+  fail_fast: true
+  dry_run: false
