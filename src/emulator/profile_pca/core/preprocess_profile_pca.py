@@ -14,7 +14,7 @@ from sklearn.decomposition import PCA
 
 
 THIS_FILE = Path(__file__).resolve()
-REPO_ROOT = THIS_FILE.parents[3]
+REPO_ROOT = THIS_FILE.parents[4]
 
 
 @dataclass(frozen=True)

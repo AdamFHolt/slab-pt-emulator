@@ -6,18 +6,22 @@ set -euo pipefail
 #
 # All 20 times share one fixed run set (--runs-file), so the 85/15 split by run
 # is identical at every time and the per-time quality numbers are comparable.
+# Model settings come from configs/gp.const-vc.profile-pca.10myr.yaml and match
+# the existing 0.5-5 Myr series (10 PCs, Matern 5/2, 25 restarts, seed 42).
 #
 # Usage:
-#   ./run_10myr_series.sh RUNS_FILE [STAGE]
+#   ./run_10myr_series.sh RUNS_FILE [STAGE] [NPROC]
 #     STAGE = all | preprocess | train | quality   (default: all)
+#     NPROC = dataset-level parallelism            (default: 10)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 PY="${ROOT}/env/bin/python"
 [[ -x "$PY" ]] || PY="python3"
 
-RUNS_FILE="${1:?usage: run_10myr_series.sh RUNS_FILE [STAGE]}"
+RUNS_FILE="$(cd "$(dirname "${1:?usage: run_10myr_series.sh RUNS_FILE [STAGE] [NPROC]}")" && pwd)/$(basename "$1")"
 STAGE="${2:-all}"
+NPROC="${3:-10}"
 
 SUITE="const-vc"
 K=10
@@ -36,29 +40,31 @@ for k in $(seq 1 20); do
 done
 
 cd "$ROOT"
+export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
 
 if [[ "$STAGE" == "all" || "$STAGE" == "preprocess" ]]; then
   for i in "${!TIMES[@]}"; do
-    t="${TIMES[$i]}"; lab="${LABELS[$i]}"
-    dname="profileT_pca_t${lab}Myr_k${K}"
+    echo "${TIMES[$i]} ${LABELS[$i]}"
+  done | xargs -n 2 -P "$NPROC" bash -c '
+    t="$0"; lab="$1"
+    dname="profileT_pca_t${lab}Myr_k'"${K}"'"
     echo "[preprocess] t=${t} Myr -> ${dname}"
-    "$PY" src/emulator/profile_pca/core/preprocess_profile_pca.py \
-      --suite "$SUITE" \
-      --target-time-myr "$t" \
-      --k "$K" \
-      --score-space "$SCORE_SPACE" \
-      --runs-file "$RUNS_FILE" \
-      --dataset-name "$dname" \
-      --outdir "$DATA_ROOT"
-  done
+    "'"$PY"'" src/emulator/profile_pca/core/preprocess_profile_pca.py \
+      --suite "'"$SUITE"'" --target-time-myr "$t" --k "'"$K"'" \
+      --score-space "'"$SCORE_SPACE"'" --runs-file "'"$RUNS_FILE"'" \
+      --dataset-name "$dname" --outdir "'"$DATA_ROOT"'" > /dev/null
+  '
 fi
 
 if [[ "$STAGE" == "all" || "$STAGE" == "train" ]]; then
-  for lab in "${LABELS[@]}"; do
-    dname="profileT_pca_t${lab}Myr_k${K}"
+  mkdir -p "$MODEL_ROOT"
+  printf '%s\n' "${LABELS[@]}" | xargs -n 1 -P "$NPROC" bash -c '
+    lab="$0"
+    dname="profileT_pca_t${lab}Myr_k'"${K}"'"
     echo "[train] ${dname}"
-    "$PY" train.py --config "$CFG" --datasets "$dname"
-  done
+    "'"$PY"'" train.py --config "'"$CFG"'" --datasets "$dname" > \
+      "'"$MODEL_ROOT"'/../train_${dname}.log" 2>&1 || echo "[FAIL] ${dname}"
+  '
 fi
 
 if [[ "$STAGE" == "all" || "$STAGE" == "quality" ]]; then
