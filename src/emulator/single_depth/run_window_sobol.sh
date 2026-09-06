@@ -12,6 +12,7 @@ set -euo pipefail
 #
 # Usage:
 #   ./run_window_sobol.sh TAG T1 T2 [STAGE]
+#     MASTER=<path> overrides the master table the tag is built from.
 #     STAGE = all | preprocess | train | sobol   (default: all)
 #
 # Example:
@@ -32,7 +33,7 @@ DEPTHS="${DEPTHS:-5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80}"
 N_BASE="${N_BASE:-1024}"
 MODEL_TAG=gp_m25
 
-MASTER="${ROOT}/subd-model-runs/${SUITE}/analysis/master_DT${T1}-${T2}.csv"
+MASTER="${MASTER:-${ROOT}/subd-model-runs/${SUITE}/analysis/master_DT${T1}-${T2}.csv}"
 PARAMS="${ROOT}/data/params/params-list.${SUITE}.csv"
 DATA_ROOT="${ROOT}/src/emulator/data/single_depth_${TAG}"
 MODEL_ROOT="${ROOT}/src/emulator/models/single_depth_${TAG}"

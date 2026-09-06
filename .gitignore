@@ -40,3 +40,5 @@ src/emulator/models/single_depth_dt1-20/
 src/emulator/models/single_depth_dt10-20/
 # Postprocessing driver logs
 subd-model-runs/*/analysis/logs-extend/
+src/emulator/data/single_depth_dt1-10m/
+src/emulator/models/single_depth_dt1-10m/
