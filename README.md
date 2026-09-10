@@ -5,6 +5,7 @@ Surrogate emulators of slab thermal evolution from ASPECT model outputs.
 Supported experiment suites:
 - `const-vc` (constant convergence rate)
 - `ramped-vc` (time-ramped convergence)
+- `const-vc-dd100` (const-vc with the weak crust cut off at 100 km instead of 150 km: a prescribed maximum decoupling depth; same 400-point design, paired run-by-run with const-vc; built by `src/build-numerical-mods/build_runs.const-vc-dd100.py` from the const-vc run-inputs; not yet run)
 
 Quick orientation:
 
