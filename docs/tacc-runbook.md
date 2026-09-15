@@ -57,6 +57,27 @@ waits for the active jobs to drain. Once every run is submitted the script may b
 `kill $(cat submit_<list>.pid)`); Slurm jobs are independent of it. Env overrides: `THROTTLE`, `POLL`,
 `BASE_DIR`, `SLURM_FILE`. `submit_rolling.sh START END` is the same for a contiguous run range.
 
+Optional: an email when the feeder exits (success or crash). TACC login nodes can send mail
+(`echo test | mail -s test aholt@miami.edu` to confirm). Put this in the suite dir as `watcher.sh`
+and start it with `nohup ./watcher.sh > watcher.log 2>&1 &`; keep the pid file name in step:
+
+```bash
+#!/usr/bin/env bash
+PID=$(cat submit_<list>.pid)
+echo "watching feeder pid $PID from $(date)"
+while ps -p "$PID" > /dev/null 2>&1; do sleep 600; done
+{ echo "feeder exited $(date)"; echo; tail -n 15 submit_<list>.log; echo
+  echo "jobs by state (today):"
+  sacct -u adamholt -S "$(date +%F)" -n -o JobName,State | grep run_ | awk '{print $2}' | sort | uniq -c
+} | mail -s "<suite> feeder exited" aholt@miami.edu
+echo "mail sent $(date)"
+```
+
+Reading the email: last log line `Done at ...` = finished normally; `All listed jobs submitted...` =
+died while draining (harmless); `submitted run_XXX` / `At throttle` = died mid-feed -> build a
+remainder list (below) and restart. The feeder runs `set -euo pipefail`, so one failed `squeue`/`sbatch`
+call kills it; expect to restart it occasionally on a long list.
+
 Progress of the feeder:
 
 ```bash
@@ -78,8 +99,19 @@ From `production-runs_v2/` (outputs root defaults to `$SCRATCH/aspect_work`; ove
 Step k = k x 0.5 Myr; step 20 = 10 Myr, 21 = 10.5 Myr (end). Exit code 1 if anything is short.
 Typical pace (skx, 48 cores): 0.2-0.5 wall-h per model-Myr, i.e. 2-5 h to 10.5 Myr.
 
-If the feeder died (login node reboot), make a copy of the list without the finished runs
-(`check_runs_list.sh ... -p` gives the unfinished ones) and restart it on that.
+If the feeder died, restart it on a remainder list = listed runs that are neither finished nor queued:
+
+```bash
+cd $WORK/aspect_work/SlabT_emulator/production-runs_v2
+squeue -u adamholt -h -o "%j" | sed 's/run_//' | sort > /tmp/queued.txt
+./check_runs_list.sh <suite>/<list>.txt -p | awk '$2!="OK" && $1 ~ /^run_/ {sub("run_","",$1); print $1}' | sort > /tmp/notdone.txt
+comm -23 /tmp/notdone.txt /tmp/queued.txt > <suite>/remainder.txt
+cd <suite> && nohup ./submit_from_list.sh remainder.txt > submit_remainder.log 2>&1 & echo $! > submit_remainder.pid
+```
+
+Failed individual runs: `sacct -u adamholt -S <date> -o JobID,JobName,State,Elapsed,ExitCode | grep -E 'FAILED|TIMEOUT|CANCELLED|OUT_OF_ME'`;
+diagnosis in `$SCRATCH/aspect_work/logs/run_XXX.<jobid>.err`. `TIMEOUT` = 10 h wall clock: resubmit the
+run number, `Resume computation = auto` continues from the last checkpoint (every 25 steps).
 
 ## 4. Pull outputs back
 
