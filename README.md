@@ -5,13 +5,14 @@ Surrogate emulators of slab thermal evolution from ASPECT model outputs.
 Supported experiment suites:
 - `const-vc` (constant convergence rate)
 - `ramped-vc` (time-ramped convergence)
-- `const-vc-dd100` (const-vc with the weak crust cut off at 100 km instead of 150 km: a prescribed maximum decoupling depth; same 400-point design, paired run-by-run with const-vc; built by `src/build-numerical-mods/build_runs.const-vc-dd100.py` from the const-vc run-inputs; not yet run)
+- `const-vc-dd100` (const-vc with the weak crust cut off at 100 km instead of 150 km: a prescribed maximum decoupling depth; same 400-point design paired run-by-run with const-vc, run for `dip_int >= 35` only (320 runs) because shallower slabs flatten along the cutoff; see [`subd-model-runs/const-vc-dd100/README.md`](subd-model-runs/const-vc-dd100/README.md); submitted 2026-09-15)
 
 Quick orientation:
 
 - [`Makefile`](/home/holt/Projects/SlabPT-emulator/Makefile) is the main day-to-day command entrypoint.
 - [`train.py`](/home/holt/Projects/SlabPT-emulator/train.py) is the main config-driven training entrypoint.
 - [`docs/repo-map.md`](/home/holt/Projects/SlabPT-emulator/docs/repo-map.md) summarizes the repo structure and identifies legacy helpers.
+- [`docs/tacc-runbook.md`](/home/holt/Projects/SlabPT-emulator/docs/tacc-runbook.md) is the Stampede3 procedure: push inputs, submit in the background, check, pull outputs.
 - Emulator scripts are grouped by workflow under:
   - `src/emulator/single_depth/`
     - `core/`
