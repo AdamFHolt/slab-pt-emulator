@@ -1448,3 +1448,15 @@ Solver health identical to const-vc pairs (wall h/Myr and nonlinear iterations/s
   science comparison (T(z) above the cutoff) is still to do, at 10 Myr.
 - Next: when step 20 lands, rerun `extract_dd100.py RUN 20` + `pair_diag.py`; then decide on
   the full 400-run submission.
+
+### Decision: dd100 full set filtered to dip >= 35 deg (2026-09-15)
+
+Low-dip slabs flatten along the 100 km cutoff (pilot at 5 Myr: 80-100 km slab-top dip 8-17 deg in
+dd100 vs 18-23 in const-vc for dips 25-26; no change at dip >= 38; same happens at 150 km in
+const-vc, so it is the rheological switch making a preferred sliding level, not the OP). PI chose a
+dip_int >= 35 filter instead of threshold runs or a smeared cutoff; age_OP left alone (worst
+flattening was run 090, age_OP 58; old-OP steep runs are clean). Filtering keeps the const-vc
+pairing and the design uniform (KS p >= 0.98, |corr| <= 0.09, all pairwise 4x4 cells filled).
+`make_submit_list.const-vc-dd100.py` -> `run-inputs/full-list.dip35.txt`: 305 runs (320 pass,
+minus 19 pilot), 35-40 deg band (39 runs) first so it can be checked with the pair diagnostics
+before the bulk finishes. Excluded: 80 runs with dip < 35.
