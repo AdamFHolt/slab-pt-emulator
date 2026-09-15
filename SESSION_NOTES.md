@@ -1384,3 +1384,40 @@ Findings:
 3. Cross-suite + (later) `const-vc-sh`: do `A,a,b` shift with shear heating? That
    contrast is the likely headline.
 4. Emulator-based conditional crossover test (proper `z_cross ∝ √(κ·age_OP)`).
+
+---
+
+## Pre-run check (2026-09-15, const-vc-dd100: will a 100 km crust cutoff weld slab to OP?)
+
+Context: `const-vc-dd100` built 2026-09-10 (400 .prm files verified: identical to const-vc except
+`ocrust: 150e3|660e3 -> 100e3|660e3`; inputs hard-linked). Concern: with the weak crust ending at
+100 km the slab may not "break through" an old OP and the plates couple. A pilot list
+(`run-inputs/pilot-list.txt`, 12 at-risk + 3 controls) already exists; nothing submitted yet.
+
+Method (`subd-model-runs/const-vc-dd100/analysis/pre-run-wedge-check/`): sample const-vc fields on
+the OP side of the slab top at 100–125 km for all runs at 1/5/10 Myr, and the coupled zone just
+below the existing 150 km cutoff.
+
+Findings:
+- Initial condition is safe everywhere: plate model (L = 125 km) puts 1100 C at <= 92 km and 1200 C
+  at <= 103 km even for age_OP = 110 Myr. At 1 Myr no run has OP-side mantle colder than 1140 C at
+  100–125 km (viscosity <= 10^21.8). The far-field 1100 C isotherm never reaches 100 km by 10 Myr
+  (max 96 km). So the OP lid itself does not extend below the cutoff.
+- The cold nose is made by the slab, not the OP: in const-vc the decoupled 100–150 km zone
+  stagnates and cools to 600–700 C (viscosity at the 2.5e23 cap) in the oldest-OP / stiffest
+  runs by 10 Myr (225/385 runs < 1000 C at 10 km off the slab top). Below the 150 km cutoff the
+  same runs have 1250–1360 C, ~eta_UM, moving at 4–8 cm/yr: the coupled zone is kept hot by corner
+  flow. Expect the same at 100 km in dd100, i.e. the cold nose is truncated at 100 km.
+- Where it can go wrong: low dip (25–31 deg). Runs 090, 038, 039, 343, 282 already show, at the
+  150 km cutoff, the op compositional layer entrained down the slab and a 900–1200 C,
+  10^21–10^23.4 blanket riding with the slab below the cutoff (run_090: ~950 C at 160–190 km,
+  moving at v_conv). With the cutoff at 100 km this entrainment starts at the OP lid base
+  (1100–1200 C for age_OP > ~80 Myr) instead of in hot mantle, so low-dip + old-OP + high eta_UM
+  is the weld-risk corner. Cold-nose T at 10 Myr correlates with age_OP (rho -0.73), eta_UM
+  (-0.41), v_conv (-0.31), not dip; dip enters through geometry/entrainment instead.
+- Pilot list check: contained the two coldest noses (010, 242) and 090 (dip 25), but its criterion
+  (age_OP > 58 & eta_UM > 3e20) misses 038, 039, 343, 282 (dip 25–31, old OP, lower eta_UM) and
+  156 (oldest OP, highest eta_UM). Added 038, 039, 343, 156 to pilot-list.txt (now 16 at-risk + 3 controls).
+- Coupling diagnostics for the pilot outputs (paired with const-vc run_XXX): OP-side |v| at
+  60–90 km depth within 50 km of the trench (should be ~0; welded => a fraction of v_conv), op-field
+  entrainment depth along the slab, slab-top T at 100–125 km vs the const-vc pair, and dip change.
