@@ -1421,3 +1421,6 @@ Findings:
 - Coupling diagnostics for the pilot outputs (paired with const-vc run_XXX): OP-side |v| at
   60–90 km depth within 50 km of the trench (should be ~0; welded => a fraction of v_conv), op-field
   entrainment depth along the slab, slab-top T at 100–125 km vs the const-vc pair, and dip change.
+- Pilot submitted 2026-09-15 09:40 CDT (Stampede3 skx, 48 cores, 10 h wall each): jobs
+  3501029-3501049 for the 19 runs (135, 010 started 09:43; rest queued). Inputs pushed with
+  `make push-tacc` (rsync --link-dest against const-vc-new). Logs: `$SCRATCH/aspect_work/logs/`.
