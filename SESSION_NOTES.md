@@ -1424,3 +1424,27 @@ Findings:
 - Pilot submitted 2026-09-15 09:40 CDT (Stampede3 skx, 48 cores, 10 h wall each): jobs
   3501029-3501049 for the 19 runs (135, 010 started 09:43; rest queued). Inputs pushed with
   `make push-tacc` (rsync --link-dest against const-vc-new). Logs: `$SCRATCH/aspect_work/logs/`.
+
+### Pilot check at 1/2/5 Myr (2026-09-15, `analysis/pilot-check/`)
+
+Outputs rsynced from `$SCRATCH/aspect_work/outputs` (all 19 runs past step 10; 286 finished).
+Solver health identical to const-vc pairs (wall h/Myr and nonlinear iterations/step within a few %).
+
+**No welding in any pilot run at 5 Myr.**
+- OP interior (op >= 0.5, 30-90 km deep, 20-100 km behind the slab top) is static in every dd100
+  run: mean |v| ~0, same as const-vc. Young-OP controls show ~1-2 x v_conv there in both suites
+  (hot "op" mantle flowing), as before.
+- The cold nose is truncated at 100 km as intended. 10 km OP-side of the slab top at 100 km, dd100
+  is 1180-1290 C (log eta ~20) where const-vc is 780-930 C (log eta 22.4-23.4) in the old-OP,
+  steep runs (010, 135, 156, 242, 120, 165, 268). Corner flow flushes the coupled zone from t~0.
+- Low-dip runs (090, 343, 039, 038) also do not weld: wedge hot to the slab below ~100 km, OP static.
+  But the slab responds dynamically: with the lubricated channel ending at 100 km the slab tip
+  below ~150 km hangs steeply instead of sliding on under the OP (const-vc), and small crust
+  slivers/folds appear at the 100 km corner and near the tip (e.g. 090 slab-top pick at 100 km is
+  a 1144 C sliver). op-base material is entrained deeper (op zmax 160-260 km vs 105-140 km).
+  => the dd100/const-vc pairing changes slab geometry too, not only the interface depth; keep in
+  mind when attributing slab-top T differences.
+- Slab-top T at 100 km at 5 Myr: dd100 vs const-vc differ by -100..+60 C with mixed sign; the
+  science comparison (T(z) above the cutoff) is still to do, at 10 Myr.
+- Next: when step 20 lands, rerun `extract_dd100.py RUN 20` + `pair_diag.py`; then decide on
+  the full 400-run submission.
