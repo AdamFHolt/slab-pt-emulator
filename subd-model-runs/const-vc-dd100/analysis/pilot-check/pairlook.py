@@ -1,10 +1,12 @@
 import sys, numpy as np, pandas as pd, matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from pathlib import Path; from scipy.interpolate import griddata
 ROOT=Path("/home/holt/Projects/SlabPT-emulator"); R=ROOT/"subd-model-runs"; P=pd.read_csv(ROOT/"data/params/params-list.const-vc.csv")
-runs=sys.argv[1].split(","); step=int(sys.argv[2]); out=Path(sys.argv[3]); field=sys.argv[4] if len(sys.argv)>4 else "T"
+# RUNS = "090,038" or per-run steps "090:15,343:14" (a bare run uses STEP)
+STEP=int(sys.argv[2]); out=Path(sys.argv[3]); field=sys.argv[4] if len(sys.argv)>4 else "T"
+runs=[(t.split(":")[0], int(t.split(":")[1]) if ":" in t else STEP) for t in sys.argv[1].split(",")]
 fig,axes=plt.subplots(len(runs),2,figsize=(15,4.0*len(runs)),squeeze=False)
 X,Z=np.meshgrid(np.arange(1750,2350,2.),np.arange(0,240,2.))
-for r,axr in zip(runs,axes):
+for (r,step),axr in zip(runs,axes):
     for ax,suite in zip(axr,("const-vc","const-vc-dd100")):
         p=R/suite/"analysis"/f"run_{r}"/f"t{step}.csv"
         if not p.is_file(): ax.set_title(f"{suite} run_{r}: no t{step}.csv"); continue
@@ -20,5 +22,5 @@ for r,axr in zip(runs,axes):
         ax.contour(X,Z,T,levels=[1100,1200,1300],colors=["b","m","r"],linewidths=0.7)
         for zz in (100,150): ax.axhline(zz,color="0.3",ls=":",lw=0.8)
         ax.set_ylim(240,0); ax.set_aspect("equal"); ax.set_xlabel("x [km]"); ax.set_ylabel("depth [km]")
-        p_=P.iloc[int(r)]; ax.set_title(f"{suite} run_{r} step {step} ({step/2:.0f} Myr): ageOP={p_.age_OP:.0f} dip={p_.dip_int:.0f} etaUM={p_.eta_UM:.1e} vc={p_.v_conv:.1f}",fontsize=9)
+        p_=P.iloc[int(r)]; ax.set_title(f"{suite} run_{r} step {step} ({step/2:g} Myr): ageOP={p_.age_OP:.0f} dip={p_.dip_int:.0f} etaUM={p_.eta_UM:.1e} vc={p_.v_conv:.1f}",fontsize=9)
 plt.tight_layout(); plt.savefig(out,dpi=100); print("wrote",out)

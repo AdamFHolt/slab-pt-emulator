@@ -58,7 +58,7 @@ and sections with `pairlook.py RUNS STEP OUT.png [T|eta|v]`.
 - When the 35-40 deg band reaches ~5 Myr: rsync, run `pair_diag.py` and the local-dip table on those 39
   runs. If any flatten, raise the threshold post hoc (drop runs; nothing to resubmit).
 - When the pilot reaches step 20: rerun `extract_dd100.py RUN 20` + `pair_diag.py` (STEPS) for the
-  10 Myr check, especially 377 (dip 38) and 316 (dip 41); do the step 15 low-dip comparison.
+  10 Myr check, especially 377 (dip 38) and 316 (dip 41) (step 15 sections done: low-dip flattening complete, 377 tip fold growing).
 - Then the science: slab-top T(z) above the cutoff, dd100 vs const-vc, on the 320 pairs; extend the
   processed-record tooling (`extract_profiles_range.py`) to the suite.
 

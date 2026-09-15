@@ -1460,3 +1460,15 @@ pairing and the design uniform (KS p >= 0.98, |corr| <= 0.09, all pairwise 4x4 c
 `make_submit_list.const-vc-dd100.py` -> `run-inputs/full-list.dip35.txt`: 305 runs (320 pass,
 minus 19 pilot), 35-40 deg band (39 runs) first so it can be checked with the pair diagnostics
 before the bulk finishes. Excluded: 80 runs with dip < 35.
+
+### Pilot sections at step 15 = 7.5 Myr (2026-09-15, `analysis/pilot-check/pair_*_t15.png`)
+
+Outputs re-rsynced (all pilot runs past step 15 except 031 at step 10; 7 runs at step 20+).
+`pairlook.py` now takes per-run steps (`090:15,343:14`) and labels 7.5 Myr correctly.
+- Low dip (090, 343, 039, 038): the flattening seen at 5 Myr has gone all the way. All four dd100
+  slabs lie along the 100 km level out to the edge of the plotted window (~2350 km); the wedge is
+  closed, 343 shows no tip descent at all, 090/039/038 hang a steep segment off the box edge below
+  200 km. const-vc twins keep a continuous 25 deg slab to 240 km. Confirms the dip >= 35 filter.
+- Steep (316, 010, 135): same as const-vc apart from the intended hotter 100-150 km nose. 377 (dip 38)
+  has a small crust fold near the tip (~200 km), slightly larger than at 5 Myr -- watch at step 20
+  and in the 35-40 deg band.
