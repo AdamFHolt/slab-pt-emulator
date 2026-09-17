@@ -116,11 +116,19 @@ def _build_common_depth_grid(slices: list[ProfileSlice], depth_min_km: float | N
     if not slices:
         raise ValueError("No profile slices available to build depth grid.")
 
+    # Shallow limit: every run starts at (about) the surface, take the intersection.
+    # Deep limit: when a depth is requested, honour it as long as at least one run
+    # reaches it; runs whose profile ends shallower (a NaN tail where the crust is
+    # absent at that step, typically the deepest ~10 km at one or two mid-window
+    # steps) are dropped for this time by _interpolate_profiles instead of
+    # truncating the grid for everyone.  Without a requested depth the old
+    # behaviour (intersection across runs) is kept.
     z_min_data = max(float(np.min(s.depth_km)) for s in slices)
-    z_max_data = min(float(np.max(s.depth_km)) for s in slices)
+    z_max_common = min(float(np.max(s.depth_km)) for s in slices)
+    z_max_any = max(float(np.max(s.depth_km)) for s in slices)
 
     z_lo = z_min_data if depth_min_km is None else max(z_min_data, float(depth_min_km))
-    z_hi = z_max_data if depth_max_km is None else min(z_max_data, float(depth_max_km))
+    z_hi = z_max_common if depth_max_km is None else min(z_max_any, float(depth_max_km))
 
     if not np.isfinite(z_lo) or not np.isfinite(z_hi) or z_hi <= z_lo:
         raise ValueError("Invalid overlapping depth range across runs.")
@@ -138,9 +146,11 @@ def _interpolate_profiles(slices: list[ProfileSlice], depth_grid: np.ndarray) ->
     mats: list[np.ndarray] = []
     src_paths: list[str] = []
 
+    dropped: list[str] = []
     for s in slices:
         ti = np.interp(depth_grid, s.depth_km, s.temp_c, left=np.nan, right=np.nan)
         if not np.isfinite(ti).all():
+            dropped.append(s.run_id)
             continue
         run_ids.append(s.run_id)
         times.append(s.time_myr)
@@ -149,6 +159,10 @@ def _interpolate_profiles(slices: list[ProfileSlice], depth_grid: np.ndarray) ->
 
     if not mats:
         raise ValueError("No valid interpolated profiles after depth-grid intersection.")
+    if dropped:
+        print(f"[WARN] {len(dropped)} run(s) do not cover the depth grid "
+              f"({depth_grid[0]:g}-{depth_grid[-1]:g} km) at this time and were dropped: "
+              + ",".join(dropped))
 
     return run_ids, np.asarray(times, dtype=float), np.vstack(mats), src_paths
 
@@ -183,7 +197,7 @@ def main() -> int:
     ap.add_argument("--time-tol-myr", type=float, default=0.025,
                     help="Max |time-selected - target-time| per run.")
     ap.add_argument("--depth-min-km", type=float, default=0.0)
-    ap.add_argument("--depth-max-km", type=float, default=80.0)
+    ap.add_argument("--depth-max-km", type=float, default=100.0)
     ap.add_argument("--depth-step-km", type=float, default=1.0)
     ap.add_argument("--k", type=int, default=5, help="Number of retained PCA components.")
     ap.add_argument("--score-space", choices=["raw", "whitened"], default="raw",

@@ -4,14 +4,14 @@ set -euo pipefail
 # Usage:
 #   ./make_science_emulator_plots.sh const-vc
 # Optional env overrides:
-#   DEPTHS="10 40 70" VARIANT=dTdt MODEL_TAG=gp_m25
+#   DEPTHS="10 40 70 100" VARIANT=dTdt MODEL_TAG=gp_m25
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 SCIENCE_DIR="${SCRIPT_DIR}/science"
 
 SUITE="${1:-${SUITE:-const-vc}}"
-DEPTHS="${DEPTHS:-10 40 70}"
+DEPTHS="${DEPTHS:-10 40 70 100}"
 VARIANT="${VARIANT:-dTdt}"
 MODEL_TAG="${MODEL_TAG:-gp_m25}"
 

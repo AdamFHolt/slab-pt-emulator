@@ -24,7 +24,7 @@ help:
 	@echo "  env-ensure          - create env (venv or virtualenv fallback) and install deps"
 	@echo "  env-doctor          - verify core Python imports"
 	@echo "  push-tacc           - rsync SUITE run-inputs to Stampede3 (SUITE=const-vc-dd100 LINK=const-vc-new [DRY=1])"
-	@echo "  profile-pca-preprocess - build profile-PCA datasets for PROFILE_TIMES (default: 0.5 1 2 3 4 5)"
+	@echo "  profile-pca-preprocess - build profile-PCA datasets for PROFILE_TIMES (default: 0.5 1 2 3 4 5; depth grid 0-PROFILE_DEPTH_MAX km, default 100)"
 	@echo "  profile-pca-train-gp - train GP profile-PCA models for PROFILE_TIMES"
 	@echo "  profile-pca-qc      - generate profile-PCA QC plots for PROFILE_TIMES"
 	@echo "  profile-pca-quality-report - write profile-PCA quality JSON reports for PROFILE_TIMES"
@@ -100,6 +100,7 @@ PROFILE_SUITES ?= const-vc ramped-vc
 PROFILE_TIMES ?= 0.5 1 2 3 4 5
 PROFILE_K ?= 10
 PROFILE_SCORE_SPACE ?= whitened
+PROFILE_DEPTH_MAX ?= 100
 PROFILE_QC_SPLIT ?= val
 PROFILE_MODEL_TAG ?= gp_m25
 PROFILE_SWEEP_KS ?= 4 6 8 10
@@ -125,6 +126,7 @@ profile-pca-preprocess:
 				--target-time-myr "$$t" \
 				--k "$(PROFILE_K)" \
 				--score-space "$(PROFILE_SCORE_SPACE)" \
+				--depth-max-km "$(PROFILE_DEPTH_MAX)" \
 				--dataset-name "$$dname"; \
 		done; \
 	done

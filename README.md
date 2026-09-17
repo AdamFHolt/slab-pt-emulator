@@ -383,16 +383,40 @@ Run each generated `.prm` model so solutions land under:
 
 This step is external to this repository.
 
-### 4) Extract cooling-rate targets from model outputs
+### 4) Extract the slab-top record from model outputs
+
+The processed record is one slab-top temperature profile per run and output
+step (`Tprof_{k}.csv`, 0-100 km at 1 km spacing) plus cooling-rate pair files
+(`DT_{a}_{b}.csv`) and their suite-wide master tables. The depth grid was
+0-80 km until 2026-09-17 and is 0-100 km since; the interpolation grid behind
+it reaches 120 km.
 
 ```bash
-cd src/postproc-numerical-mods
-./extract_cooling-rates_all-mods.sh 1 10 0:10 5:80:5 "${SUITE}"
-cd ../..
+# field CSVs (pvpython) + profiles + DT pairs for every run with output to step 20
+src/postproc-numerical-mods/extend_profiles_all-mods.sh "${SUITE}" 0:20 "1,10;1,20;10,20" 24
+# re-derive profiles from field CSVs already on disk (e.g. after changing DEPTHS)
+FROM_CSV=1 OVERWRITE=1 src/postproc-numerical-mods/extend_profiles_all-mods.sh "${SUITE}" 0:20 "1,10;1,20;10,20" 24
+# master tables (never re-run extraction)
+for p in "1 10" "1 20" "10 20"; do set -- $p
+  python src/postproc-numerical-mods/build_master_dt.py --suite "${SUITE}" --t1 $1 --t2 $2 --force
+done
 ```
 
-Key output:
-- `subd-model-runs/${SUITE}/analysis/master_DT1-10.csv`
+Key outputs:
+- `subd-model-runs/${SUITE}/analysis/run_XXX/Tprof_{k}.csv`, `DT_{a}_{b}.csv`
+- `subd-model-runs/${SUITE}/analysis/master_DT1-10.csv` (0.5-5 Myr), `master_DT1-20.csv`, `master_DT10-20.csv`
+
+The legacy per-timestep driver `extract_cooling-rates_all-mods.sh` is kept for
+reference only.
+
+Validity of the deep end: the initial slab reaches only ~85-90 km, so at 100 km
+the slab top is absent in most runs before ~1-3 Myr (const-vc: 67% of runs at
+0.5 Myr, 3% at 5 Myr, 0% at 10 Myr; ramped-vc: 91%, 8%, 0%). Where no crust is
+present the pick lands in ambient mantle (T > 1200 C) or is NaN. Anything built
+from depths > ~80 km at early times (the 0.5-5 Myr cooling window, the 0.5-2 Myr
+profile-PCA datasets) mixes slab arrival with slab cooling; see
+`plots/qc-numerical-mods/<suite>/slab_arrival_time_by_depth.csv` and the
+2026-09-17 entry in `SESSION_NOTES.md`.
 
 ### 5) Numerical-model QC plots
 
@@ -415,6 +439,9 @@ cd ../..
 
 Outputs under:
 - `src/emulator/data/single_depth/${SUITE}/runs/<depth>km_<variant>/`
+
+The standard grid is 5-100 km every 5 km for `dTdt` and 10-100 km every 10 km
+for `dTdt_thermalParam` (5-80 km until 2026-09-17).
 
 ### 7) Train baseline depth-based emulator models
 
@@ -579,8 +606,11 @@ A change affecting emulator training, data prep, or model quality is complete wh
   - `src/build-numerical-mods/build_runs.const-vc.py`
   - `src/build-numerical-mods/build_runs.ramped-vc.py`
 - Postprocessing:
-  - `src/postproc-numerical-mods/extract_cooling-rates_all-mods.sh`
-  - `src/postproc-numerical-mods/extract_cooling-rates_one-mod.py`
+  - `src/postproc-numerical-mods/extend_profiles_all-mods.sh` (driver: field CSVs, profiles, DT pairs)
+  - `src/postproc-numerical-mods/extract_profiles_range.py`
+  - `src/postproc-numerical-mods/build_master_dt.py`
+  - `src/postproc-numerical-mods/extract_cooling-rates_all-mods.sh` (legacy)
+  - `src/postproc-numerical-mods/extract_cooling-rates_one-mod.py` (legacy)
 - Emulator prep/train:
   - `src/emulator/legacy/preprocess_all_training.sh`
   - `src/emulator/legacy/train_all_depths.sh`

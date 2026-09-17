@@ -1511,3 +1511,109 @@ production setup and the suite built; full table in `subd-model-runs/const-vc-sh
   only binds in the top ~1-2 km.
 - Not submitted; the 3.x module/binary on TACC is still to be settled (collaborator's paths look
   like Frontera). Push with `make push-tacc SUITE=const-vc-sh LINK=const-vc-new` (and v3ctrl).
+
+## Slab-top record extended from 80 to 100 km, all downstream products rebuilt (2026-09-17)
+
+PI request: extend the profile extraction to 100 km for const-vc and ramped-vc and rebuild every
+analysis and plot. Old record backed up (hard copies) in `misc/backup-z80-2026-09-17/` (gitignored):
+profiles, DT pairs, masters, emulator data + models, plots.
+
+### Re-extraction
+- Field CSVs t0..t20 already on disk for every run, so no ParaView: `FROM_CSV=1 OVERWRITE=1
+  extend_profiles_all-mods.sh <suite> 0:20 "1,10;1,20;10,20"` (new FROM_CSV mode; new
+  GRID_DEPTH_MAX_KM, default 120; DEPTHS default now 0:100:1). 391 + 498 runs, 0 failures, ~3 min
+  per run single-core, 2 h 05 min wall at 48-way (the extension to 10 Myr had gridded only to 90 km).
+- Validation against the backup: all 18,542 Tprof files bit-identical at depths <= 73 km. 74-80 km
+  shifted by up to ~2 C because the 14 km Savitzky-Golay window of the interface pick no longer ends
+  at 80 km (documented in `extract_profiles_range.py`).
+- Masters rebuilt (`build_master_dt.py --force`, depths 0:100:1): NaN counts at 85-100 km equal
+  those at 5 km within 0-1 runs, i.e. the DT pairs at steps 1/10/20 are complete to 100 km.
+  `master_DT1-10.matched385.csv` rebuilt from the runs with a DT_1_20 file (the FROM_CSV pass had
+  overwritten logs-extend/worklist.txt with all 391 runs; restored from the backup, 385).
+- 39 Tprof files (23 const-vc in 17 runs, 16 ramped-vc in 13 runs) have a NaN tail from 84-93 km
+  down, each at one or two mid-window steps (e.g. run_226 steps 4-7): no crust (ocrust >= 0.5) in
+  those rows, and the smoother turns the last 7 km above it into NaN too. Physical, not an
+  extraction bug (below).
+
+### The deep end is only meaningful once the slab is there
+The initial crust nominally reaches 125 km (plate thickness), but the pick at 100 km is in ambient
+mantle (T > 1200 C) or NaN for most runs early on: const-vc 67% of runs at 0.5 Myr, 46% at 1 Myr,
+23% at 2 Myr, 10% at 3 Myr, 3% at 5 Myr, 0% at 10 Myr; ramped-vc 91 / 82 / 54 / 28 / 8 / 0%. At
+90 km: 24% -> 1% (const-vc) over 0.5-5 Myr; at 80 km <= 5% at 0.5 Myr and 0 from 3 Myr. First
+cold pick at 100 km: median 1.0 Myr const-vc (90th pct 3.1, max 8.5), 2.5 Myr ramped-vc (90th
+pct 4.5, max 9.5), correlating with 1/v_conv (r 0.5) and 1/sin(dip) (r 0.4). Interpretation: the
+deep part of the initial slab does not carry a pickable crust; the slab top at 85-100 km exists
+only after actively subducted crust arrives. Table:
+`plots/qc-numerical-mods/<suite>/slab_arrival_time_by_depth.csv`. Consequences:
+- 0.5-5 Myr cooling rates (master_DT1-10) at 85-100 km mix "slab arrival" (T1 ~1350 C mantle
+  -> slab-top T) with slab cooling. Their emulators fit fine (val R2 0.91-0.98) but the quantity is
+  not the same thing as at 40 km; the 5-10 Myr window (master_DT10-20) is clean at 100 km.
+- Profile-PCA to 100 km is hurt badly at early times (below).
+- For the dd100 vs const-vc comparison at the 100 km cutoff use 10 Myr (5 Myr at the earliest).
+
+### Single-depth emulators (5-100 km every 5; thermalParam 10-100 every 10; 3 const-vc windows)
+- 60 + 60 datasets rebuilt from master_DT1-10, plus dt1-20 / dt10-20 / dt1-10m (20 each). 120 GP
+  fits + 20 (dt1-10m redo), all ok, ~80 s each. New deep val quality (0.5-5 Myr): const-vc R2
+  0.975 / 0.948 / 0.951 / 0.913, RMSE 4.9 / 7.4 / 7.4 / 10.1 C/Myr at 85 / 90 / 95 / 100 km
+  (80 km: 0.977, 4.5); ramped-vc 0.958 / 0.948 / 0.974 / 0.950, RMSE 7.8 / 8.9 / 6.9 / 10.1.
+- Quality gates: `configs/emulator-quality.gp_m25.yaml` gained 90 and 100 km entries (both
+  variants, both suites; same rule r2-0.01, rmse*1.25, mae*1.25 on the new baselines).
+  `make quality-check-gp-m25`: 40/40 pass, including the retrained 10-80 km models.
+- Sobol to 100 km (`make_sobol_plots.sh`, `run_window_sobol.sh`, DEPTHS default to 100): the
+  age_OP -> v_conv ST crossover is unchanged (39.6 km for 0.5-5 Myr, 39.7 km on the 385-run
+  control, 53.2 km for 0.5-10 Myr, none for 5-10 Myr) -- expected, the shallow record is
+  bit-identical. New at depth: ST(v_conv) keeps rising to 0.885 at 100 km (0.5-5 Myr) while
+  ST(dip) grows to 0.17 and ST(age_OP) falls to 0.10; in the 5-10 Myr window the 100 km point is
+  the odd one (age_OP 0.29, dip 0.30, v_conv 0.64; emulator R2 only 0.76 there). Caveat: at
+  85-100 km in the 0.5-5 Myr window part of the v_conv effect is arrival time.
+- Plots regenerated: sensitivity lines to 100 km (age_OP effect changes sign at ~55 km and stays
+  negative; dip and eta_UM only matter below ~60 km), representative depths now 10/40/70/100,
+  stacked surfaces, pred-vs-true grid 20-100 km, misfits and coverage per depth for dTdt and
+  thermalParam, Sobol per depth and vs depth, scaling figures (transient-scaling z_cross 42.7 km
+  on the 0-100 record), cooling-window stats at 40/80/100 km.
+
+### Profile-PCA (grid 0-100 km) -- WORSE, decision needed
+- `preprocess_profile_pca.py`: default `--depth-max-km` 100; the common grid now honours the
+  requested depth and drops runs whose profile ends shallower (NaN tail) at that time instead of
+  truncating the grid for everyone (1-7 runs dropped per time; printed). Makefile knob
+  `PROFILE_DEPTH_MAX` (default 100). Fixed stale `SCRIPT_DIR`/`EMULATOR_DIR` in the two sweep
+  drivers (broken since the move into sweeps/; they had not been run since).
+- Held-out profile RMSE, old 0-80 -> new 0-100 (and the new error split 0-80 | 80-100 km):
+  const-vc 0.5 Myr 6.5 -> 13.8 (7.6 | 27.0); 1 Myr 9.4 -> 22.8 (10.4 | 46.7); 2 Myr 8.1 -> 13.9;
+  3 Myr 9.2 -> 12.5 (8.5 | 22.3); 5 Myr 8.1 -> 12.2 (9.0 | 20.6).
+  ramped-vc 0.5 Myr 3.0 -> 6.7; 1 Myr 7.3 -> 14.6; 3 Myr 8.0 -> 17.7 (10.0 | 34.4); 4 Myr 9.4 ->
+  21.1 (11.5 | 41.4); 5 Myr 11.1 -> 17.7 (10.8 | 33.4). Score R2 drops too (ramped-vc 3 Myr
+  0.56 -> 0.32). The PCA truncation floor itself rises (const-vc 1 Myr 1.8 -> 7.2 C; k=10 explains
+  99.95% instead of 99.98%): the runs with a mantle pick at 80-100 km put a ~1350 C step into the
+  profile family (see `default-runs/const-vc/profileT_pca_t1Myr_k10_combined-qc.png`), which PCA
+  cannot represent with 10 smooth components and the GP cannot predict from the five parameters.
+  The 0-80 km part of the new emulators is also 0.5-2 C worse than before because components are
+  spent on the deep end.
+- 10 Myr series (const-vc, run set now the 368 runs NaN-free at 0-100 km over all 20 steps, was
+  383): val RMSE by time old -> new: 0.5 Myr 6.1 -> 17.5; 1 Myr 6.7 -> 31.2; 2 Myr 8.8 -> 27.1;
+  3 Myr 8.2 -> 18.2; 5 Myr 8.3 -> 13.6; 7 Myr 7.9 -> 11.9; 10 Myr 9.3 -> 11.3; worst depth is
+  100 km at every time. `plots/qc-emulator/profile-pca/10myr/const-vc_profile_rmse_by_time.csv`.
+- `make profile-pca-quality-check-gp-m25` now FAILS (2/2; t3Myr_k10 profile RMSE 12.5 vs gate
+  11.45 const-vc, 17.7 vs 10.04 ramped-vc). Thresholds deliberately NOT re-baselined: the
+  failure is information. CI's profile-pca gate will be red until one of these is chosen:
+  (a) keep the profile-PCA *emulator* at 0-80 km (`PROFILE_DEPTH_MAX=80`; record stays 0-100),
+  (b) 0-100 km but only for times >= ~3-5 Myr, or mask runs without a slab at depth,
+  (c) accept and re-baseline. Recommendation: (a) for the standard products; the deep end is a
+  slab-arrival problem, not an emulator problem.
+- Representation sweep at 3 Myr rerun on the 0-100 grid (k 4/6/8/10 x raw/whitened): the ranking
+  is flat -- held-out profile RMSE 12.5-13.0 C const-vc and 17.5-17.8 C ramped-vc for every k,
+  while the PCA-only floor falls 5.9 -> 2.2 (const-vc) with k. More components do not help: the
+  error is the unpredictable deep end, not truncation. (Old 0-80 sweep: 9.16-9.57 / 8.03-8.74.)
+  GP-tuning sweep (ramped-vc, k10 whitened) rerun with --force (the driver skips existing reports
+  otherwise): all 24 settings land at 17.25-17.5 C (was 8.03-9.48); Matern 3/2 with 10 restarts
+  is nominally best (17.25) over the default Matern 5/2 / 25 restarts (17.40), a 1% spread that
+  says nothing -- the kernel choice is irrelevant while the deep end dominates. Default kept.
+- Science plots and burial paths regenerated for both suites on the new models.
+
+### Numerical-model QC
+- `make_all_plots.sh`: single-depth panels 5-100 km; multi-depth panels now 20/60/100 and
+  25/50/75/100 (old 20/50/80 and 20/40/60/80 files removed from git); correlation heatmap labels
+  follow the data (to 100 km). Pairplots, cluster map, 391 Tprof heatmaps regenerated; late-time
+  QC and slab-arrival tables written. Non-monotonic T(z) flags jump (const-vc 79 -> 170 runs)
+  because the slab top at 80-100 km sits against the cold decoupled nose.
+- Tests: 28/28.

@@ -33,11 +33,11 @@ mkdir -p "${OUT_DIR}"
 mkdir -p "${OUT_DIR}/${SUITE}"
 
 # =========================================================================== #
-# 1) Single-depth QC plots: 5,10,...,80 km
+# 1) Single-depth QC plots: 5,10,...,100 km
 # =========================================================================== #
-echo "=== Single-depth QC plots (5-80 km) ==="
+echo "=== Single-depth QC plots (5-100 km) ==="
 
-for depth in 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80; do
+for depth in 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100; do
 
   OUT_PREFIX="${OUT_DIR}/${SUITE}/DT${TSTEP1}-${TSTEP2}_dTdt-vs-params_${depth}km"
 
@@ -52,61 +52,61 @@ for depth in 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80; do
 done
 
 # =========================================================================== #
-# 2) Multi-depth QC: 20, 50, 80 km - dT/dt vs params
+# 2) Multi-depth QC: 20, 60, 100 km - dT/dt vs params
 # =========================================================================== #
 echo
-echo "=== Three-depth QC plot (20, 50, 80 km) ==="
+echo "=== Three-depth QC plot (20, 60, 100 km) ==="
 
-OUT_PREFIX_3="${OUT_DIR}/${SUITE}/DT${TSTEP1}-${TSTEP2}_dTdt-vs-params_20km50km80km"
+OUT_PREFIX_3="${OUT_DIR}/${SUITE}/DT${TSTEP1}-${TSTEP2}_dTdt-vs-params_20km60km100km"
 
 python qc_dTdt_vs_params_mult-depths.py \
   --params "${PARAMS}" \
   --master "${MASTER}" \
-  --depths 20 50 80 \
+  --depths 20 60 100 \
   --y "${YVAR}" \
   --out "${OUT_PREFIX_3}"
 
 # =========================================================================== #
-# 3) Multi-depth QC: 20, 40, 60, 80 km - dT/dt vs params
+# 3) Multi-depth QC: 25, 50, 75, 100 km - dT/dt vs params
 # =========================================================================== #
 echo
-echo "=== Four-depth QC plot (20, 40, 60, 80 km) ==="
+echo "=== Four-depth QC plot (25, 50, 75, 100 km) ==="
 
-OUT_PREFIX_4="${OUT_DIR}/${SUITE}/DT${TSTEP1}-${TSTEP2}_dTdt-vs-params_20km40km60km80km"
+OUT_PREFIX_4="${OUT_DIR}/${SUITE}/DT${TSTEP1}-${TSTEP2}_dTdt-vs-params_25km50km75km100km"
 
 python qc_dTdt_vs_params_mult-depths.py \
   --params "${PARAMS}" \
   --master "${MASTER}" \
-  --depths 20 40 60 80 \
+  --depths 25 50 75 100 \
   --y "${YVAR}" \
   --out "${OUT_PREFIX_4}"
 
 # =========================================================================== #
-# 4) Three-depth dT/dt vs depth scatter panel
+# 4) Three-depth dT/dt vs depth scatter panel (20, 60, 100 km)
 # =========================================================================== #
 echo
-echo "=== QC: dT/dt vs depth panels (20, 50, 80 km) ==="
+echo "=== QC: dT/dt vs depth panels (20, 60, 100 km) ==="
 
-OUT_PREFIX_DTDEPTH="${OUT_DIR}/${SUITE}/DT${TSTEP1}-${TSTEP2}_dTdt-vs-depth_20km50km80km"
+OUT_PREFIX_DTDEPTH="${OUT_DIR}/${SUITE}/DT${TSTEP1}-${TSTEP2}_dTdt-vs-depth_20km60km100km"
 
 python qc_dTdt_vs_depth_mult-depths.py \
   --master "${MASTER}" \
-  --depths 20 50 80 \
+  --depths 20 60 100 \
   --y "${YVAR}" \
   --out "${OUT_PREFIX_DTDEPTH}"
 
 # =========================================================================== #
-# 5) Histograms for 20, 50, 80 km
+# 5) Histograms for 20, 60, 100 km
 # =========================================================================== #
 echo
-echo "=== QC: Histograms of dT/dt (20, 50, 80 km) ==="
+echo "=== QC: Histograms of dT/dt (20, 60, 100 km) ==="
 
-OUT_PREFIX_HIST="${OUT_DIR}/${SUITE}/DT${TSTEP1}-${TSTEP2}_hist-dTdt_20km50km80km"
+OUT_PREFIX_HIST="${OUT_DIR}/${SUITE}/DT${TSTEP1}-${TSTEP2}_hist-dTdt_20km60km100km"
 
 python qc_hist_dTdt_mult-depths.py \
   --params "${PARAMS}" \
   --master "${MASTER}" \
-  --depths 20 50 80 \
+  --depths 20 60 100 \
   --y "${YVAR}" \
   --out "${OUT_PREFIX_HIST}"
 
@@ -166,7 +166,7 @@ python qc_param_depth_correlation_heatmap.py \
 # 10) Optional: LHS parameter pairplot colored by dT/dt (10, 50, 70 km)
 # =========================================================================== #
 #
-# for depth in 10 50 70; do
+# for depth in 10 50 100; do
 #   OUT_PREFIX_PAIR_COLOR="${OUT_DIR}/${SUITE}/params-pairplot_colored_${depth}km"
 #
 #   python qc_pairplot_params_colored.py \

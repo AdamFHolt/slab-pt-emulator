@@ -8,7 +8,7 @@ re-run any extraction, so an existing master table can never be clobbered by
 an accidental re-extraction.
 
 Usage:
-    build_master_dt.py --suite const-vc --t1 1 --t2 20 --depths 0:80:1
+    build_master_dt.py --suite const-vc --t1 1 --t2 20 --depths 0:100:1
     build_master_dt.py --suite const-vc --t1 1 --t2 20 --out /path/master.csv
 """
 from __future__ import annotations
@@ -60,7 +60,7 @@ def main() -> int:
     ap.add_argument("--suite", default="const-vc")
     ap.add_argument("--t1", type=int, required=True)
     ap.add_argument("--t2", type=int, required=True)
-    ap.add_argument("--depths", default="0:80:1")
+    ap.add_argument("--depths", default="0:100:1")
     ap.add_argument("--out", default=None, help="Default: <suite>/analysis/master_DT<t1>-<t2>.csv")
     ap.add_argument("--force", action="store_true", help="Overwrite an existing master table.")
     args = ap.parse_args()

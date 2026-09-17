@@ -13,7 +13,7 @@ MASTER="${MASTER_BASE}/master_DT1-10.csv"
 PARAMS="$SCRIPT_DIR/../../../data/params/params-list.$SUITE.csv"
 ODIR="$SCRIPT_DIR/../data/single_depth/$SUITE/runs"
 
-DEPTHS=(10 20 30 40 50 60 70 80)
+DEPTHS=(10 20 30 40 50 60 70 80 90 100)
 FEATURE_COMBOS=(
   ""                       
   "--add-thermal-param"

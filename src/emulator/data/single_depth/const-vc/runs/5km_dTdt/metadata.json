@@ -1,5 +1,5 @@
 {
-  "repo_root": "/home/holt/Projects/SlabPT-emulator",
+  "repo_root": "/home/holt/Projects/SlabPT-emulator/src",
   "params_path": "/home/holt/Projects/SlabPT-emulator/data/params/params-list.const-vc.csv",
   "master_source": "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/master_DT1-10.csv",
   "dropped": {

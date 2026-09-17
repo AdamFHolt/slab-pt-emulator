@@ -9,7 +9,7 @@ set -euo pipefail
 #   ./make_sobol_plots.sh const-vc        # one suite
 # Optional env overrides:
 #   SUITES="const-vc ramped-vc"
-#   DEPTHS="5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80"
+#   DEPTHS="5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100"
 #   VARIANT=dTdt MODEL_TAG=gp_m25 N_BASE=1024
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,7 +19,7 @@ if [ "$#" -ge 1 ]; then
 else
   SUITES="${SUITES:-const-vc ramped-vc}"
 fi
-DEPTHS="${DEPTHS:-5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80}"
+DEPTHS="${DEPTHS:-5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100}"
 VARIANT="${VARIANT:-dTdt}"
 MODEL_TAG="${MODEL_TAG:-gp_m25}"
 N_BASE="${N_BASE:-1024}"

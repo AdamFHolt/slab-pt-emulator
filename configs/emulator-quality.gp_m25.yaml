@@ -1,13 +1,14 @@
 schema_version: 1
 model_tag: gp_m25
 metric_source: metrics.val._macro_avg
-updated_utc: "2026-02-18"
+updated_utc: "2026-09-17"
 notes:
   - Thresholds are per-dataset validation gates for baseline GP (Matern 2.5).
   - Values were set from current report.json baselines with conservative slack:
   - r2_min ~= baseline_r2 - 0.01
   - rmse_max ~= baseline_rmse * 1.25
   - mae_max ~= baseline_mae * 1.25
+  - 90 and 100 km entries added 2026-09-17 (record extended to 100 km) from the first 0-100 km baselines, same rule.
 
 thresholds:
   const-vc:
@@ -27,6 +28,10 @@ thresholds:
     70km_dTdt_thermalParam: {r2_min: 0.951, rmse_max: 6.19, mae_max: 3.56}
     80km_dTdt: {r2_min: 0.961, rmse_max: 6.32, mae_max: 4.51}
     80km_dTdt_thermalParam: {r2_min: 0.963, rmse_max: 6.08, mae_max: 4.52}
+    90km_dTdt: {r2_min: 0.938, rmse_max: 9.31, mae_max: 5.70}
+    90km_dTdt_thermalParam: {r2_min: 0.918, rmse_max: 10.90, mae_max: 6.39}
+    100km_dTdt: {r2_min: 0.903, rmse_max: 12.63, mae_max: 8.47}
+    100km_dTdt_thermalParam: {r2_min: 0.904, rmse_max: 12.55, mae_max: 8.51}
 
   ramped-vc:
     10km_dTdt: {r2_min: 0.988, rmse_max: 0.25, mae_max: 0.19}
@@ -45,3 +50,7 @@ thresholds:
     70km_dTdt_thermalParam: {r2_min: 0.963, rmse_max: 6.80, mae_max: 3.42}
     80km_dTdt: {r2_min: 0.959, rmse_max: 8.06, mae_max: 5.22}
     80km_dTdt_thermalParam: {r2_min: 0.959, rmse_max: 8.06, mae_max: 5.22}
+    90km_dTdt: {r2_min: 0.938, rmse_max: 11.09, mae_max: 6.19}
+    90km_dTdt_thermalParam: {r2_min: 0.939, rmse_max: 10.96, mae_max: 6.36}
+    100km_dTdt: {r2_min: 0.940, rmse_max: 12.65, mae_max: 7.05}
+    100km_dTdt_thermalParam: {r2_min: 0.941, rmse_max: 12.49, mae_max: 6.43}

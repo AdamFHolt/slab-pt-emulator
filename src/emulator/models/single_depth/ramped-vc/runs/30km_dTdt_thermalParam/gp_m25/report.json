@@ -24,35 +24,35 @@
     ],
     "train": {
       "dTdt_C_per_Myr": {
-        "rmse": 0.09425267479305008,
-        "mae": 0.07180626372491776,
-        "r2": 0.9999704189084292
+        "rmse": 0.09423087350559455,
+        "mae": 0.07178963754075174,
+        "r2": 0.9999704325914636
       },
       "_macro_avg": {
-        "rmse": 0.09425267479305008,
-        "mae": 0.07180626372491776,
-        "r2": 0.9999704189084292
+        "rmse": 0.09423087350559455,
+        "mae": 0.07178963754075174,
+        "r2": 0.9999704325914636
       }
     },
     "val": {
       "dTdt_C_per_Myr": {
-        "rmse": 0.7856523297952701,
-        "mae": 0.5524489801155192,
-        "r2": 0.9976508354251505
+        "rmse": 0.7856414843566333,
+        "mae": 0.552431163831161,
+        "r2": 0.9976509002821959
       },
       "_macro_avg": {
-        "rmse": 0.7856523297952701,
-        "mae": 0.5524489801155192,
-        "r2": 0.9976508354251505
+        "rmse": 0.7856414843566333,
+        "mae": 0.552431163831161,
+        "r2": 0.9976509002821959
       }
     },
     "gp_kernels": [
       {
-        "kernel": "9.79**2 * Matern(length_scale=[7.95, 33.4, 36.5, 7.51, 10.8, 47.4, 76.2, 42.8], nu=2.5) + WhiteKernel(noise_level=0.000169)"
+        "kernel": "9.79**2 * Matern(length_scale=[7.95, 33.4, 36.5, 7.51, 10.8, 47.4, 76.3, 42.8], nu=2.5) + WhiteKernel(noise_level=0.000169)"
       }
     ]
   },
-  "data_dir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data/ramped-vc/30km_dTdt_thermalParam",
+  "data_dir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data/single_depth/ramped-vc/runs/30km_dTdt_thermalParam",
   "seed": 42,
   "gp_hparams": {
     "ls_init": 1.0,
@@ -62,7 +62,7 @@
     ],
     "noise_init": 0.003,
     "noise_bounds": [
-      1e-06,
+      1e-08,
       1.0
     ],
     "alpha": 1e-06,

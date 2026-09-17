@@ -9,8 +9,10 @@ from typing import Iterable
 
 
 THIS_FILE = Path(__file__).resolve()
-SCRIPT_DIR = THIS_FILE.parent
-EMULATOR_DIR = SCRIPT_DIR.parent
+# This file lives in src/emulator/profile_pca/sweeps/; the core scripts it drives are in
+# ../core/ and the shared trainer / data / models roots are under src/emulator/.
+SCRIPT_DIR = THIS_FILE.parent.parent / "core"
+EMULATOR_DIR = THIS_FILE.parents[2]
 REPO_ROOT = THIS_FILE.parents[3]
 
 

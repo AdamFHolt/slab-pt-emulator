@@ -17,19 +17,28 @@ set -uo pipefail
 #
 # Examples:
 #   ./extend_profiles_all-mods.sh const-vc 11:20 "1,20;10,20" 24
+#   # re-derive the whole record from the field CSVs already on disk (no pvpython):
+#   FROM_CSV=1 OVERWRITE=1 ./extend_profiles_all-mods.sh const-vc 0:20 "1,10;1,20;10,20" 24
 #
 # Environment overrides:
-#   PVPYTHON   path to pvpython
-#   DEPTHS     depth spec passed through (default 0:80:1)
-#   OVERWRITE  1 to rewrite existing Tprof/DT files
+#   PVPYTHON           path to pvpython
+#   DEPTHS             depth spec passed through (default 0:100:1; was 0:80:1 until 2026-09-17)
+#   GRID_DEPTH_MAX_KM  depth extent of the interpolation grid (default 120; must exceed DEPTHS)
+#   OVERWRITE          1 to rewrite existing Tprof/DT files
+#   FROM_CSV           1 to skip pvpython and work from existing analysis/run_XXX/t{k}.csv:
+#                      the work list is then every run with at least one needed field CSV,
+#                      and steps whose CSV is missing are skipped per run (extract_profiles_range
+#                      prints [MISS]).  Use this to re-derive profiles with new DEPTHS.
 
 SUITE="${1:-const-vc}"
 TPROF_STEPS="${2:-11:20}"
 DT_PAIRS="${3:-1,20;10,20}"
 NPROC="${4:-24}"
 
-DEPTHS="${DEPTHS:-0:80:1}"
+DEPTHS="${DEPTHS:-0:100:1}"
+GRID_DEPTH_MAX_KM="${GRID_DEPTH_MAX_KM:-120}"
 OVERWRITE="${OVERWRITE:-0}"
+FROM_CSV="${FROM_CSV:-0}"
 PVPYTHON="${PVPYTHON:-/home/holt/software/ParaView-5.11.1-MPI-Linux-Python3.9-x86_64/bin/pvpython}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -70,26 +79,43 @@ echo "DT pairs     : ${DT_PAIRS}"
 echo "field CSVs   : ${NEEDED_SORTED}"
 echo "max step     : ${MAX_STEP}"
 echo "depths       : ${DEPTHS}"
+echo "grid max     : ${GRID_DEPTH_MAX_KM} km"
+echo "from csv     : ${FROM_CSV}"
 echo "parallelism  : ${NPROC}"
 echo
 
-# ---- Build the work list: runs with contiguous solution output to MAX_STEP --
+# ---- Build the work list --------------------------------------------------
+# default : runs with contiguous solution output to MAX_STEP (pvpython will
+#           write any missing field CSVs)
+# FROM_CSV: runs with at least one needed field CSV already in analysis/
 WORKLIST="${LOG_DIR}/worklist.txt"
 SKIPLIST="${LOG_DIR}/skipped.txt"
 : > "${WORKLIST}"
 : > "${SKIPLIST}"
 
 shopt -s nullglob
-for RUN_DIR in "${RUN_ROOT}"/run_*; do
+if [[ "${FROM_CSV}" == "1" ]]; then
+  RUN_DIRS=( "${ANALYSIS_ROOT}"/run_* )
+else
+  RUN_DIRS=( "${RUN_ROOT}"/run_* )
+fi
+for RUN_DIR in "${RUN_DIRS[@]}"; do
   MOD="$(basename "${RUN_DIR}")"
   RUN_NUM="${MOD#run_}"
-  ok=1
-  for k in ${NEEDED_SORTED}; do
-    if [[ ! -f "${RUN_DIR}/solution/solution-$(printf '%05d' "$k").pvtu" ]]; then
-      ok=0
-      break
-    fi
-  done
+  if [[ "${FROM_CSV}" == "1" ]]; then
+    ok=0
+    for k in ${NEEDED_SORTED}; do
+      if [[ -f "${RUN_DIR}/t${k}.csv" ]]; then ok=1; break; fi
+    done
+  else
+    ok=1
+    for k in ${NEEDED_SORTED}; do
+      if [[ ! -f "${RUN_DIR}/solution/solution-$(printf '%05d' "$k").pvtu" ]]; then
+        ok=0
+        break
+      fi
+    done
+  fi
   if [[ $ok -eq 1 ]]; then
     echo "${RUN_NUM}" >> "${WORKLIST}"
   else
@@ -110,7 +136,9 @@ RUN_NUM="\$1"
 LOG="${LOG_DIR}/run_\${RUN_NUM}.log"
 {
   echo "=== run_\${RUN_NUM} start \$(date -Is)"
-  "${PVPYTHON}" "${SCRIPT_DIR}/extract_field_csvs.py" "\${RUN_NUM}" "${NEEDED_SORTED// /,}" "${SUITE}" || exit 11
+  if [[ "${FROM_CSV}" != "1" ]]; then
+    "${PVPYTHON}" "${SCRIPT_DIR}/extract_field_csvs.py" "\${RUN_NUM}" "${NEEDED_SORTED// /,}" "${SUITE}" || exit 11
+  fi
   EXTRA=""
   if [[ "${OVERWRITE}" == "1" ]]; then EXTRA="--overwrite"; fi
   "${PY}" "${SCRIPT_DIR}/extract_profiles_range.py" \
@@ -118,7 +146,7 @@ LOG="${LOG_DIR}/run_\${RUN_NUM}.log"
       --tprof-steps "${TPROF_STEPS}" \
       --dt-pairs "${DT_PAIRS}" \
       --depths "${DEPTHS}" \
-      --grid-depth-max-km 90 \
+      --grid-depth-max-km "${GRID_DEPTH_MAX_KM}" \
       \${EXTRA} || exit 12
   echo "=== run_\${RUN_NUM} done \$(date -Is)"
 } > "\${LOG}" 2>&1

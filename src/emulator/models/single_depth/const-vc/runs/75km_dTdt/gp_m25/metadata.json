@@ -1,5 +1,5 @@
 {
-  "repo_root": "/home/holt/Projects/SlabPT-emulator",
+  "repo_root": "/home/holt/Projects/SlabPT-emulator/src",
   "params_path": "/home/holt/Projects/SlabPT-emulator/data/params/params-list.const-vc.csv",
   "master_source": "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/master_DT1-10.csv",
   "dropped": {
@@ -48,10 +48,10 @@
     },
     "Y": {
       "mean": [
-        -91.62422403518416
+        -91.47628196045268
       ],
       "std": [
-        28.349952831322078
+        28.27333835428614
       ]
     }
   },
@@ -463,7 +463,7 @@
     "max_dT": null,
     "add_thermal_param": false,
     "add_eta_ratio": false,
-    "outdir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data/single_depth",
+    "outdir": "src/emulator/data/single_depth/const-vc/runs",
     "val_frac": 0.15,
     "seed": 42,
     "root_env": "SLABPT_ROOT",

@@ -5,7 +5,7 @@ set -euo pipefail
 #   ./make_qc_emulator_plots.sh const-vc dTdt_thermalParam gp_rbf
 # Optional env overrides:
 #   DATA_ROOT=... MODELS_ROOT=... PLOTS_ROOT=... DPI=... LABEL_THRESH=... RESIDUAL_COVERAGE=0 INCLUDE_PARAM_SWEEP=1
-#   PRED_TRUE_DEPTHS="20 30 40 50 60 70"
+#   PRED_TRUE_DEPTHS="20 30 40 50 60 70 80 90 100"
 
 SUITE="${1:-const-vc}"
 VARIANT="${2:-dTdt_thermalParam}"
@@ -27,7 +27,7 @@ LABEL_THRESH="${LABEL_THRESH:-8.0}"
 # Make residual-colored coverage plots too? (0/1)
 RESIDUAL_COVERAGE="${RESIDUAL_COVERAGE:-1}"
 INCLUDE_PARAM_SWEEP="${INCLUDE_PARAM_SWEEP:-0}"
-PRED_TRUE_DEPTHS="${PRED_TRUE_DEPTHS:-20 30 40 50 60 70}"
+PRED_TRUE_DEPTHS="${PRED_TRUE_DEPTHS:-20 30 40 50 60 70 80 90 100}"
 
 PRED_TRUE_NAMES=()
 for depth in ${PRED_TRUE_DEPTHS}; do

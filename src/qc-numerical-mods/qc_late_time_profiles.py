@@ -39,7 +39,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--suite", default="const-vc")
     ap.add_argument("--steps", default="1:20")
-    ap.add_argument("--probe-depths", default="40,80")
+    ap.add_argument("--probe-depths", default="40,80,100")
     ap.add_argument("--t-min", type=float, default=-5.0)
     ap.add_argument("--t-max", type=float, default=1400.0)
     ap.add_argument("--jump-c", type=float, default=60.0,

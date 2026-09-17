@@ -9,7 +9,7 @@ from typing import Any
 import pandas as pd
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[4]  # src/emulator/profile_pca/sweeps -> repo root
 PLOTS_ROOT_DEFAULT = REPO_ROOT / "plots" / "qc-emulator" / "profile-pca" / "gp-tuning"
 
 

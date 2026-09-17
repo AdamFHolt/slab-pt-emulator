@@ -22,26 +22,26 @@
     ],
     "train": {
       "dTdt_C_per_Myr": {
-        "rmse": 0.17185506849143997,
-        "mae": 0.12755759744962505,
-        "r2": 0.9996504004429029
+        "rmse": 0.17185492825101076,
+        "mae": 0.12755748351259172,
+        "r2": 0.9996504010134764
       },
       "_macro_avg": {
-        "rmse": 0.17185506849143997,
-        "mae": 0.12755759744962505,
-        "r2": 0.9996504004429029
+        "rmse": 0.17185492825101076,
+        "mae": 0.12755748351259172,
+        "r2": 0.9996504010134764
       }
     },
     "val": {
       "dTdt_C_per_Myr": {
-        "rmse": 0.434919608134561,
-        "mae": 0.3113597095233002,
-        "r2": 0.9973373714200077
+        "rmse": 0.43491978008917914,
+        "mae": 0.31135985343304073,
+        "r2": 0.9973373693145547
       },
       "_macro_avg": {
-        "rmse": 0.434919608134561,
-        "mae": 0.3113597095233002,
-        "r2": 0.9973373714200077
+        "rmse": 0.43491978008917914,
+        "mae": 0.31135985343304073,
+        "r2": 0.9973373693145547
       }
     },
     "gp_kernels": [
@@ -50,7 +50,7 @@
       }
     ]
   },
-  "data_dir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data/const-vc/20km_dTdt_thermalParam",
+  "data_dir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data/single_depth/const-vc/runs/20km_dTdt_thermalParam",
   "seed": 42,
   "gp_hparams": {
     "ls_init": 1.0,
@@ -60,7 +60,7 @@
     ],
     "noise_init": 0.003,
     "noise_bounds": [
-      1e-06,
+      1e-08,
       1.0
     ],
     "alpha": 1e-06,

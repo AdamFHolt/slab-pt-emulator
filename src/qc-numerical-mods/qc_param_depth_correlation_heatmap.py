@@ -116,7 +116,8 @@ def main() -> None:
     ax.set_xticks(np.arange(len(param_cols)))
     ax.set_xticklabels(param_cols, rotation=35, ha="right")
 
-    wanted_depth_labels = np.arange(0, 81, 10, dtype=float)
+    z_top = float(np.nanmax(depths)) if len(depths) else 80.0
+    wanted_depth_labels = np.arange(0, z_top + 0.5, 10, dtype=float)
     yt_idx = []
     yt_lab = []
     for d in wanted_depth_labels:

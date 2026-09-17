@@ -1,5 +1,5 @@
 {
-  "repo_root": "/home/holt/Projects/SlabPT-emulator",
+  "repo_root": "/home/holt/Projects/SlabPT-emulator/src",
   "params_path": "/home/holt/Projects/SlabPT-emulator/data/params/params-list.ramped-vc.csv",
   "master_source": "/home/holt/Projects/SlabPT-emulator/subd-model-runs/ramped-vc/analysis/master_DT1-10.csv",
   "dropped": {
@@ -54,10 +54,10 @@
     },
     "Y": {
       "mean": [
-        -84.89916752643173
+        -85.47044880587552
       ],
       "std": [
-        35.45388773308858
+        35.562348837708626
       ]
     }
   },
@@ -568,15 +568,15 @@
     "499"
   ],
   "cli_args": {
-    "params": "/home/holt/Projects/SlabPT-emulator/src/emulator/../../data/params/params-list.ramped-vc.csv",
-    "master": "/home/holt/Projects/SlabPT-emulator/src/emulator/../../subd-model-runs/ramped-vc/analysis/master_DT1-10.csv",
+    "params": "data/params/params-list.ramped-vc.csv",
+    "master": "subd-model-runs/ramped-vc/analysis/master_DT1-10.csv",
     "targets": "dTdt_C_per_Myr",
     "suite": "ramped-vc",
     "max_dTdt": null,
     "max_dT": null,
     "add_thermal_param": false,
     "add_eta_ratio": false,
-    "outdir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data/ramped-vc",
+    "outdir": "src/emulator/data/single_depth/ramped-vc/runs",
     "val_frac": 0.15,
     "seed": 42,
     "root_env": "SLABPT_ROOT",

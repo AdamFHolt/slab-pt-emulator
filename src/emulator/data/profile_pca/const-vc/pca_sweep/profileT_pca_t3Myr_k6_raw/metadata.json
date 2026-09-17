@@ -30,9 +30,7 @@
     "time_selected_myr": [
       3.0021023068400003,
       3.00062208064,
-      3.00011602636,
       3.00084015766,
-      3.00092823063,
       3.00079192533,
       3.00019617413,
       3.00010279254,
@@ -172,7 +170,6 @@
       3.00088291103,
       3.00073829924,
       3.00058223036,
-      3.00080981306,
       3.0012998465900003,
       3.00012484161,
       3.00058501881,
@@ -246,10 +243,8 @@
       3.00018265622,
       3.00031651425,
       3.00086283464,
-      3.00098727664,
       3.00104936383,
       3.00199091146,
-      3.0008426738700003,
       3.00037835887,
       3.00014673916,
       3.00067866458,
@@ -314,8 +309,6 @@
       3.00129713382,
       3.00010085108,
       3.0006461911,
-      3.00068365635,
-      3.00049086957,
       3.00005051229,
       3.00045920843,
       3.00051161561,
@@ -423,9 +416,7 @@
     "run_ids": [
       "000",
       "001",
-      "002",
       "003",
-      "004",
       "005",
       "006",
       "007",
@@ -565,7 +556,6 @@
       "146",
       "147",
       "148",
-      "149",
       "150",
       "151",
       "152",
@@ -639,10 +629,8 @@
       "220",
       "221",
       "222",
-      "223",
       "224",
       "225",
-      "226",
       "227",
       "229",
       "230",
@@ -707,8 +695,6 @@
       "290",
       "291",
       "292",
-      "293",
-      "294",
       "295",
       "296",
       "297",
@@ -816,9 +802,7 @@
     "source_paths": [
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_000/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_001/Tprof_6.csv",
-      "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_002/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_003/Tprof_6.csv",
-      "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_004/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_005/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_006/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_007/Tprof_6.csv",
@@ -958,7 +942,6 @@
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_146/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_147/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_148/Tprof_6.csv",
-      "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_149/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_150/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_151/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_152/Tprof_6.csv",
@@ -1032,10 +1015,8 @@
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_220/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_221/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_222/Tprof_6.csv",
-      "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_223/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_224/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_225/Tprof_6.csv",
-      "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_226/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_227/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_229/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_230/Tprof_6.csv",
@@ -1100,8 +1081,6 @@
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_290/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_291/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_292/Tprof_6.csv",
-      "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_293/Tprof_6.csv",
-      "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_294/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_295/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_296/Tprof_6.csv",
       "/home/holt/Projects/SlabPT-emulator/subd-model-runs/const-vc/analysis/run_297/Tprof_6.csv",
@@ -1287,9 +1266,29 @@
       77.0,
       78.0,
       79.0,
-      80.0
+      80.0,
+      81.0,
+      82.0,
+      83.0,
+      84.0,
+      85.0,
+      86.0,
+      87.0,
+      88.0,
+      89.0,
+      90.0,
+      91.0,
+      92.0,
+      93.0,
+      94.0,
+      95.0,
+      96.0,
+      97.0,
+      98.0,
+      99.0,
+      100.0
     ],
-    "n_depth": 81,
+    "n_depth": 101,
     "dropped_nonfinite_rows": 0
   },
   "pca": {
@@ -1304,44 +1303,44 @@
   "scalers": {
     "X": {
       "mean": [
-        4.557347570332478,
-        75.02966751918159,
-        59.85329923273662,
-        49.89071611253194,
-        3.2283863171355515e+20
+        4.535920833333331,
+        74.72250000000001,
+        60.61919270833338,
+        49.757031249999976,
+        3.195656119791669e+20
       ],
       "std": [
-        2.0062005995066516,
-        20.147453397540847,
-        29.024549589698783,
-        14.42255361176078,
-        2.5670034999972623e+20
+        2.002701062805381,
+        19.997655083888386,
+        28.714908686232945,
+        14.397705149861787,
+        2.5466098480136913e+20
       ]
     },
     "Y": {
       "mean": [
-        -16.559479767754272,
-        -1.112399099237143,
-        -2.193356699013565,
-        -0.521717301326846,
-        -0.6585947693760807,
-        -0.01168940972533972
+        24.42209342121711,
+        -3.7094060212209996,
+        0.6797496859828964,
+        -0.04871338897087352,
+        0.1436361848351642,
+        -0.1741841761462395
       ],
       "std": [
-        996.1407540481736,
-        176.8648157772238,
-        82.63629861522172,
-        34.9086167849736,
-        23.185776195915984,
-        16.578283656753513
+        1246.7659761304083,
+        332.8203051805668,
+        115.51974757719076,
+        60.078421498405746,
+        41.3774372822545,
+        27.813687301686702
       ]
     }
   },
   "split": {
     "val_frac": 0.15,
     "seed": 42,
-    "n_train": 332,
-    "n_val": 59
+    "n_train": 326,
+    "n_val": 58
   },
   "cli_args": {
     "suite": "const-vc",
@@ -1350,13 +1349,14 @@
     "target_time_myr": 3.0,
     "time_tol_myr": 0.025,
     "depth_min_km": 0.0,
-    "depth_max_km": 80.0,
+    "depth_max_km": 100.0,
     "depth_step_km": 1.0,
     "k": 6,
     "score_space": "raw",
     "val_frac": 0.15,
     "seed": 42,
     "dataset_name": "profileT_pca_t3Myr_k6_raw",
-    "outdir": null
+    "outdir": "/home/holt/Projects/SlabPT-emulator/src/emulator/data/profile_pca/const-vc/pca_sweep",
+    "runs_file": null
   }
 }

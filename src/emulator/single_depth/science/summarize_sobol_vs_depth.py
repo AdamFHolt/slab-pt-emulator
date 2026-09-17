@@ -33,7 +33,7 @@ def main() -> int:
     ap.add_argument("--model-tag", default="gp_m25")
     ap.add_argument("--crossover", default="age_OP,v_conv",
                     help="Two parameter names whose ST crossover depth is reported.")
-    ap.add_argument("--report-depths", default="10,20,30,40,50,60,80")
+    ap.add_argument("--report-depths", default="10,20,30,40,50,60,80,100")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 

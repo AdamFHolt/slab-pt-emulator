@@ -59,7 +59,10 @@ and sections with `pairlook.py RUNS STEP OUT.png [T|eta|v]`.
   runs. If any flatten, raise the threshold post hoc (drop runs; nothing to resubmit).
 - When the pilot reaches step 20: rerun `extract_dd100.py RUN 20` + `pair_diag.py` (STEPS) for the
   10 Myr check, especially 377 (dip 38) and 316 (dip 41) (step 15 sections done: low-dip flattening complete, 377 tip fold growing).
-- Then the science: slab-top T(z) above the cutoff, dd100 vs const-vc, on the 320 pairs; extend the
-  processed-record tooling (`extract_profiles_range.py`) to the suite.
+- Then the science: slab-top T(z) above the cutoff, dd100 vs const-vc, on the 320 pairs. The
+  processed-record tooling now reaches 100 km (`extend_profiles_all-mods.sh`, 0-100 km grid since
+  2026-09-17), so `extend_profiles_all-mods.sh const-vc-dd100 0:20 "1,10;1,20;10,20"` gives the
+  same record for this suite. Compare at 10 Myr: at 100 km the slab top is absent in most runs
+  before ~1-3 Myr (see README section 4, "Validity of the deep end").
 
 Chronology and numbers: `SESSION_NOTES.md`, entries dated 2026-09-15.

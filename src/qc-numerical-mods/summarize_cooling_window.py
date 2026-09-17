@@ -11,7 +11,7 @@ one common set of runs.
 
 Usage:
     summarize_cooling_window.py --suite const-vc --steps 1,10,20 \
-        --depths 40,80 --windows "1,10;10,20;1,20" \
+        --depths 40,80,100 --windows "1,10;10,20;1,20" \
         --out plots/science-emulator/cooling-window-10myr/const-vc_cooling_stats.json
 """
 from __future__ import annotations
@@ -41,7 +41,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--suite", default="const-vc")
     ap.add_argument("--steps", default="1,10,20")
-    ap.add_argument("--depths", default="40,80")
+    ap.add_argument("--depths", default="40,80,100")
     ap.add_argument("--windows", default="1,10;10,20;1,20")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()

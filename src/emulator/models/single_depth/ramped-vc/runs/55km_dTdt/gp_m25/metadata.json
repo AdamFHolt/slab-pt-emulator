@@ -1,5 +1,5 @@
 {
-  "repo_root": "/home/holt/Projects/SlabPT-emulator",
+  "repo_root": "/home/holt/Projects/SlabPT-emulator/src",
   "params_path": "/home/holt/Projects/SlabPT-emulator/data/params/params-list.ramped-vc.csv",
   "master_source": "/home/holt/Projects/SlabPT-emulator/subd-model-runs/ramped-vc/analysis/master_DT1-10.csv",
   "dropped": {
@@ -576,7 +576,7 @@
     "max_dT": null,
     "add_thermal_param": false,
     "add_eta_ratio": false,
-    "outdir": null,
+    "outdir": "src/emulator/data/single_depth/ramped-vc/runs",
     "val_frac": 0.15,
     "seed": 42,
     "root_env": "SLABPT_ROOT",

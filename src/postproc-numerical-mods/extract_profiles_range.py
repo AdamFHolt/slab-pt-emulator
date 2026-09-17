@@ -23,6 +23,11 @@ Numerical conventions replicate the legacy pipeline exactly:
   ``scipy.interpolate.griddata`` is pointwise, so the retained rows are
   bit-identical to the full-depth grid used by the legacy script as long as
   the requested depths lie inside the restricted range.
+* The interface smoothing is a 14 km Savitzky-Golay window, so the deepest
+  ~7 km of a profile are edge-affected: extending ``--depths`` (0-80 km until
+  2026-09-17, 0-100 km since) changes x_smooth and hence T by up to a few C
+  in the last 7 km of the *old* range and leaves everything shallower
+  bit-identical.
 
 Times are read from ``solution.pvd`` (same values ParaView reports).
 """
@@ -107,7 +112,7 @@ def main() -> int:
     ap.add_argument("--run", required=True, help="Run id, e.g. 000 or run_000.")
     ap.add_argument("--tprof-steps", default="", help="Comma list or a:b range of timesteps for Tprof files.")
     ap.add_argument("--dt-pairs", default="", help="Semicolon list of 'a,b' pairs, e.g. '1,20;10,20'.")
-    ap.add_argument("--depths", default="0:80:1", help="Depths in km: 'a:b:step' or comma list.")
+    ap.add_argument("--depths", default="0:100:1", help="Depths in km: 'a:b:step' or comma list.")
     ap.add_argument("--grid-res-km", type=float, default=1.0)
     ap.add_argument("--grid-depth-max-km", type=float, default=120.0)
     ap.add_argument("--c-thresh", type=float, default=0.5)
