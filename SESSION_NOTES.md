@@ -1472,3 +1472,42 @@ Outputs re-rsynced (all pilot runs past step 15 except 031 at step 10; 7 runs at
 - Steep (316, 010, 135): same as const-vc apart from the intended hotter 100-150 km nose. 377 (dip 38)
   has a small crust fold near the tip (~200 km), slightly larger than at 5 Myr -- watch at step 20
   and in the 35-40 deg band.
+
+## const-vc-sh built (2026-09-17, shear-heating suite from the collaborator's template; target ASPECT 3.x)
+
+The shear-heating template arrived 2026-09-16 (`subd-model-runs/const-vc-sh/example/`: `run_100.prm`
+= const-vc run_100 byte for byte; `run_heating.prm` = same + heating). PI: the suite will run under
+ASPECT 3.0 or a 3.x development build (the collaborator's requirement). Reconciled against the
+production setup and the suite built; full table in `subd-model-runs/const-vc-sh/README.md`.
+
+- Kept: `Heating model = shear heating` with the stress limiter on (`Limit stress contribution to
+  shear heating = true`, cohesion 10 MPa, friction 0.523599 rad = the mantle plasticity's 30 deg; the
+  plugin takes radians, checked in `shear_heating.cc`; parameters exist from 3.0, absent in 2.5).
+  `Formulation = custom` with `Mass conservation = incompressible` and `Temperature equation =
+  reference density profile`, because ASPECT aborts when the plugin meets the `Boussinesq
+  approximation` keyword and those two choices are what that keyword selects internally (no
+  adiabatic heating listed, so only the dissipation is new). `Stokes solver type = block AMG` --
+  NOT a no-op: 3.0 defaults to GMG, block AMG is what const-vc ran with under 2.5.
+- Dropped: renamed `Use years instead of seconds` (3.0.0 only knows the old spelling; the dev branch
+  keeps it as a deprecated alias), 2.5 Myr end time / no resume, collaborator paths, tighter solver
+  tolerances (must match const-vc for a paired ablation), the extra diagnostic output list and 16
+  grouped files.
+- Added: `heating` (W/m^3) to the visualization output next to `viscosity` (~15% more output).
+- `src/build-numerical-mods/build_runs.const-vc-sh.py` derives the 400 runs from the const-vc
+  run-inputs (hard links, dd100 style) and asserts the .prm body changes by exactly one solver line,
+  the Formulation block, the Heating block and one output word; template
+  `data/ref-model/model_template_fixed-trench.const-vc-sh.prm`; design copied to
+  `data/params/params-list.const-vc-sh.*`; scheduler scripts from dd100 with the suite name swapped
+  and a TODO in run_one.slurm for the 3.x binary (`asp30_skx`).
+- Version confound: const-vc ran under 2.5. `--control` writes `subd-model-runs/const-vc-v3ctrl/`
+  (the 8 pilot runs, const-vc physics, only the block-AMG line added) to run under the 3.x binary
+  and compare with the existing const-vc outputs before trusting 2.5-vs-3.x pairs.
+- Suggested pilot `run-inputs/pilot-list.txt` (8): 100 (collaborator's case), 310/195/210 (fastest
+  v_conv ~8 cm/yr, most channel dissipation), 072/217 (largest v_conv^2 x eta_UM, wedge
+  dissipation), 270 (median), 064 (weakest). Check parameter acceptance, wall time vs the const-vc
+  twin, slab-top T(z) and the `heating` field at 1 and 5 Myr.
+- Expected size: channel H ~ 4e-6 W/m^3 at 4 cm/yr (~30 K/Myr vs ~1 Myr channel diffusion time),
+  scaling with v_conv^2 -- tens of degrees at the slab top, well above emulator RMSE. The limiter
+  only binds in the top ~1-2 km.
+- Not submitted; the 3.x module/binary on TACC is still to be settled (collaborator's paths look
+  like Frontera). Push with `make push-tacc SUITE=const-vc-sh LINK=const-vc-new` (and v3ctrl).

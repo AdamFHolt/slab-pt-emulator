@@ -42,3 +42,6 @@ src/emulator/models/single_depth_dt10-20/
 subd-model-runs/*/analysis/logs-extend/
 src/emulator/data/single_depth_dt1-10m/
 src/emulator/models/single_depth_dt1-10m/
+
+# collaborator files received for the shear-heating suite (README summarises them)
+!subd-model-runs/const-vc-sh/example/*.txt
