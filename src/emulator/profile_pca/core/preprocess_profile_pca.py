@@ -197,7 +197,11 @@ def main() -> int:
     ap.add_argument("--time-tol-myr", type=float, default=0.025,
                     help="Max |time-selected - target-time| per run.")
     ap.add_argument("--depth-min-km", type=float, default=0.0)
-    ap.add_argument("--depth-max-km", type=float, default=100.0)
+    ap.add_argument("--depth-max-km", type=float, default=80.0,
+                    help=("Deepest grid point. The slab-top record reaches 100 km, but the emulator "
+                          "grid stops at 80 km by decision (2026-09-17): below ~85 km the slab top only "
+                          "exists once subducted crust arrives (0.5-5 Myr, run dependent), and including "
+                          "it roughly doubled the held-out profile error. Pass 100 to build a deep set."))
     ap.add_argument("--depth-step-km", type=float, default=1.0)
     ap.add_argument("--k", type=int, default=5, help="Number of retained PCA components.")
     ap.add_argument("--score-space", choices=["raw", "whitened"], default="raw",

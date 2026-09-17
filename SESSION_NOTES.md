@@ -1617,3 +1617,32 @@ only after actively subducted crust arrives. Table:
   QC and slab-arrival tables written. Non-monotonic T(z) flags jump (const-vc 79 -> 170 runs)
   because the slab top at 80-100 km sits against the cold decoupled nose.
 - Tests: 28/28.
+
+### Decision: profile-PCA emulator grid stays 0-80 km (2026-09-17, evening)
+
+PI chose option (a). The record and the single-depth emulators stay at 100 km; the profile-PCA
+emulator grid goes back to 0-80 km (`preprocess_profile_pca.py --depth-max-km` default 80 with the
+reason in its help text; Makefile `PROFILE_DEPTH_MAX ?= 80`; README section 4). Pass 100 to build
+a deep set on purpose. Rationale: the deep-end error is a slab-arrival problem, not an emulator
+problem; profile-PCA serves burial paths at 20-45 km; including 80-100 km cost 0.5-2 C on the
+shallow part too. A 0-100 km profile-PCA restricted to t >= 5 Myr (slab present in > 97% of runs)
+remains a possible future product.
+
+Rebuilt on the 0-80 grid of the new record (default series both suites, k8 exploratory sets,
+3 Myr representation sweep, GP-tuning sweep with --force, 10 Myr series, science plots, paths;
+26/26 jobs ok, ~1 h 50 min):
+- Quality gates pass again with the thresholds untouched: const-vc t3 profile RMSE 7.20 C (gate
+  11.45), ramped-vc 8.10 (gate 10.04). Default series held-out RMSE vs the January-record models
+  (both 0-80): const-vc 6.5/9.4/8.1/9.2/8.5/8.1 -> 6.5/9.6/8.0/7.2/8.2/8.0 C at 0.5/1/2/3/4/5 Myr;
+  ramped-vc 3.0/7.3/8.0/8.0/9.4/11.1 -> 3.0/7.2/8.1/8.1/9.5/10.8. Same runs and splits; the
+  differences come from the 74-80 km smoothing shift and from dropping (rather than truncating on)
+  runs with a NaN tail at that time.
+- Sweeps: k8 raw nominally best for const-vc (7.19) with k10 within 0.01; Matern 5/2 / 25 restarts
+  best for ramped-vc (8.10). Defaults unchanged.
+- 10 Myr series run set: 384 of 385 (only run_004 has a NaN inside 0-80 km, at step 6; the
+  January record had two such runs). Val RMSE 5.0-9.6 C across 0.5-10 Myr, worst depth 70-80 km
+  at every time; the 6-8 Myr values are ~1-2 C above the January-record models, 0.5-1 Myr ~1 C
+  below.
+- The 0-100 km profile-PCA models were built, evaluated (see above) and overwritten; their numbers
+  live only in this log.
+- Tests 28/28. Committed with this entry.

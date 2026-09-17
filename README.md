@@ -416,7 +416,9 @@ present the pick lands in ambient mantle (T > 1200 C) or is NaN. Anything built
 from depths > ~80 km at early times (the 0.5-5 Myr cooling window, the 0.5-2 Myr
 profile-PCA datasets) mixes slab arrival with slab cooling; see
 `plots/qc-numerical-mods/<suite>/slab_arrival_time_by_depth.csv` and the
-2026-09-17 entry in `SESSION_NOTES.md`.
+2026-09-17 entry in `SESSION_NOTES.md`. For that reason the profile-PCA
+emulator grid stays at 0-80 km (`PROFILE_DEPTH_MAX`, default 80) while the
+record and the single-depth emulators go to 100 km.
 
 ### 5) Numerical-model QC plots
 
