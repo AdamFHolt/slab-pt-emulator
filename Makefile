@@ -5,7 +5,8 @@ SHELL := /bin/bash
         env-status env-ensure env-doctor profile-pca-preprocess profile-pca-train-gp profile-pca-qc \
         profile-pca-quality-report profile-pca-quality-check-gp-m25 \
         profile-pca-sweep profile-pca-sweep-summary \
-        profile-pca-gp-tuning-sweep profile-pca-gp-tuning-summary sobol-sensitivity push-tacc
+        profile-pca-gp-tuning-sweep profile-pca-gp-tuning-summary sobol-sensitivity push-tacc \
+        pull-tacc
 
 help:
 	@echo "Targets:"
@@ -24,6 +25,7 @@ help:
 	@echo "  env-ensure          - create env (venv or virtualenv fallback) and install deps"
 	@echo "  env-doctor          - verify core Python imports"
 	@echo "  push-tacc           - rsync SUITE run-inputs to Stampede3 (SUITE=const-vc-dd100 LINK=const-vc-new [DRY=1])"
+	@echo "  pull-tacc           - rsync SUITE model outputs back from Stampede3 scratch (SUITE=const-vc-dd100 [ALL=1] [DRY=1])"
 	@echo "  profile-pca-preprocess - build profile-PCA datasets for PROFILE_TIMES (default: 0.5 1 2 3 4 5; depth grid 0-PROFILE_DEPTH_MAX km, default 80; record goes to 100)"
 	@echo "  profile-pca-train-gp - train GP profile-PCA models for PROFILE_TIMES"
 	@echo "  profile-pca-qc      - generate profile-PCA QC plots for PROFILE_TIMES"
@@ -240,3 +242,8 @@ SUITE ?= const-vc-dd100
 LINK  ?= const-vc-new
 push-tacc:
 	src/build-numerical-mods/push_runs_to_tacc.sh $(SUITE) $(LINK) $(if $(DRY),-n,)
+
+# rsync a suite's model outputs back from scratch; ALL=1 skips the submission-list restriction
+# (only safe when the TACC outputs dir holds this suite alone -- run_XXX numbers collide across suites)
+pull-tacc:
+	subd-model-runs/pull_runs_from_tacc.sh $(SUITE) $(if $(ALL),-a,) $(if $(DRY),-n,)

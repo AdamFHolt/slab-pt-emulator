@@ -10,6 +10,7 @@ Everything here was worked out for const-vc-dd100 on 2026-09-15; it applies to a
 | TACC suite dir | `$WORK/aspect_work/SlabT_emulator/production-runs_v2/<suite>/run_XXX/` (`$WORK` = `/work2/04714/adamholt/stampede3`; const-vc is `const-vc-new` there) |
 | TACC job scripts | in the suite dir: `run_one.slurm`, `submit_from_list.sh`, `submit_rolling.sh` (copied with the run inputs) |
 | check scripts | `production-runs_v2/check_runs.sh`, `check_runs_list.sh` (local copies: `subd-model-runs/`) |
+| transfer scripts | push: `src/build-numerical-mods/push_runs_to_tacc.sh` (`make push-tacc`); pull: `subd-model-runs/pull_runs_from_tacc.sh` (`make pull-tacc`) |
 | model outputs on TACC | `$SCRATCH/aspect_work/outputs/run_XXX/` (ASPECT runs in `$SCRATCH/aspect_work`; job logs in `$SCRATCH/aspect_work/logs/`) |
 | local outputs | `subd-model-runs/<suite>/run-outputs/run_XXX/` (gitignored) |
 
@@ -116,18 +117,30 @@ run number, `Resume computation = auto` continues from the last checkpoint (ever
 ## 4. Pull outputs back
 
 ```bash
-mkdir -p subd-model-runs/<suite>/run-outputs
-rsync -avh --info=progress2 \
-  --include='run_*/' --include='run_*/solution/' --include='run_*/solution/**' \
-  --include='run_*/solution.pvd' --include='run_*/log.txt' --include='run_*/statistics' \
-  --include='run_*/parameters.prm' --exclude='*' \
-  adamholt@stampede3.tacc.utexas.edu:/scratch/04714/adamholt/aspect_work/outputs/ \
-  subd-model-runs/<suite>/run-outputs/
+make pull-tacc SUITE=<suite> ALL=1 DRY=1   # preview
+make pull-tacc SUITE=<suite> ALL=1         # transfer
 ```
 
-Incremental: rerun to pick up later steps. ~200 MB per finished run. Note `outputs/` on scratch is
-shared by whatever was run there; restrict with `--include='run_010/'`-style rules if it holds more
-than one suite.
+Wrapper: `subd-model-runs/pull_runs_from_tacc.sh <suite> [LIST_FILE ...] [-a] [-n]`, which lives next
+to the check scripts. Takes `solution/`, `solution.pvd`, `log.txt`, `statistics` and `parameters.prm`
+per run into `subd-model-runs/<suite>/run-outputs/`, and leaves `restart.*` checkpoints on TACC so a
+timed-out run can still resume from them.
+
+`ALL=1` (`-a`) pulls every `run_*` in the scratch outputs dir. **Only use it when that dir holds one
+suite**: `$SCRATCH/aspect_work/outputs/` is shared by whatever was run there and `run_XXX` numbers
+collide across suites, so an unrestricted pull silently mixes them into one directory with nothing to
+tell them apart. Without `ALL=1` the transfer is restricted to the runs named in the suite's
+`run-inputs/*list*.txt` (for const-vc-dd100 that is 324: the 320-run record plus the four dip < 35
+pilot runs kept as evidence of the flattening). Name list files explicitly to narrow it further:
+
+```bash
+subd-model-runs/pull_runs_from_tacc.sh <suite> <suite>/run-inputs/pilot-list.txt
+```
+
+Incremental: rerun to pick up later steps, and to top up runs that were still going or had died
+part-way. ~200 MB per finished run, one password + token prompt per invocation. Partial `.vtu` files
+survive an interrupted transfer (`--partial-dir`). The run ends with a local count of runs holding
+step 00021, so the completion figure costs no further TACC login.
 
 ## 5. Field CSVs for postprocessing
 
