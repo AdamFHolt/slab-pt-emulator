@@ -1760,4 +1760,16 @@ fix on the idev node (`ibrun -n 48 ... run_900.prm`) rather than through the que
 above were instant there and cost a 10-min queue round trip each otherwise.
 
 Status: `run_900` starts and timesteps under 3.0 with shear heating on, so the Formulation block and
-the stress-limited shear-heating parameters are all accepted. Timing benchmark skx vs spr next.
+the stress-limited shear-heating parameters are all accepted. Both benchmarks submitted at the end
+of the session: `run_901` (spr) running, `run_900` (skx) queued. Next session: read
+`Total wallclock time elapsed including restarts` from
+`$SCRATCH/aspect_work/outputs/run_90{0,1}/log.txt`, compare at the SAME timestep number, and check
+`grep "running with" .../run_901/log.txt` says 112 MPI processes (the `-n 112` in run_one.spr.slurm
+is an assumption about the Xeon Max node size, still unverified).
+
+Kept as-is after a check this session: `Nonlinear solver scheme = single Advection, iterated Stokes`
+(const-vc's setting, and the collaborator's heating file uses it too). Changing it to `iterated
+Advection and Stokes` would put a solver-scheme difference inside the const-vc-sh/const-vc pair,
+and the feedback it would capture is negligible here -- ~1270 yr timesteps against ~30 K/Myr of
+channel heating is ~0.04 K/step, and the crust channel's viscosity is fixed at 1e20 anyway. A
+one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is available if wanted.
