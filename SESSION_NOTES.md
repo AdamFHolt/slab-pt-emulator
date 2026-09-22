@@ -1823,3 +1823,8 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   Verified against stubbed `sbatch`/`squeue`: first submit rejected once and retried, run dirs
   `run_XXX`, jobs `v3c_XXX`, `squeue -p spr`. .prm untouched (410 md5 OK). Runbook remainder recipe
   now strips `(run|sh|v3c)_`. Needs a re-push of both suites' scripts before resubmitting.
+- Status at end of session: scripts re-pushed; **const-vc-v3ctrl pilot-list feeder running on spr**
+  (jobs `v3c_XXX`). const-vc-sh `full-list.txt` deliberately NOT started yet -- next session, once the
+  v3ctrl runs have been looked at: `cd .../const-vc-sh && SLURM_FILE=run_one.spr.slurm nohup
+  ./submit_from_list.sh full-list.txt > submit_full.log 2>&1 & echo $! > submit_full.pid` (with
+  `asp3_skx` exported). Pull v3ctrl with `make pull-tacc SUITE=const-vc-v3ctrl ALL=1`.
