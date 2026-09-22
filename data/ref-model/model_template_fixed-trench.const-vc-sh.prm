@@ -213,7 +213,10 @@ subsection Postprocess
   set List of postprocessors = visualization
 
   subsection Visualization
-    set List of output variables = viscosity, heating
+    set List of output variables = material properties, heating
+    subsection Material properties
+      set List of material properties = viscosity
+    end
     set Output format                 = vtu
     set Time between graphical output = 0.5e6
     set Interpolate output = true

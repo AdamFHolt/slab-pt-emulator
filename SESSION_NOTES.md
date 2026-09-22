@@ -1712,3 +1712,52 @@ Unresolved, for the pilot to settle (TODOs in the script):
   Hand-made, not builder-generated, and `run-inputs/` is gitignored -- they exist only on disk.
 - `submit_from_list.sh` is the wrong tool for these: its throttle counts `^run_[0-9]{3}$` across the
   whole account, so the in-flight dd100 jobs block it. Submit the benchmarks with bare `sbatch`.
+
+### ASPECT 3.0.0 built on Stampede3, and the two .prm incompatibilities it exposed (2026-09-22)
+
+**Working build recipe** (binary: `$WORK/software/aspect/build-3.0/aspect-release`, referenced by
+`$asp3_skx`). ASPECT 3.0.0 needs only deal.II >= 9.5.0, and the existing 9.5.1 install has p4est,
+Trilinos and SUNDIALS, so the 2.5 toolchain was reused rather than following the ASPECT wiki's
+Stampede3 page (which builds deal.II 9.7 via candi on intel/26 + impi/21.18 + phdf5/1.14.6).
+Deliberate: keeping compiler, MPI, deal.II, Trilinos and p4est fixed means `const-vc-v3ctrl`
+measures the ASPECT version change alone, not a whole-toolchain change.
+
+```
+idev -p skx-dev -N 1 -n 48 -m 120        # skx: the binary then runs on skx AND spr
+module reset && module load intel/24.0 impi/21.11 TACC p4est/2.8.5 trilinos/15.0.0 phdf5/1.14.3 boost/1.85.0
+# NOTE: netcdf/4.9.2 deliberately NOT loaded -- see below
+. $WORK/software/deal.II-9.5/configuration/enable.sh
+cmake -D CMAKE_CXX_COMPILER=/opt/intel/oneapi/mpi/2021.11/bin/mpicxx \
+      -D ASPECT_ADDITIONAL_CXX_FLAGS="-fno-finite-math-only" ..
+make release && make -j48
+```
+Reports: ASPECT 3.0.0 (a42fd1d5d), deal.II 9.5.1, Trilinos 15.0.0, p4est 2.8.5, vectorization
+level 3 (AVX512 -- the level that also runs on spr), OPTIMIZED.
+
+Three traps, in the order they bit:
+1. **Compiler.** A bare `cmake ..` picks up `c++` (gcc 13.2.0), then applies deal.II's stored Intel
+   flags -> `unrecognized command-line option '-qopenmp-simd' / '-no-ansi-alias'`. deal.II 9.5.1 was
+   built with `/opt/intel/oneapi/mpi/2021.11/bin/mpicxx` (from `deal.IIConfig.cmake`); pass it
+   explicitly, in a *fresh* build dir (the compiler is pinned in CMakeCache.txt).
+2. **HDF5 skew.** `libnetcdf` (netcdf/4.9.2) has an **RPATH** to serial `hdf5/1.14.4` and NEEDs
+   `libhdf5_hl.so.310` from there, while everything else resolves to parallel phdf5/1.14.3 ->
+   `undefined symbol: H5T_IEEE_F16LE_g` (the _Float16 type added in 1.14.4) at startup. RPATH beats
+   LD_LIBRARY_PATH, so no module ordering fixes it. ASPECT only links netcdf opportunistically and
+   these models never use it: **build with netcdf unloaded**. (`LD_PRELOAD` of phdf5's own
+   `libhdf5_hl.so.310` also works and was used to confirm the diagnosis.) The 2.5 binary is
+   unaffected, which is why the shared module line in `run_one.slurm` looked innocent.
+3. **`viscosity` visualization postprocessor removed in 3.0.** "has been removed. Please use the
+   'material properties' postprocessor instead" -- an abort during parameter parsing, i.e. it would
+   have killed all 400 runs at startup. The reconciliation table had kept the 2.5 spelling, reading
+   the collaborator's `material properties` + `Material properties = viscosity` as diagnostic bulk;
+   it is in fact required under 3.x. Fixed in `build_runs.const-vc-sh.py`, the template and
+   `const-vc-v3ctrl` (which has no heating but the same viz block, and would have aborted too); the
+   vtu field is still named `viscosity`, so the field-CSV extraction is unaffected. README
+   reconciliation row corrected.
+
+Lesson for the remaining dropped lines: they were all judged against 2.5 semantics. Smoke-test each
+fix on the idev node (`ibrun -n 48 ... run_900.prm`) rather than through the queue -- both aborts
+above were instant there and cost a 10-min queue round trip each otherwise.
+
+Status: `run_900` starts and timesteps under 3.0 with shear heating on, so the Formulation block and
+the stress-limited shear-heating parameters are all accepted. Timing benchmark skx vs spr next.
