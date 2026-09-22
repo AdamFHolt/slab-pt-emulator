@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # pull_runs_from_tacc.sh -- rsync a suite's model outputs back from Stampede3 scratch.
-# Lives next to the suites; counterpart of src/build-numerical-mods/push_runs_to_tacc.sh.
+# Lives next to the suites; counterpart of push_runs_to_tacc.sh, next to it.
 #
 #   subd-model-runs/pull_runs_from_tacc.sh SUITE [LIST_FILE ...] [-a] [-n]
 #

@@ -190,7 +190,7 @@ def copy_scripts(dst_dir: Path, new_base: str) -> None:
             t = t.replace('ASPECT_EXE="${asp25_skx:?asp25_skx not set}"',
                           '# TODO(const-vc-sh): this suite needs an ASPECT >= 3.0 binary (stress-limited shear heating);\n'
                           '# swap the module line above and the variable below for the 3.x build before submitting.\n'
-                          'ASPECT_EXE="${asp30_skx:?asp30_skx not set (ASPECT 3.x build, see const-vc-sh/README.md)}"')
+                          'ASPECT_EXE="${asp3_skx:?asp3_skx not set (ASPECT 3.x build, see const-vc-sh/README.md)}"')
         (dst_dir / sname).write_text(t)
         shutil.copymode(src, dst_dir / sname)
         if sname == "run_one.slurm":

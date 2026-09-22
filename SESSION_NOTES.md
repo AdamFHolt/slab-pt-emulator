@@ -1498,7 +1498,7 @@ production setup and the suite built; full table in `subd-model-runs/const-vc-sh
   the Formulation block, the Heating block and one output word; template
   `data/ref-model/model_template_fixed-trench.const-vc-sh.prm`; design copied to
   `data/params/params-list.const-vc-sh.*`; scheduler scripts from dd100 with the suite name swapped
-  and a TODO in run_one.slurm for the 3.x binary (`asp30_skx`).
+  and a TODO in run_one.slurm for the 3.x binary (`asp3_skx`; the name was corrected from `asp30_skx` on 2026-09-22).
 - Version confound: const-vc ran under 2.5. `--control` writes `subd-model-runs/const-vc-v3ctrl/`
   (the 8 pilot runs, const-vc physics, only the block-AMG line added) to run under the 3.x binary
   and compare with the existing const-vc outputs before trusting 2.5-vs-3.x pairs.
@@ -1688,5 +1688,27 @@ Unresolved, for the pilot to settle (TODOs in the script):
   decomposition noise to the const-vc-sh/const-vc pair difference on top of the 2.5-vs-3.x version
   effect. **const-vc-v3ctrl must run on whichever queue and rank count production uses**, so that
   its comparison against the 2.5 const-vc outputs absorbs both. Both READMEs say so now.
-- The 2.5 deal.II 9.5 `enable.sh` line and the `${asp30_skx:?}` TODO are still in all four scripts;
+- The 2.5 deal.II 9.5 `enable.sh` line and the `${asp3_skx:?}` TODO are still in all four scripts;
   fill in once the 3.x build's module set and executable path are known.
+
+### First 3.x submission attempt, and the skx/spr benchmark (2026-09-22, later)
+- `push_runs_to_tacc.sh` moved from `src/build-numerical-mods/` to `subd-model-runs/`, next to its
+  counterpart `pull_runs_from_tacc.sh` (PI: it belongs with the suites). Its repo-root resolution
+  changed from `dirname/../..` to `dirname` accordingly; `make push-tacc`, the runbook and the pull
+  script's back-reference updated. Verified cwd-independent and that the rsync it builds is
+  unchanged.
+- Binary variable is **`asp3_skx`**, not `asp30_skx` as the builder guessed; renamed in
+  `build_runs.const-vc-sh.py` and the README, scripts regenerated (.prm untouched). Note that
+  `--export=ALL` only carries *exported* variables and a batch script is non-interactive, so
+  `~/.bashrc` is not sourced -- pass it as `--export=ALL,RUN_ID=...,asp3_skx=<path>` or export it
+  before submitting. The first spr submission died at exactly that check.
+- **Timing benchmark**: `run_900` (skx) and `run_901` (spr) under `const-vc-sh/run-inputs/`, both
+  copies of **`run_089`** -- the most central point of the design (normalised distance 0.096 from
+  the centre; runner-up 0.219, and the pilot list's "median" run_270 is 0.350): v_conv 4.78 cm/yr,
+  age_SP 74.8 Myr, age_OP 57.4 Myr, dip 46.0 deg, eta_UM 5.42e20. Truncated to `End time = 0.5e6`
+  with `Resume computation = false` and their own output dirs. The 900s cannot collide with the
+  dd100 runs sharing `$SCRATCH/aspect_work/outputs/` (design is 000-399). Sizing from dd100
+  run_089: 394 of 7527 timesteps to 0.5 Myr, 12681 s total at 48 skx ranks, so ~11 min each.
+  Hand-made, not builder-generated, and `run-inputs/` is gitignored -- they exist only on disk.
+- `submit_from_list.sh` is the wrong tool for these: its throttle counts `^run_[0-9]{3}$` across the
+  whole account, so the in-flight dd100 jobs block it. Submit the benchmarks with bare `sbatch`.

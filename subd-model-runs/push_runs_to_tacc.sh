@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # push_runs_to_tacc.sh -- rsync a suite's run-inputs to Stampede3.
+# Lives next to the suites; counterpart of pull_runs_from_tacc.sh.
 #
-#   src/build-numerical-mods/push_runs_to_tacc.sh SUITE [LINK_SUITE] [-n]
+#   subd-model-runs/push_runs_to_tacc.sh SUITE [LINK_SUITE] [-n]
 #
 #   SUITE       local suite name under subd-model-runs/ (also the TACC directory name)
 #   LINK_SUITE  optional TACC suite whose run_XXX/inputs are identical; rsync hard-links
@@ -29,8 +30,8 @@ TACC_HOST="${TACC_HOST:-stampede3.tacc.utexas.edu}"
 TACC_WORK="${TACC_WORK:-/work2/04714/adamholt/stampede3}"
 TACC_BASE="$TACC_WORK/aspect_work/SlabT_emulator/production-runs_v2"
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SRC="$ROOT/subd-model-runs/$SUITE/run-inputs/"
+RUNS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SRC="$RUNS_DIR/$SUITE/run-inputs/"
 [[ -d "$SRC" ]] || { echo "no run-inputs for suite '$SUITE' at $SRC"; exit 1; }
 
 LINK=()

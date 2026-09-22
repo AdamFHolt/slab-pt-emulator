@@ -241,7 +241,7 @@ profile-pca-gp-tuning-summary:
 SUITE ?= const-vc-dd100
 LINK  ?= const-vc-new
 push-tacc:
-	src/build-numerical-mods/push_runs_to_tacc.sh $(SUITE) $(LINK) $(if $(DRY),-n,)
+	subd-model-runs/push_runs_to_tacc.sh $(SUITE) $(LINK) $(if $(DRY),-n,)
 
 # rsync a suite's model outputs back from scratch; ALL=1 skips the submission-list restriction
 # (only safe when the TACC outputs dir holds this suite alone -- run_XXX numbers collide across suites)

@@ -10,7 +10,7 @@ Everything here was worked out for const-vc-dd100 on 2026-09-15; it applies to a
 | TACC suite dir | `$WORK/aspect_work/SlabT_emulator/production-runs_v2/<suite>/run_XXX/` (`$WORK` = `/work2/04714/adamholt/stampede3`; const-vc is `const-vc-new` there) |
 | TACC job scripts | in the suite dir: `run_one.slurm`, `submit_from_list.sh`, `submit_rolling.sh` (copied with the run inputs) |
 | check scripts | `production-runs_v2/check_runs.sh`, `check_runs_list.sh` (local copies: `subd-model-runs/`) |
-| transfer scripts | push: `src/build-numerical-mods/push_runs_to_tacc.sh` (`make push-tacc`); pull: `subd-model-runs/pull_runs_from_tacc.sh` (`make pull-tacc`) |
+| transfer scripts | push: `subd-model-runs/push_runs_to_tacc.sh` (`make push-tacc`); pull: `subd-model-runs/pull_runs_from_tacc.sh` (`make pull-tacc`) |
 | model outputs on TACC | `$SCRATCH/aspect_work/outputs/run_XXX/` (ASPECT runs in `$SCRATCH/aspect_work`; job logs in `$SCRATCH/aspect_work/logs/`) |
 | local outputs | `subd-model-runs/<suite>/run-outputs/run_XXX/` (gitignored) |
 
@@ -26,7 +26,7 @@ make push-tacc SUITE=<suite> LINK=<...>                                        #
 
 `LINK` hard-links files that already exist in a sibling TACC suite (rsync `--link-dest`), so a paired
 ablation such as const-vc-dd100 vs const-vc-new sends only the .prm files instead of ~19 GB. Drop `LINK`
-for a plain full transfer. Wrapper: `src/build-numerical-mods/push_runs_to_tacc.sh`.
+for a plain full transfer. Wrapper: `subd-model-runs/push_runs_to_tacc.sh`.
 
 Submission lists and one-off scripts go with `scp` to the suite dir, e.g.
 

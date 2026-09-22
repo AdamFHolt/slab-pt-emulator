@@ -56,7 +56,7 @@ pair difference alongside the heating. To separate the two:
 ## Open points before submission
 
 1. **Binary and machine.** `run_one.slurm` still loads the 2.5 toolchain and now stops with a TODO on
-   `asp30_skx`; the 3.x build (module set + executable path) has to be filled in. The collaborator's
+   `asp3_skx`; the 3.x build (module set + executable path) has to be filled in. The collaborator's
    paths are on a `/scratch2/...` filesystem, i.e. probably Frontera rather than Stampede3.
    **skx or spr?** `run_one.spr.slurm` is a Sapphire Rapids variant (`-p spr`, `-n 112`) written
    next to the skx script by the builder. The same skx-built binary serves both -- SPR's instruction
