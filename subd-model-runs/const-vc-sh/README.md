@@ -53,44 +53,74 @@ pair difference alongside the heating. To separate the two:
   2.5 const-vc record as planned. If it is comparable to the heating signal, the clean options are to
   re-run const-vc under 3.x (400 runs, ~10 h each) or to pair const-vc-sh against the v3ctrl subset only.
 
-## Open points before submission
+## Machine, workspace and submission order (settled 2026-09-22)
 
-1. **Binary and machine.** `run_one.slurm` still loads the 2.5 toolchain and now stops with a TODO on
-   `asp3_skx`; the 3.x build (module set + executable path) has to be filled in. The collaborator's
-   paths are on a `/scratch2/...` filesystem, i.e. probably Frontera rather than Stampede3.
-   **skx or spr?** `run_one.spr.slurm` is a Sapphire Rapids variant (`-p spr`, `-n 112`) written
-   next to the skx script by the builder. The same skx-built binary serves both -- SPR's instruction
-   set is a superset of SKX's, so no second compile is needed (the reverse would not hold). Select it
-   per submission with `SLURM_FILE=run_one.spr.slurm`. Unverified until the first pilot: the rank
-   count (2x56-core Xeon Max assumed), and whether ~128 GB of HBM per node is enough at 112 ranks
-   where skx gives 192 GB at 48. Note that 112 ranks is a different domain decomposition from the
-   48-rank const-vc runs, so choosing spr adds decomposition noise to the pair difference on top of
-   the 2.5-vs-3.x version effect -- which is exactly what `const-vc-v3ctrl` is for, so run it on
-   whichever queue production uses.
-2. **Pilot first.** `run-inputs/pilot-list.txt` (8 runs): 100 (the collaborator's test case), the three
-   fastest-converging runs (most channel dissipation, ~v_conv^2), two high v_conv^2 x eta_UM runs
-   (most wedge dissipation), a median case and the weakest case. Check: parameters accepted (3.x
-   prints a deprecation warning for the years keyword, nothing more), wall time per Myr vs the
-   const-vc twin, slab-top T(z) and the `heating` field at 1 and 5 Myr, and that the `op` interior
-   stays static. Submit the v3ctrl set with it.
-3. `heating` output adds roughly one scalar field to each vtu (const-vc writes T, p, velocity, two
+1. **Binary.** `$asp3_skx` = `$WORK/software/aspect/build-3.0/aspect-release`, ASPECT 3.0.0 on the
+   2.5 toolchain (deal.II 9.5.1, Trilinos 15, p4est 2.8.5; recipe and traps in SESSION_NOTES
+   2026-09-22). `run_one*.slurm` take it from the environment: **export it before starting the
+   feeder** -- `--export=ALL` carries exported variables only, and a batch script does not source
+   `~/.bashrc`. `run_900`/`run_901` under `run-inputs/` are hand-made copies of run_089 truncated to
+   0.5 Myr (skx and spr timing benchmarks; numbered outside the 000-399 design).
+2. **Production runs on spr, 112 ranks** (`SLURM_FILE=run_one.spr.slurm`). Same skx-built binary
+   (SPR's instruction set is a superset of SKX's). Verified on run_901: 112 MPI processes; peak node
+   RSS 45 GB at 0.5 Myr against 128 GB HBM, where a complete 48-rank 2.5 run peaks at 22 GB total, so
+   the adaptive mesh cannot grow into the limit; 6 min to 0.5 Myr against ~11 estimated for skx/48.
+   spr costs 2 SU/node-h (skx 1), so about the same SUs per run at half the wall time. **spr allows
+   24 jobs in queue per user** (skx 40). The submitters here differ from the 2.5 suites' accordingly:
+   jobs are named `sh_XXX` (v3ctrl: `v3c_XXX`; run directories stay `run_XXX`), the throttle counts
+   every active job of ours in the batch script's partition regardless of name (default 24), so the
+   skx dd100 jobs do not block it and the two 3.0 feeders share one spr counter, and a rejected
+   `sbatch` is retried after `POLL` s rather than dropped. (Found the hard way: with the inherited
+   name-based throttle, dd100's 30 queued `run_XXX` jobs kept the v3ctrl feeder asleep at 30/24.)
+   `const-vc-v3ctrl` runs on spr too (same queue and rank count as production, or it stops
+   controlling for the decomposition).
+3. **Own scratch workspace.** The batch scripts `cd` to `$SCRATCH/aspect_work/const-vc-sh/` (v3ctrl:
+   `.../const-vc-v3ctrl/`), not `$SCRATCH/aspect_work/` where const-vc, ramped-vc and dd100 ran and
+   share `outputs/run_XXX`. There, with `Resume computation = auto`, a const-vc-sh run_XXX would have
+   resumed from -- or overwritten -- the dd100 run of the same number. Consequences: `check_runs*.sh`
+   need `BASE_DIR=$SCRATCH/aspect_work/const-vc-sh`, and `pull_runs_from_tacc.sh` defaults to that
+   workspace for these two suites (so `-a` is safe). Job logs stay in the shared `logs/` (job id in
+   the name).
+4. **Submission order: `run-inputs/full-list.txt`** (`src/build-numerical-mods/make_full_list.const-vc-sh.py`).
+   The 8 pilot runs first -- 100 (the collaborator's test case), the three fastest-converging (most
+   channel dissipation, ~v_conv^2), two high v_conv^2 x eta_UM (most wedge dissipation), a median
+   case and the weakest -- then the other 392 by greedy maximin in the normalised design space, so any
+   prefix of the list is roughly space-filling and a suite stopped early still covers the parameter
+   space. No separate pilot submission: the pilot is the head of the list, and its first finishers
+   (~2 h at spr speed for the fast ones) are where to look before the bulk lands. Checks on them:
+   3.x prints only the years-keyword deprecation warning; slab-top T(z) and the `heating` field at 1
+   and 5 Myr; the `op` interior stays static; wall time against the const-vc twin. Kill the feeder if
+   anything is off (Slurm jobs are independent of it).
+5. Size: const-vc's 399 completed runs took 0.17-6.8 h each on skx/48 (median 3.4 h, 1364 node-h in
+   all; wall time scales with v_conv, ~1.8 h for the slowest-converging third to ~5 h for the
+   fastest). Expect roughly half that per run on spr, i.e. on the order of a day and a half of
+   continuous feeding at 24 concurrent jobs, more while dd100 jobs still occupy throttle slots.
+   `heating` adds roughly one scalar field to each vtu (const-vc writes T, p, velocity, two
    compositions, viscosity), ~15% more output.
 
 ## How to operate it
 
 ```bash
-make push-tacc SUITE=const-vc-sh LINK=const-vc-new DRY=1     # preview; only .prm + scripts travel
+python src/build-numerical-mods/build_runs.const-vc-sh.py --control   # .prm + scripts, both suites
+python src/build-numerical-mods/make_full_list.const-vc-sh.py          # run-inputs/full-list.txt
+make push-tacc SUITE=const-vc-sh LINK=const-vc-new DRY=1     # preview; .prm, scripts and lists travel
 make push-tacc SUITE=const-vc-sh LINK=const-vc-new
 make push-tacc SUITE=const-vc-v3ctrl LINK=const-vc-new         # 8-run version control
-scp subd-model-runs/const-vc-sh/run-inputs/pilot-list.txt adamholt@stampede3.tacc.utexas.edu:/work2/04714/adamholt/stampede3/aspect_work/SlabT_emulator/production-runs_v2/const-vc-sh/
 # on Stampede3
-cd $WORK/aspect_work/SlabT_emulator/production-runs_v2/const-vc-sh
-nohup ./submit_from_list.sh pilot-list.txt > submit_pilot.log 2>&1 &
-# ... or on the Sapphire Rapids nodes (same binary, 112 ranks):
-SLURM_FILE=run_one.spr.slurm nohup ./submit_from_list.sh pilot-list.txt > submit_pilot.log 2>&1 &
+export asp3_skx=$WORK/software/aspect/build-3.0/aspect-release
+cd $WORK/aspect_work/SlabT_emulator/production-runs_v2/const-vc-v3ctrl
+SLURM_FILE=run_one.spr.slurm nohup ./submit_from_list.sh pilot-list.txt > submit_v3ctrl.log 2>&1 &
+cd ../const-vc-sh
+SLURM_FILE=run_one.spr.slurm nohup ./submit_from_list.sh full-list.txt > submit_full.log 2>&1 &
+echo $! > submit_full.pid
+# feeders: jobs appear as v3c_XXX / sh_XXX in squeue; both throttle on the spr partition (24)
+# progress / pull (own workspace, so -a is safe)
+BASE_DIR=$SCRATCH/aspect_work/const-vc-sh ../check_runs_list.sh const-vc-sh/full-list.txt -p
+make pull-tacc SUITE=const-vc-sh ALL=1
 ```
 
-Then `docs/tacc-runbook.md` sections 3-5 as for the other suites. Downstream, the suite slots into
+Then `docs/tacc-runbook.md` sections 3-5 as for the other suites, with `BASE_DIR` pointing at the
+suite's own workspace. Downstream, the suite slots into
 the standard pipeline (`extend_profiles_all-mods.sh const-vc-sh ...`, `build_master_dt.py`,
 per-suite emulator configs) once outputs exist; wrappers that hardcode `const-vc ramped-vc` need
 `const-vc-sh` added.
@@ -99,7 +129,11 @@ per-suite emulator configs) once outputs exist; wrappers that hardcode `const-vc
 
 - `example/` -- collaborator's files as received (`run_100.prm`, `run_heating.prm`, `readme.txt`, `shear_heating.png`)
 - `run-inputs/run_XXX/` -- 400 derived inputs (gitignored; regenerate with the builder)
-- `run-inputs/pilot-list.txt` -- suggested pilot
+- `run-inputs/pilot-list.txt` -- the 8 pilot runs (also the head of the full list, and the v3ctrl set)
+- `run-inputs/full-list.txt` -- all 400 in submission order (`make_full_list.const-vc-sh.py`)
+- `run-inputs/bench-{skx,spr}-list.txt`, `run_900/`, `run_901/` -- timing benchmarks (hand-made, not
+  builder output; on disk only)
 - `run-inputs/run_one.slurm` / `run_one.spr.slurm` -- one-job batch scripts for skx (48 ranks) and
-  spr (112 ranks); both generated by the builder, picked with `SLURM_FILE`
+  spr (112 ranks); both generated by the builder, picked with `SLURM_FILE`; both work in
+  `$SCRATCH/aspect_work/const-vc-sh/`
 - `../const-vc-v3ctrl/run-inputs/` -- version-control set (same 8 runs, no heating, for the 3.x binary)

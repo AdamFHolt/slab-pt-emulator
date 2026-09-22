@@ -25,6 +25,7 @@
 #   ./pull_runs_from_tacc.sh const-vc-dd100 -a                            # every run_* on scratch
 #   ./pull_runs_from_tacc.sh const-vc-dd100                               # only runs named in the lists
 #   ./pull_runs_from_tacc.sh const-vc-dd100 const-vc-dd100/run-inputs/pilot-list.txt
+#   ./pull_runs_from_tacc.sh const-vc-sh -a            # own workspace on scratch, so -a is safe
 #
 # Prompts for TACC password + token; run from your own terminal.
 set -euo pipefail
@@ -41,7 +42,14 @@ done
 
 TACC_USER="${TACC_USER:-adamholt}"
 TACC_HOST="${TACC_HOST:-stampede3.tacc.utexas.edu}"
-TACC_OUT="${TACC_OUT:-/scratch/04714/adamholt/aspect_work/outputs}"
+# Outputs root on scratch.  The 2.5 suites (const-vc, ramped-vc, dd100) all ran in
+# $SCRATCH/aspect_work/ and share its outputs/; the 3.0 suites have their own workspace
+# $SCRATCH/aspect_work/<suite>/ (see run_one.slurm there), so their outputs/ holds one suite only.
+case "$SUITE" in
+  const-vc-sh|const-vc-v3ctrl) DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/$SUITE/outputs" ;;
+  *)                           DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/outputs" ;;
+esac
+TACC_OUT="${TACC_OUT:-$DEFAULT_OUT}"
 
 RUNS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SUITE_DIR="$RUNS_DIR/$SUITE"

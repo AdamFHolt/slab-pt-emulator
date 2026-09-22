@@ -1773,3 +1773,53 @@ Advection and Stokes` would put a solver-scheme difference inside the const-vc-s
 and the feedback it would capture is negligible here -- ~1270 yr timesteps against ~30 K/Myr of
 channel heating is ~0.04 K/step, and the crust channel's viscosity is fixed at 1e20 anyway. A
 one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is available if wanted.
+
+### run_901 verdict, spr it is, and the shared-scratch collision (2026-09-22, evening)
+- **run_901 (spr, 112 ranks) finished 0.5 Myr in 6 min** (`sacct` Elapsed 00:06:00; the skx twin
+  run_900 was estimated at ~11 min -- read its log when it lands). `running with 112 MPI processes`
+  confirmed the Xeon Max node size. Memory: `sacct MaxRSS` on the batch step is the whole node's
+  resident memory under `ibrun` (all ranks live in that step): **45 GB at 0.5 Myr** against 128 GB
+  HBM, while a *complete* 48-rank 2.5 run (job 2666861, 2h57) peaked at **22 GB** total, so the AMR
+  growth over 10.5 Myr cannot reach the limit. TACC docs: spr is **2 SU/node-h** (skx 1), so about
+  the same SUs per run at half the wall time; spr allows **24 jobs in queue per user** (skx 40).
+  Decision (PI): production const-vc-sh and const-vc-v3ctrl go on spr, no separate pilot
+  submission.
+- **Blocker found before submitting: every suite's batch script does `cd $SCRATCH/aspect_work/`**
+  and the .prm writes to the relative `outputs/run_XXX`, so const-vc-sh run_XXX would have started
+  in dd100's run_XXX output dir with `Resume computation = auto` -- resuming a 2.5 checkpoint with
+  the 3.0 binary or clobbering dd100's output -- and the staged `aspect.run_XXX`/`run_XXX.prm` collide
+  too (dd100 still has a dozen jobs running or requeueing). The 900s only dodged it by numbering.
+  Fix in `build_runs.const-vc-sh.py`: the copied `run_one*.slurm` now work in a per-suite
+  `$SCRATCH/aspect_work/<suite>/` (with `mkdir -p inputs outputs`); logs stay shared. Same pass:
+  submitter `THROTTLE` default 30 -> **24** (spr limit; a rejected sbatch is WARN-and-skip, not
+  retried), and the spr script's TODO block replaced by the verified facts. Rebuilt with
+  `--control`: all 410 .prm byte-identical, `bash -n` clean on all 8 scripts.
+  `pull_runs_from_tacc.sh` now defaults `TACC_OUT` to the per-suite workspace for these two suites
+  (so `-a` is safe there); `check_runs*.sh` need `BASE_DIR=$SCRATCH/aspect_work/<suite>`. Runbook
+  and both READMEs updated (const-vc-sh "Open points" replaced by the settled machine/workspace/order
+  section).
+- **Submission order**: new `src/build-numerical-mods/make_full_list.const-vc-sh.py` writes
+  `run-inputs/full-list.txt` -- the 8 pilot runs first (100 310 195 210 072 217 270 064), then the
+  other 392 by greedy maximin in normalised (v_conv, age_SP, age_OP, dip, log10 eta_UM), so any prefix
+  is roughly space-filling (min pairwise distance 0.33 through the first 100, 0.29 at 200). The LHS
+  row order is arbitrary, so this is what makes an early stop still useful. Lists travel with
+  `push-tacc` (whole `run-inputs/` is rsynced).
+- Sizing from the const-vc record (399 logs): 0.17-6.8 h per run on skx/48, median 3.4 h, 1364
+  node-h total; wall time tracks v_conv (slowest third ~1.8 h, fastest third ~5 h). At spr speed and
+  24 concurrent jobs, ~1.5 days of feeding once dd100 stops occupying throttle slots.
+- To do on Stampede3: `make push-tacc` both suites (LINK=const-vc-new), `export asp3_skx=...`, then
+  v3ctrl `pilot-list.txt` and const-vc-sh `full-list.txt` with `SLURM_FILE=run_one.spr.slurm`
+  (commands in const-vc-sh/README.md "How to operate it"). Nothing committed yet this pass.
+- **First v3ctrl feeder start did nothing**: log said `At throttle (30/24)`. The inherited throttle
+  counts every `run_XXX` job on the account and dd100's feeder holds 30 of them, so with the new
+  default of 24 the 3.0 feeders could never start. (`JOB_PREFIX=v3c_` as a workaround would have
+  been worse: the old `submit_one` builds the run-directory path from the job name too, so every run
+  would have been SKIPped as "prm not found".) Fixed in the builder for the const-vc-sh and v3ctrl
+  submitters only: job name `sh_XXX` / `v3c_XXX` decoupled from the `run_XXX` directory; throttle
+  counts every active job of ours in the batch script's partition (`#SBATCH -p`, read from
+  `SLURM_FILE`) regardless of name -- the Stampede3 limit is per user per queue, so skx dd100 jobs
+  stop counting and the two spr feeders share one counter; a rejected `sbatch` is retried after
+  `POLL` s (under `set -o pipefail` the old `sbatch | tee` would have killed the feeder outright).
+  Verified against stubbed `sbatch`/`squeue`: first submit rejected once and retried, run dirs
+  `run_XXX`, jobs `v3c_XXX`, `squeue -p spr`. .prm untouched (410 md5 OK). Runbook remainder recipe
+  now strips `(run|sh|v3c)_`. Needs a re-push of both suites' scripts before resubmitting.

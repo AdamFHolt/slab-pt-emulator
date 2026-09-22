@@ -19,4 +19,12 @@ negligible, pair const-vc-sh against the 2.5 const-vc record. Comparable to the 
 (tens of C at the slab top) = either re-run const-vc under 3.x or pair const-vc-sh only against
 these 8.
 
+**Where it runs.** Production const-vc-sh went to spr (2026-09-22), so this set goes on spr:
+`export asp3_skx=...; SLURM_FILE=run_one.spr.slurm ./submit_from_list.sh pilot-list.txt`. Its batch
+scripts work in their own `$SCRATCH/aspect_work/const-vc-v3ctrl/` (not the shared `$SCRATCH/aspect_work/`
+where the 2.5 suites' `outputs/run_XXX` of the same numbers live), so check with
+`BASE_DIR=$SCRATCH/aspect_work/const-vc-v3ctrl` and pull with `make pull-tacc SUITE=const-vc-v3ctrl ALL=1`.
+Jobs are named `v3c_XXX` in `squeue` (the run directories stay `run_XXX`), and the feeder throttles on
+the spr partition, not on job names, so dd100's skx jobs do not hold it up.
+
 Details: `subd-model-runs/const-vc-sh/README.md` ("The version confound, and the control set").

@@ -58,6 +58,14 @@ waits for the active jobs to drain. Once every run is submitted the script may b
 `kill $(cat submit_<list>.pid)`); Slurm jobs are independent of it. Env overrides: `THROTTLE`, `POLL`,
 `BASE_DIR`, `SLURM_FILE`. `submit_rolling.sh START END` is the same for a contiguous run range.
 
+**const-vc-sh and const-vc-v3ctrl differ** (2026-09-22): their jobs are named `sh_XXX` / `v3c_XXX`
+(run directories stay `run_XXX`; the prefix is only the Slurm job name and the log-file name), and
+the throttle counts *every* active job of ours in the batch script's partition regardless of name,
+default 24 = the spr per-user queue limit. So the skx dd100 jobs do not hold them up, and the two
+3.0 feeders share one spr counter. A rejected `sbatch` is retried after `POLL` seconds instead of
+dropping the run (the 2.5 feeders die on it). Where a recipe below strips `run_` from job names, use
+`sed -E 's/^(run|sh|v3c)_//'` for these suites.
+
 Optional: an email when the feeder exits (success or crash). TACC login nodes can send mail
 (`echo test | mail -s test aholt@miami.edu` to confirm). Put this in the suite dir as `watcher.sh`
 and start it with `nohup ./watcher.sh > watcher.log 2>&1 &`; keep the pid file name in step:
@@ -89,7 +97,9 @@ squeue -u adamholt -h -o "%t %j" | sort | uniq -c
 
 ## 3. Check
 
-From `production-runs_v2/` (outputs root defaults to `$SCRATCH/aspect_work`; override with `BASE_DIR`):
+From `production-runs_v2/` (outputs root defaults to `$SCRATCH/aspect_work`; override with `BASE_DIR`.
+**const-vc-sh and const-vc-v3ctrl run in their own workspace**, so for them prefix every check with
+`BASE_DIR=$SCRATCH/aspect_work/<suite>` -- the default root holds the 2.5 suites' runs of the same numbers):
 
 ```bash
 ./check_runs_list.sh <suite>/<list>.txt              # every listed run with its latest step
@@ -104,7 +114,7 @@ If the feeder died, restart it on a remainder list = listed runs that are neithe
 
 ```bash
 cd $WORK/aspect_work/SlabT_emulator/production-runs_v2
-squeue -u adamholt -h -o "%j" | sed 's/run_//' | sort > /tmp/queued.txt
+squeue -u adamholt -h -o "%j" | sed -E 's/^(run|sh|v3c)_//' | sort > /tmp/queued.txt
 ./check_runs_list.sh <suite>/<list>.txt -p | awk '$2!="OK" && $1 ~ /^run_/ {sub("run_","",$1); print $1}' | sort > /tmp/notdone.txt
 comm -23 /tmp/notdone.txt /tmp/queued.txt > <suite>/remainder.txt
 cd <suite> && nohup ./submit_from_list.sh remainder.txt > submit_remainder.log 2>&1 & echo $! > submit_remainder.pid
@@ -127,9 +137,11 @@ per run into `subd-model-runs/<suite>/run-outputs/`, and leaves `restart.*` chec
 timed-out run can still resume from them.
 
 `ALL=1` (`-a`) pulls every `run_*` in the scratch outputs dir. **Only use it when that dir holds one
-suite**: `$SCRATCH/aspect_work/outputs/` is shared by whatever was run there and `run_XXX` numbers
-collide across suites, so an unrestricted pull silently mixes them into one directory with nothing to
-tell them apart. Without `ALL=1` the transfer is restricted to the runs named in the suite's
+suite**: `$SCRATCH/aspect_work/outputs/` is shared by whatever was run there (const-vc, ramped-vc,
+dd100) and `run_XXX` numbers collide across suites, so an unrestricted pull silently mixes them into
+one directory with nothing to tell them apart. const-vc-sh and const-vc-v3ctrl are exempt: they run in
+`$SCRATCH/aspect_work/<suite>/`, the pull script defaults to that outputs dir for them, and `ALL=1` is
+safe. Without `ALL=1` the transfer is restricted to the runs named in the suite's
 `run-inputs/*list*.txt` (for const-vc-dd100 that is 324: the 320-run record plus the four dip < 35
 pilot runs kept as evidence of the flattening). Name list files explicitly to narrow it further:
 
