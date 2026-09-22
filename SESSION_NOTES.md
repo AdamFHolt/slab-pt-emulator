@@ -1646,3 +1646,47 @@ Rebuilt on the 0-80 grid of the new record (default series both suites, k8 explo
 - The 0-100 km profile-PCA models were built, evaluated (see above) and overwritten; their numbers
   live only in this log.
 - Tests 28/28. Committed with this entry.
+
+## dd100 pull status + spr batch variant for const-vc-sh (2026-09-22)
+
+### const-vc-dd100 progress
+Two rsync passes today (`pull_runs_from_tacc.sh const-vc-dd100 -a`). Of the 324 target runs
+(305 in `full-list.dip35.txt` + 19 pilot): **202 pulled, 190 complete** (step 21 + "Termination
+requested by criterion"), 12 partial, 122 not yet pulled. The 33 new run dirs are the 176-218 band;
+31 of them plus run_174 finished since the 2026-09-21 pull.
+
+Partial runs and their last written step: 013:12 028:2 032:18 067:1 070:3 109:8 118:10 171:4
+179:12 217:4 218:4 308:2. Eight of these (013, 028, 067, 070, 109, 118, 171, 308) are at the same
+step as in the previous day's pull, i.e. no progress in 24 h -- either requeueing or stalled;
+check `squeue`/logs on TACC before assuming they are running.
+
+Note for postprocessing: unlike const-vc/ramped-vc, dd100 has **no field CSVs on disk**, so the
+0-100 km extraction cannot use `FROM_CSV=1`. Step 5 of the runbook (pvpython `extract_csv`, ~33 MB
+per step per run, 21 steps x ~324 runs) is the long pole, and only the pilot driver
+(`analysis/pilot-check/extract_dd100.py`) exists -- a suite-wide driver still has to be written.
+
+Five wrappers still hardcode `const-vc ramped-vc` and will skip dd100/sh:
+`extract_cooling-rates_all-mods.sh`, `extract_cooling-rates_one-mod.py`, `qc_pairplot_params.py`,
+`make_sobol_plots.sh`, `Makefile`. (`extend_profiles_all-mods.sh` takes the suite as an argument.)
+
+### const-vc-sh: Sapphire Rapids batch variant
+PI is compiling ASPECT 3.0 on Stampede3 (on an skx node) and wants to try the spr nodes. No second
+compile is needed: SPR's instruction set is a superset of SKX's, so an skx-built binary runs on spr
+(the reverse would not -- a `-xSAPPHIRERAPIDS`/`-march=native` spr build would SIGILL on skx). Only
+the queue and rank count change, so `build_runs.const-vc-sh.py` now writes **`run_one.spr.slurm`**
+(`-p spr`, `-n 112`) next to the unchanged `run_one.slurm` (`-p skx`, `-n 48`) in both const-vc-sh
+and const-vc-v3ctrl. Both submitters already honour `SLURM_FILE`, so it is selected per submission:
+`SLURM_FILE=run_one.spr.slurm ./submit_from_list.sh pilot-list.txt`. `push-tacc` rsyncs the whole
+`run-inputs/`, so it travels with the suite. Verified by re-running the builder with `--control`:
+408 .prm byte-identical, `bash -n` clean.
+
+Unresolved, for the pilot to settle (TODOs in the script):
+- `-n 112` assumes 2x56-core Xeon Max nodes; confirm with `sinfo`.
+- spr is HBM-only, ~128 GB/node (~1.1 GB/rank at 112) against 192 GB on skx at 48: check peak RSS
+  before committing 400 runs.
+- 112 ranks is a different domain decomposition from the skx/48 const-vc runs, so going to spr adds
+  decomposition noise to the const-vc-sh/const-vc pair difference on top of the 2.5-vs-3.x version
+  effect. **const-vc-v3ctrl must run on whichever queue and rank count production uses**, so that
+  its comparison against the 2.5 const-vc outputs absorbs both. Both READMEs say so now.
+- The 2.5 deal.II 9.5 `enable.sh` line and the `${asp30_skx:?}` TODO are still in all four scripts;
+  fill in once the 3.x build's module set and executable path are known.

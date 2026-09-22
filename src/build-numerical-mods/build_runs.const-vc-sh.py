@@ -98,6 +98,34 @@ NEW_VIS = "    set List of output variables = viscosity, heating\n"
 OLD_BASE, NEW_BASE = "production-runs_v2/const-vc-dd100", f"production-runs_v2/{NEW_SUITE}"
 SCRIPTS = ["run_one.slurm", "submit_from_list.sh", "submit_rolling.sh"]
 
+# Sapphire Rapids variant of run_one.slurm, written alongside it (run_one.spr.slurm).
+# The skx-built ASPECT binary runs unchanged on spr -- SPR's instruction set is a superset
+# of SKX's -- so only the queue and the rank count differ.  Both submitters honour
+# SLURM_FILE, so the variant is selected with
+#   SLURM_FILE=run_one.spr.slurm ./submit_from_list.sh <list>
+SPR_NOTE = {
+    NEW_SUITE: """#   * 112 ranks is a different domain decomposition from the 48-rank skx const-vc runs,
+#     so the const-vc-sh/const-vc pair difference picks up decomposition noise on top of
+#     the 2.5->3.x version change.  If production goes to spr, run const-vc-v3ctrl here
+#     too (run_one.spr.slurm in that suite) so the control absorbs both.""",
+    CTRL_SUITE: """#   * This is the version-control set: it MUST run on the same queue/rank count as
+#     const-vc-sh production, so that comparing it with the 2.5 skx/48-rank const-vc
+#     outputs measures version + decomposition together.  If const-vc-sh goes to spr,
+#     v3ctrl goes to spr.""",
+}
+SPR_HEADER = """
+# Sapphire Rapids variant of run_one.slurm (which stays on skx, -n 48).
+# Same binary: an SKX-built executable runs on SPR (SPR's ISA is a superset), so no
+# separate compile is needed -- only the queue and the rank count change.
+#
+# Submit with:  SLURM_FILE=run_one.spr.slurm ./submit_from_list.sh pilot-list.txt
+#
+# TODO(verify on first pilot):
+#   * -n 112 assumes 2x56-core Xeon Max nodes; confirm against `sinfo`/TACC docs.
+#   * SPR nodes are HBM-only (~128 GB/node, ~1.1 GB/rank at 112 ranks) against 192 GB
+#     on skx.  Check peak RSS on the pilot before committing the full suite.
+{note}"""
+
 # the template must carry exactly the same edits, so the record stays in step
 tmpl = TEMPLATE.read_text()
 for frag in (NEW_FORM, NEW_VIS, NEW_AMG):
@@ -165,6 +193,18 @@ def copy_scripts(dst_dir: Path, new_base: str) -> None:
                           'ASPECT_EXE="${asp30_skx:?asp30_skx not set (ASPECT 3.x build, see const-vc-sh/README.md)}"')
         (dst_dir / sname).write_text(t)
         shutil.copymode(src, dst_dir / sname)
+        if sname == "run_one.slurm":
+            suite = new_base.rsplit("/", 1)[-1]
+            spr = t.replace("#SBATCH -p skx", "#SBATCH -p spr")
+            spr = spr.replace("#SBATCH -n 48\n",
+                              "#SBATCH -n 112\n" + SPR_HEADER.format(note=SPR_NOTE[suite]) + "\n")
+            spr = spr.replace(
+                "# TODO(const-vc-sh): this suite needs an ASPECT >= 3.0 binary (stress-limited shear heating);\n"
+                "# swap the module line above and the variable below for the 3.x build before submitting.",
+                f"# TODO({suite}): this suite needs an ASPECT >= 3.0 binary (stress-limited shear heating).\n"
+                "# If the 3.x build links a different deal.II than the 9.5 enable.sh above, swap that line too.")
+            (dst_dir / "run_one.spr.slurm").write_text(spr)
+            shutil.copymode(src, dst_dir / "run_one.spr.slurm")
 
 copy_scripts(OUT_DIR, NEW_BASE)
 
@@ -198,5 +238,6 @@ if CONTROL:
 
 print(f"Finished: {n_ok} run directories under {OUT_DIR} "
       f"(prm: Formulation custom + stress-limited shear heating + block AMG explicit + 'heating' output; "
-      f"inputs hard-linked from {SRC_SUITE}); scripts: {', '.join(SCRIPTS)} with BASE_DIR -> {NEW_BASE}"
+      f"inputs hard-linked from {SRC_SUITE}); scripts: {', '.join(SCRIPTS)} + run_one.spr.slurm "
+      f"with BASE_DIR -> {NEW_BASE}"
       + (f"; version-control set: {n_ctrl} runs under {CTRL_DIR}" if CONTROL else ""))
