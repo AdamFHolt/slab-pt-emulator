@@ -162,7 +162,7 @@ for s in SUITES:
         if not tab:
             print(f"  {s}: window {w} missing ({sub})"); continue
         z = np.array(sorted(tab)); r2 = np.array([tab[d]["val_r2"] for d in z])
-        axF.plot(r2, z, **S.suite_kw(s, S.WINDOW_COLOR[w], S.WINDOW_MARKER[w]))
+        axF.plot(r2, z, **S.suite_kw(s, S.WINDOW_COLOR[w]))
         print(f"{s} {w}: dTdt held-out R2 {r2.min():.3f}-{r2.max():.3f} over {z.min():g}-{z.max():g} km "
               f"(min at {z[np.argmin(r2)]:g} km)")
 zF = max(max(max(t) for t in SOB[s].values() if t) for s in SUITES)
@@ -174,8 +174,7 @@ axF.set_yticks(np.arange(0, zF + 1, 20)); axF.set_xticks([0.6, 0.8, 1.0])
 axF.set_xlabel(r"Held-out $R^2$, dTdt emulators")
 axF.set_ylabel("Depth (km)")
 axF.spines["top"].set_visible(False); axF.spines["right"].set_visible(False)
-h_w = [Line2D([0], [0], color=S.WINDOW_COLOR[w], lw=1.3, marker=S.WINDOW_MARKER[w], ms=2.4, label=w)
-       for w, _ in S.WINDOWS]
+h_w = [Line2D([0], [0], color=S.WINDOW_COLOR[w], lw=1.3, label=w) for w, _ in S.WINDOWS]
 S.outside_legend(axF, h_w, 0.30, title="cooling window", title_fontsize=6.5)
 
 labels = []

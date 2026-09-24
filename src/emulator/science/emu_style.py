@@ -88,7 +88,6 @@ PARAM_COLOR = {   # Okabe-Ito
 
 WINDOWS = [("0.5-5 Myr", "sobol"), ("0.5-10 Myr", "sobol_dt1-20"), ("5-10 Myr", "sobol_dt10-20")]
 WINDOW_COLOR = {"0.5-5 Myr": _plasma(0.15), "0.5-10 Myr": _plasma(0.50), "5-10 Myr": _plasma(0.82)}
-WINDOW_MARKER = {"0.5-5 Myr": "o", "0.5-10 Myr": "D", "5-10 Myr": "s"}
 
 DEEP_END_KM = 80.0   # slab top at 85-100 km exists only after crust arrival (decision 2026-09-17)
 
