@@ -1888,3 +1888,17 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   36/64 % -- dd100 is colder, more rocks sit above its hottest profile. Rerun dd100 after pass 1.
 - Sobol crossovers (age_OP vs v_conv, 0.5-5 Myr window): const-vc 39.6 km, ramped-vc 23.2 km;
   const-vc 5-10 Myr window v_conv dominates at every depth.
+- **dd100 extraction pass 1 finished 13:09** (started 12:11, 58 min at 24-way): 249/249 runs, 0 errors,
+  Tprof_0..20 + DT_1_10 / DT_1_20 / DT_10_20 for every run. Remaining: the 14 runs still short of
+  step 20 on TACC (013 028 032 067 070 109 118 171 179 252 272 273 280 308) -- rerun the same
+  command after the next pull; it will process only those.
+- **First dd100 vs const-vc look (paired Tprof_20, 246 pairs, 0-80 km):** mean dT(dd100 - const-vc)
+  +5.0 C, median |dT| 2.2 C, 95th pct 19.7 C. The 100 km cutoff barely moves the 0-80 km slab top;
+  the difference grows toward the cutoff (run_100: +9 C at 20 km, +25 at 40, +18 at 80, +97 at
+  100 km). Consequently the rocks-overlay fractions for the full dd100 set are identical to
+  const-vc's to 0.1 % at 6 of 7 times (52/48 % at 10 Myr) -- the envelope extremes are the same
+  runs. The "colder dd100" preliminary numbers above (67 runs: 36/64 % at 10 Myr) were a selection
+  effect: the early-finishing runs are the slow-convergence, cold ones. Full-set figure
+  `plots/science-numerical-mods/const-vc-dd100/explore_all_models_rocks_const-vc-dd100_age_OP.png`.
+- ramped-vc 10 Myr emulator build (`build_10myr_products.sh ramped-vc 10`) started 13:09 right
+  behind the extraction; results below when done.
