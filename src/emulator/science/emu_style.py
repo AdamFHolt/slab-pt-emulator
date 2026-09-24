@@ -2,7 +2,8 @@
 figures: Myriad Pro incl. mathtext, 8 pt, fonts embedded as text in PDF/SVG).
 
 Conventions used by plot_emulator_validation.py and plot_sobol_windows.py:
-  * suite  -> line style   (const-vc solid, ramped-vc dashed, others dotted/dash-dot)
+  * suite  -> line style + marker fill (const-vc solid/filled, ramped-vc dashed/hollow; suite_kw());
+              marker shape never encodes the suite
   * time   -> plasma colour (the k -> colour recipe of the proposal's Fig. 1D / Fig. 3B)
   * window -> three fixed colours; parameter -> Okabe-Ito colours (fixed per parameter)
 """
@@ -45,6 +46,20 @@ DEG = r"$^{\circ}$"
 SUITE_LS = {"const-vc": "-", "ramped-vc": "--", "const-vc-sh": "-.", "const-vc-dd100": ":"}
 SUITE_LABEL = {"const-vc": "const-vc", "ramped-vc": "ramped-vc", "const-vc-sh": "const-vc-sh",
                "const-vc-dd100": "const-vc-dd100"}
+
+def suite_kw(suite, color, marker="o", lw=1.3):
+    """Line/marker kwargs encoding the suite: const-vc solid + filled, ramped-vc dashed + hollow, ...
+    Marker SHAPE never encodes the suite (it is free for windows etc.)."""
+    ls = SUITE_LS.get(suite, ":")
+    filled = ls == "-"
+    return dict(color=color, ls=ls, lw=lw, marker=marker, ms=2.4 if filled else 2.8,
+                mfc=color if filled else "white", mec=color, mew=0.7)
+
+
+def suite_handles(suites, color="0.15", marker="o"):
+    from matplotlib.lines import Line2D
+    return [Line2D([0], [0], label=SUITE_LABEL.get(s, s), **suite_kw(s, color, marker)) for s in suites]
+
 
 K_LIST_FULL = [1, 2, 4, 6, 10, 15, 20]          # 0.5, 1, 2, 3, 5, 7.5, 10 Myr
 _plasma = plt.get_cmap("plasma")

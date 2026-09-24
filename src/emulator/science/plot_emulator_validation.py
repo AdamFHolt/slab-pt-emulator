@@ -139,8 +139,7 @@ for s in SUITES:
     p95 = np.array([S.val_block(Q[s][t])["emulator_reconstruction"]["per_run_rmse"]["p95"] for t in ts])
     fl = np.array([S.val_block(Q[s][t])["pca_truncation_baseline"]["rmse"] for t in ts])
     ls = S.SUITE_LS.get(s, ":")
-    axE.plot(ts, rm, color="0.15", lw=1.3, ls=ls, marker="o" if ls == "-" else "s", ms=2.4,
-             mfc="0.15" if ls == "-" else "white", mew=0.7)
+    axE.plot(ts, rm, **S.suite_kw(s, "0.15"))
     axE.plot(ts, fl, color="0.65", lw=1.1, ls=ls)
     print(f"{s}: pooled val RMSE {rm.min():.1f}-{rm.max():.1f} C over {ts.min():g}-{ts.max():g} Myr; "
           f"PCA floor {fl.min():.1f}-{fl.max():.1f} C; p95 per-run up to {p95.max():.0f} C")
@@ -152,10 +151,8 @@ axE.spines["top"].set_visible(False); axE.spines["right"].set_visible(False)
 h_e = [Line2D([0], [0], color="0.15", lw=1.3, label="GP emulator, pooled"),
        Line2D([0], [0], color="0.65", lw=1.1, label="PCA-truncation floor")]
 S.outside_legend(axE, h_e, 0.62, handlelength=1.6)
-h_es = [Line2D([0], [0], color="0.15", lw=1.3, ls=S.SUITE_LS.get(s, ":"), marker="o" if S.SUITE_LS.get(s) == "-" else "s",
-               ms=2.4, mfc="0.15" if S.SUITE_LS.get(s) == "-" else "white", mew=0.7, label=S.SUITE_LABEL.get(s, s))
-        for s in SUITES]
-S.outside_legend(axE, h_es, 0.12, handlelength=2.0, title="suite", title_fontsize=6.5)
+# one suite key for (E) and (F), in the strip between them
+S.outside_legend(axE, S.suite_handles(SUITES), -0.02, handlelength=2.2, title="suite", title_fontsize=6.5)
 
 # ---------------------------------------------------------------- (F) dTdt R2 vs depth
 for s in SUITES:
@@ -165,8 +162,7 @@ for s in SUITES:
         if not tab:
             print(f"  {s}: window {w} missing ({sub})"); continue
         z = np.array(sorted(tab)); r2 = np.array([tab[d]["val_r2"] for d in z])
-        axF.plot(r2, z, color=S.WINDOW_COLOR[w], lw=1.3, ls=ls, marker=S.WINDOW_MARKER[w],
-                 ms=2.4 if ls == "-" else 2.8, mfc=S.WINDOW_COLOR[w] if ls == "-" else "white", mew=0.7)
+        axF.plot(r2, z, **S.suite_kw(s, S.WINDOW_COLOR[w], S.WINDOW_MARKER[w]))
         print(f"{s} {w}: dTdt held-out R2 {r2.min():.3f}-{r2.max():.3f} over {z.min():g}-{z.max():g} km "
               f"(min at {z[np.argmin(r2)]:g} km)")
 zF = max(max(max(t) for t in SOB[s].values() if t) for s in SUITES)
@@ -180,10 +176,7 @@ axF.set_ylabel("Depth (km)")
 axF.spines["top"].set_visible(False); axF.spines["right"].set_visible(False)
 h_w = [Line2D([0], [0], color=S.WINDOW_COLOR[w], lw=1.3, marker=S.WINDOW_MARKER[w], ms=2.4, label=w)
        for w, _ in S.WINDOWS]
-S.outside_legend(axF, h_w, 0.45, title="cooling window", title_fontsize=6.5)
-h_s = [Line2D([0], [0], color="0.15", lw=1.3, ls=S.SUITE_LS.get(s, ":"), label=S.SUITE_LABEL.get(s, s))
-       for s in SUITES]
-S.outside_legend(axF, h_s, 0.0, title="suite", title_fontsize=6.5, handlelength=2.0)
+S.outside_legend(axF, h_w, 0.30, title="cooling window", title_fontsize=6.5)
 
 labels = []
 letters = iter("ABCDEFGHIJ")

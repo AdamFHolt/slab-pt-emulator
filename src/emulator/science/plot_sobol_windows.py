@@ -80,8 +80,8 @@ for iw, (w, sub) in enumerate(S.WINDOWS):
             if not args.no_ci:
                 ax.fill_betweenx(z, np.clip(ST[p] - CI[p], 0, None), ST[p] + CI[p], color=S.PARAM_COLOR[p],
                                  alpha=0.10 if ls == "-" else 0.07, lw=0)
-            ax.plot(ST[p], z, color=S.PARAM_COLOR[p], ls=ls, lw=1.2, marker="o" if ls == "-" else "s",
-                    ms=2.0 if ls == "-" else 2.4, mfc=S.PARAM_COLOR[p] if ls == "-" else "white", mew=0.6)
+            kw = S.suite_kw(s, S.PARAM_COLOR[p], lw=1.2); kw["ms"] -= 0.4; kw["mew"] = 0.6
+            ax.plot(ST[p], z, **kw)
         r2 = np.array([tab[d]["val_r2"] for d in z])
         axr.plot(r2, z, color="0.15", lw=1.1, ls=ls)
         if "age_OP" in ST and "v_conv" in ST:
@@ -112,10 +112,7 @@ for iw, (w, sub) in enumerate(S.WINDOWS):
 h_p = [Line2D([0], [0], color=S.PARAM_COLOR[p], lw=1.2, label=S.PARAM_LABEL[p]
               + (" (ramped only)" if p == "t_conv" else "")) for p in PARAMS]
 S.outside_legend(axT[-1], h_p, 0.42, handlelength=1.2, title="parameter", title_fontsize=6.5)
-h_s = [Line2D([0], [0], color="0.15", lw=1.2, ls=S.SUITE_LS.get(s, ":"), marker="o" if S.SUITE_LS.get(s) == "-" else "s",
-              ms=2.2, mfc="0.15" if S.SUITE_LS.get(s) == "-" else "white", mew=0.6, label=S.SUITE_LABEL.get(s, s))
-       for s in SUITES]
-S.outside_legend(axT[-1], h_s, 0.08, handlelength=2.0, title="suite", title_fontsize=6.5)
+S.outside_legend(axT[-1], S.suite_handles(SUITES), 0.08, handlelength=2.2, title="suite", title_fontsize=6.5)
 if not args.no_ci:
     fig.text((L + nw * W_P + (nw - 1) * GAP + 0.06) / FIG_W, (BOT + H_BOT) / FIG_H,
              "bands: bootstrap\n95 % CI of $S_T$", fontsize=6, color="0.35", ha="left", va="top")
