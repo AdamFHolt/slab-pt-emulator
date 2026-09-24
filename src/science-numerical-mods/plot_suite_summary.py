@@ -47,7 +47,7 @@ ap.add_argument("--band", choices=["iqr", "90"], default="iqr",
 args = ap.parse_args()
 SUITES, ZMAX = args.suites, args.zmax
 PCT = (25, 50, 75) if args.band == "iqr" else (5, 50, 95)
-BAND_LABEL = "median, IQR (25-75 %)" if args.band == "iqr" else "median, 5-95 %"
+BAND_LABEL = "median, IQR" if args.band == "iqr" else "median, 5-95 %"
 S.apply_style()
 
 ZG = np.arange(0.0, ZMAX + 0.01, 1.0)
