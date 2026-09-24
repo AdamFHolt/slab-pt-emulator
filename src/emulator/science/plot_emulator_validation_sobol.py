@@ -212,8 +212,12 @@ for label, *_ in WINDOWS:
 # ========================================================================
 # Layout
 # ========================================================================
-FIG_W, FIG_H = 6.5, 2.55
-left_margin, right_margin, top_margin, bottom_margin, gap = 0.50, 0.10, 0.20, 0.42, 0.55
+# Legends of (C) live OUTSIDE the panel, in a strip to its right (LEGEND_W), because for ramped-vc
+# the curves fill the whole panel and any in-panel box hides data (PI, 2026-09-24). Panel geometry is
+# the proposal's 6.5 in layout; the strip is added to the figure width.
+LEGEND_W = 0.62
+FIG_W, FIG_H = 6.5 + LEGEND_W, 2.55
+left_margin, right_margin, top_margin, bottom_margin, gap = 0.50, 0.10 + LEGEND_W, 0.20, 0.42, 0.55
 panel_h = FIG_H - top_margin - bottom_margin
 panel_wA = panel_h
 panel_w = (FIG_W - left_margin - right_margin - 2 * gap - panel_wA) / 2.0
@@ -285,16 +289,17 @@ param_handles = [Line2D([0], [0], color=PARAM_COLOR[p], lw=1.3, label=PARAM_LABE
 window_handles = [Line2D([0], [0], color="0.25", lw=1.3, ls=ls, marker=mk, ms=2.2 if ls == "-" else 2.6,
                          mfc="0.25" if ls == "-" else "white", mew=0.7, label=label)
                   for label, _, ls, mk in WINDOWS]
+# both keys outside the panel, stacked in the right-hand strip, bottom-aligned with the axes
 leg_c1 = axC.legend(handles=param_handles, fontsize=6.5, loc="lower left",
-                    bbox_to_anchor=(0.28, 24), bbox_transform=axC.transData, frameon=True,
+                    bbox_to_anchor=(1.04, 0.30), bbox_transform=axC.transAxes, frameon=True,
                     facecolor="white", edgecolor="black", framealpha=0.95, handlelength=1.0,
-                    handletextpad=0.5, labelspacing=0.2, borderpad=0.3)
+                    handletextpad=0.5, labelspacing=0.2, borderpad=0.3, borderaxespad=0)
 leg_c1.get_frame().set_linewidth(0.5)
 axC.add_artist(leg_c1)
-leg_c2 = axC.legend(handles=window_handles, fontsize=7, loc="lower left",
-                    bbox_to_anchor=(0.30, 80), bbox_transform=axC.transData, frameon=True,
+leg_c2 = axC.legend(handles=window_handles, fontsize=6.5, loc="lower left",
+                    bbox_to_anchor=(1.04, 0.0), bbox_transform=axC.transAxes, frameon=True,
                     facecolor="white", edgecolor="black", framealpha=0.95, handlelength=1.8,
-                    labelspacing=0.25, borderpad=0.35)
+                    labelspacing=0.25, borderpad=0.35, borderaxespad=0)
 leg_c2.get_frame().set_linewidth(0.5)
 
 fig.canvas.draw()
