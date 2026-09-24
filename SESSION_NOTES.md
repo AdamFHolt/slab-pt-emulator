@@ -1975,7 +1975,11 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
 - **Numerical-model science summary, both suites** (`src/science-numerical-mods/plot_suite_summary.py`,
   `make numerical-summary-plot`, `plots/science-numerical-mods/suite_summary.*`; record cache
   `<suite>/analysis/slabtop_record_0-80km.npz`, gitignored). Runs with the full 20-step record: const-vc
-  384, ramped-vc 491. Salient numbers: median slab-top T at 40 km falls 605 -> 205 C (const-vc) and
+  384, ramped-vc 491. Revised at the PI's request to 3 rows x 2: (A,B) T(z) envelopes + rocks, (C) T(t) at
+  40/80 km beside (D) cooling rate vs depth, (E) T(40 km, 5 Myr) and (F) 5-10 Myr cooling rate at 40 km vs
+  v_conv coloured by age_OP (shared scale); the t90 panel was dropped (the PI did not like it; its numbers
+  stay here for the record). (F): late cooling rate 9-43 C/Myr const-vc, 10-60 ramped-vc, corr(log v_conv)
+  -0.72/-0.66, corr(age_OP) -0.55/-0.43. Salient numbers: median slab-top T at 40 km falls 605 -> 205 C (const-vc) and
   658 -> 220 C (ramped-vc) over 0.5-10 Myr, at 80 km 1068 -> 477 / 1112 -> 501 C; IQR at 10 Myr 74-88 C
   (40 km), 173-196 C (80 km). t90 (time to 90 % of the 0.5-10 Myr cooling) is 6-7.5 Myr at every depth,
   ramped-vc ~0.3-0.6 Myr later than const-vc -- the slab top is still cooling at 10 Myr, so "steady
