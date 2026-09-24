@@ -45,3 +45,8 @@ src/emulator/models/single_depth_dt1-10m/
 
 # collaborator files received for the shear-heating suite (README summarises them)
 !subd-model-runs/const-vc-sh/example/*.txt
+
+# extend_profiles driver log/pid (per suite)
+subd-model-runs/*/analysis/extend_*.log
+subd-model-runs/*/analysis/extend_*.pid
+!data/rocks/*.csv

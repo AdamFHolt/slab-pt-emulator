@@ -6,7 +6,7 @@ SHELL := /bin/bash
         profile-pca-quality-report profile-pca-quality-check-gp-m25 \
         profile-pca-sweep profile-pca-sweep-summary \
         profile-pca-gp-tuning-sweep profile-pca-gp-tuning-summary sobol-sensitivity push-tacc \
-        pull-tacc
+        pull-tacc rocks-plot emulator-summary-plot
 
 help:
 	@echo "Targets:"
@@ -36,6 +36,8 @@ help:
 	@echo "  profile-pca-gp-tuning-sweep - run GP tuning sweep on fixed profile-PCA datasets"
 	@echo "  profile-pca-gp-tuning-summary - write ranked summary tables for GP tuning sweep results"
 	@echo "  sobol-sensitivity   - compute + plot single-depth Sobol indices (override SOBOL_SUITES/DEPTHS/N_BASE)"
+	@echo "  rocks-plot          - all-runs slab-top T(z) vs Agard 2018 rock P-T for SUITE (SUITE=const-vc [COLOR_BY=age_OP] [DIP_MIN=35])"
+	@echo "  emulator-summary-plot - 3-panel emulator validation + Sobol summary for SUITE (SUITE=const-vc)"
 
 setup:
 	python3 -m venv env
@@ -81,6 +83,13 @@ sobol-sensitivity:
 	$(if $(DEPTHS),DEPTHS="$(DEPTHS)",) \
 	$(if $(N_BASE),N_BASE="$(N_BASE)",) \
 	bash src/emulator/single_depth/science/make_sobol_plots.sh
+
+rocks-plot:
+	env/bin/python src/science-numerical-mods/explore_all_models_rocks.py $(if $(SUITE),$(SUITE),const-vc) \
+		--color-by $(if $(COLOR_BY),$(COLOR_BY),age_OP) $(if $(DIP_MIN),--dip-min $(DIP_MIN),)
+
+emulator-summary-plot:
+	env/bin/python src/emulator/science/plot_emulator_validation_sobol.py $(if $(SUITE),$(SUITE),const-vc)
 
 env-status:
 	./dev-env.sh status

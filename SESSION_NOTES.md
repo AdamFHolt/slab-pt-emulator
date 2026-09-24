@@ -1858,3 +1858,33 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   extraction yet (PI: wait for more runs). run_900/901 in dd100/run-outputs are the const-vc-sh
   benchmarks (shared scratch, pulled by -a) -- not dd100 runs. Estimated extraction cost ~6 min per
   run per process (v3ctrl timing), ~1.5 h at 24-way for the full set.
+
+### dd100 extraction pass 1 started; proposal figures (rocks overlay, Fig. 3) brought into the repo (2026-09-24, later)
+- **dd100 postprocessing started** on the 249 locally complete runs (263 pulled; 14 short of step 20
+  plus run_900/901 skipped): `extend_profiles_all-mods.sh const-vc-dd100 0:20 "1,10;1,20;10,20" 24`,
+  log `const-vc-dd100/analysis/extend_pass1.log`, per-run logs in `logs-extend/`. Worth starting
+  before the tail lands because the script is incremental (work list = runs with solution-00020,
+  existing outputs untouched); a second pass after the final rsync picks up only the remaining
+  runs. The 19 pilot-check runs' existing t{k}.csv (same pvpython format) are reused. ~5 min per
+  run end to end at 24-way, ~3.5 runs/min overall.
+- **Where the P-T-vs-rocks plots live**: not in this repo -- they were made 2026-09-10 in the NSF
+  proposal folder (`~/Documents/InProgress/nsf-slab-pt/figures/`, `scripts/explore_all_models_rocks.py`,
+  output `output/explore_all_models_rocks_{const-vc,ramped-vc}.png`, data `data/Agard_2018.xlsx`).
+  Copied into the repo at the PI's request, generalised to any suite, along with the proposal's
+  Fig. 3 (emulator validation + Sobol):
+  - `data/rocks/Agard_2018.{xlsx,csv}` + README (CSV = xlsx with terrane forward-filled, so the
+    repo env needs no openpyxl).
+  - `src/science-numerical-mods/explore_all_models_rocks.py SUITE [--color-by] [--zmax] [--dip-min]`
+    -> `plots/science-numerical-mods/<suite>/explore_all_models_rocks_<suite>_<color>[_dipNN].png`;
+    `make rocks-plot SUITE=...`. `--dip-min 35` on const-vc is the paired reference for dd100.
+  - `src/emulator/science/plot_emulator_validation_sobol.py SUITE` -> `plots/science-emulator/summary/<suite>/
+    emulator_validation_sobol_<suite>.{pdf,svg,png}`; `make emulator-summary-plot SUITE=...`. Auto-picks
+    `profile_pca_10myr` (const-vc, 0.5-10 Myr) else `profile_pca`; skips absent times/windows, so
+    ramped-vc shows 0.5/3/5 Myr in (B) and only the 0.5-5 Myr window in (C). Panel A n is read from
+    the data (58 held-out for const-vc now; the proposal text said 57).
+- Rocks-vs-models numbers (fraction of the 123 Agard points at z <= 80 km inside the model T range /
+  warmer than the hottest model): const-vc 36/9 % at 0.5 Myr, 81/16 % at 2 Myr, 52/48 % at 10 Myr;
+  ramped-vc 33/8, 64/11, 56/44 %; const-vc-dd100 (preliminary, 67 runs at 10 Myr) 33/11, 70/26,
+  36/64 % -- dd100 is colder, more rocks sit above its hottest profile. Rerun dd100 after pass 1.
+- Sobol crossovers (age_OP vs v_conv, 0.5-5 Myr window): const-vc 39.6 km, ramped-vc 23.2 km;
+  const-vc 5-10 Myr window v_conv dominates at every depth.

@@ -1,0 +1,131 @@
+terrane,T_C,P_GPa,t
+Japan,535.0,1.8,0.24
+Japan,275.0,0.55,1.0
+Japan,510.0,1.7,0.24
+Japan,455.0,0.9,1.0
+Japan,255.0,0.425,0.59
+Japan,255.0,0.425,0.59
+Japan,250.0,0.4,0.66
+Franciscan,695.0,0.95,0.07
+Franciscan,675.0,1.05,0.07
+Franciscan,450.0,1.1,0.36
+Franciscan,550.0,1.1,0.33
+Franciscan,650.0,1.2,0.29
+Franciscan,585.0,2.35,0.05
+Franciscan,550.0,1.5,0.05
+Franciscan,645.0,1.2,0.05
+Franciscan,300.0,1.1,0.09
+Franciscan,250.0,0.8,0.54
+Franciscan,295.0,0.7,0.25
+Franciscan,265.0,0.95,0.31
+Franciscan,225.0,0.7,0.38
+Franciscan,325.0,0.6,0.1
+Franciscan,225.0,0.5,0.2
+Cascades,190.0,0.3,0.17
+Cascades,150.0,0.25,0.5
+Alaska,275.0,0.26,0.64
+New Zealand,300.0,0.5,0.73
+New Caledonia,450.0,1.6,0.8
+New Caledonia,495.0,1.7,0.8
+New Caledonia,545.0,1.9,0.8
+New Caledonia,545.0,2.3,0.55
+New Caledonia,545.0,2.3,0.55
+New Caledonia,600.0,1.9,0.55
+New Caledonia,400.0,1.0,0.8
+New Caledonia,475.0,1.45,0.8
+Equador,575.0,2.0,0.41
+Equador,600.0,1.5,0.41
+Equador,575.0,1.7,0.41
+Chile,367.5,1.01,0.29
+Chile,415.0,1.215,0.21
+Chile,682.0,1.375,0.04
+Chile,425.0,1.2,0.29
+Chile,532.0,1.24,0.13
+Chile,500.0,0.91,0.04
+Central America,550.0,1.2,0.14
+Central America,600.0,2.0,0.15
+Central America,710.0,1.45,0.06
+Central America,775.0,1.65,0.06
+Central America,750.0,1.5,0.06
+Central America,600.0,1.6,0.91
+Central America,750.0,2.2,0.28
+Central America,670.0,2.1,0.28
+Central America,520.0,1.75,0.59
+Central America,380.0,1.7,0.84
+Central America,660.0,0.85,0.04
+Central America,320.0,1.2,0.93
+Central America,390.0,1.6,0.93
+Central America,430.0,1.8,0.93
+Central America,460.0,2.0,0.93
+Central America,620.0,2.3,0.56
+Alps,360.0,1.2,0.9
+Alps,375.0,1.15,0.9
+Alps,400.0,1.3,0.94
+Alps,400.0,1.4,0.94
+Alps,375.0,1.7,0.8
+Alps,350.0,1.3,0.67
+Alps,410.0,1.8,0.78
+Alps,500.0,2.0,0.89
+Alps,480.0,2.3,0.89
+Alps,420.0,1.7,0.78
+Alps,430.0,0.9,0.96
+Alps,500.0,2.25,0.96
+Alps,550.0,1.85,0.89
+Alps,545.0,2.0,0.91
+Alps,400.0,2.0,0.91
+Alps,550.0,2.55,0.91
+Alps,550.0,2.65,0.91
+Alps,540.0,2.3,0.93
+Alps,575.0,2.75,0.93
+Alps,575.0,2.15,0.89
+Alps,615.0,2.8,0.93
+Alps,600.0,3.2,0.93
+Medit. Mid-East,400.0,1.3,0.69
+Medit. Mid-East,525.0,1.9,0.88
+Medit. Mid-East,580.0,2.0,0.88
+Medit. Mid-East,500.0,1.5,0.88
+Medit. Mid-East,530.0,1.95,0.88
+Medit. Mid-East,300.0,1.2,0.29
+Medit. Mid-East,440.0,1.6,0.43
+Medit. Mid-East,300.0,0.95,0.43
+Medit. Mid-East,350.0,0.75,0.57
+Medit. Mid-East,310.0,0.9,0.49
+Medit. Mid-East,410.0,1.2,0.14
+Medit. Mid-East,670.0,1.25,0.16
+Medit. Mid-East,460.0,0.8,0.21
+Medit. Mid-East,530.0,2.3,0.21
+Medit. Mid-East,525.0,1.1,0.57
+Medit. Mid-East,500.0,1.75,0.67
+Medit. Mid-East,420.0,1.6,0.63
+Medit. Mid-East,240.0,0.65,0.57
+Asia,400.0,0.7,0.71
+Asia,470.0,1.9,0.71
+Asia,340.0,1.15,0.9
+Asia,325.0,1.0,0.9
+Asia,480.0,2.25,0.3
+Asia,300.0,0.85,0.5
+Asia,500.0,2.4,0.5
+Asia,385.0,1.0,0.78
+Asia,540.0,2.5,0.73
+Met. Soles,800.0,1.1,0.05
+Met. Soles,825.0,0.77,0.05
+Met. Soles,840.0,1.16,0.05
+Met. Soles,840.0,1.2,0.05
+Met. Soles,780.0,1.0,0.05
+Met. Soles,700.0,0.85,0.06
+Met. Soles,800.0,1.1,0.06
+Met. Soles,710.0,0.83,0.02
+Met. Soles,730.0,0.7,0.02
+Met. Soles,700.0,0.75,0.04
+Met. Soles,670.0,0.6,0.04
+Met. Soles,875.0,0.85,0.03
+Met. Soles,900.0,0.8,0.03
+Met. Soles,800.0,0.9,0.03
+Met. Soles,750.0,0.75,0.03
+Met. Soles,800.0,0.85,0.03
+Met. Soles,840.0,1.2,0.03
+Met. Soles,775.0,0.65,0.03
+Met. Soles,655.0,0.86,0.02
+Met. Soles,850.0,1.2,0.02
+Met. Soles,730.0,0.95,0.02
+Met. Soles,725.0,0.85,0.02
