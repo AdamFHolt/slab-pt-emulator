@@ -1854,3 +1854,7 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   order as the pick noise already inside const-vc.
 - Not yet done: const-vc-sh `full-list.txt` feeder (PI to start on Stampede3, command in
   const-vc-sh/README "How to operate it"). Comparison script uncommitted at time of writing.
+- dd100 after this session's rsync: 263/324 pulled, 248 complete, none through the 0-100 km
+  extraction yet (PI: wait for more runs). run_900/901 in dd100/run-outputs are the const-vc-sh
+  benchmarks (shared scratch, pulled by -a) -- not dd100 runs. Estimated extraction cost ~6 min per
+  run per process (v3ctrl timing), ~1.5 h at 24-way for the full set.
