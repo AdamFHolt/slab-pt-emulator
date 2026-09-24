@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build, train and score the const-vc profile-PCA emulators at every output
+# Build, train and score the profile-PCA emulators of one suite (SUITE env, default const-vc) at every output
 # step of the extended 0.5-10 Myr window (steps 1..20, 0.5 Myr apart).
 #
 # All 20 times share one fixed run set (--runs-file), so the 85/15 split by run
@@ -23,7 +23,7 @@ RUNS_FILE="$(cd "$(dirname "${1:?usage: run_10myr_series.sh RUNS_FILE [STAGE] [N
 STAGE="${2:-all}"
 NPROC="${3:-10}"
 
-SUITE="const-vc"
+SUITE="${SUITE:-const-vc}"   # override with SUITE=ramped-vc
 K=10
 SCORE_SPACE=whitened
 CFG="configs/gp.${SUITE}.profile-pca.10myr.yaml"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Preprocess -> train -> Sobol for one const-vc cooling-rate window.
+# Preprocess -> train -> Sobol for one cooling-rate window of one suite (SUITE env, default const-vc).
 #
 # The window is identified by the master table it comes from, e.g.
 #   master_DT1-20.csv   -> tag dt1-20   (0.5-10 Myr mean cooling rate)
@@ -28,7 +28,7 @@ T1="${2:?}"
 T2="${3:?}"
 STAGE="${4:-all}"
 
-SUITE=const-vc
+SUITE="${SUITE:-const-vc}"   # override with SUITE=ramped-vc
 DEPTHS="${DEPTHS:-5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100}"
 N_BASE="${N_BASE:-1024}"
 MODEL_TAG=gp_m25
