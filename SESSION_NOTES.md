@@ -1939,3 +1939,23 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   (README "How to operate it"). Not pushed or submitted this session. Smoke-test one .prm on idev
   first (the limiter parameters are unchanged in kind, only in value, so a startup failure is
   unlikely, but the rule stands).
+
+### ramped-vc 0.5-10 Myr emulator products built; both suites now on the same footing (2026-09-24, 14:40)
+- `build_10myr_products.sh ramped-vc 10` ran 13:09-14:40 (91 min) behind the dd100 extraction, 0 failures:
+  profile-PCA series steps 1-20 on the fixed 491-run set (`ramped-vc/analysis/logs-extend/worklist_full_depth.txt`
+  = runs with Tprof_1..20 present and finite on 0-80 km; the 7 dropped are the ones missing step 11),
+  by-time table `plots/qc-emulator/profile-pca/10myr/ramped-vc_profile_rmse_by_time.csv` (gitignored csv,
+  like const-vc's), single-depth dTdt windows dt10-20 and dt1-20 (5-100 km every 5, gp_m25) + Sobol +
+  `sobol_windows_summary.csv`, and the 3-panel figure `plots/science-emulator/summary/ramped-vc/`.
+- Held-out profile RMSE (C): 2.9 at 0.5 Myr, 9.7 at 1, 7.0 at 2, 9.9 at 3, 9.3 at 5, 10.0 at 7.5,
+  8.0 at 10 Myr (const-vc: 5.0/6.7/8.8/8.2/8.2/7.9/9.3). Worst depth 80 km at every time; the 5 Myr
+  ramped-vc curve has a second bump at ~40 km (17 C). Caveat: the 0.5 and 1 Myr slices hold 448 and
+  488 runs, not 491 -- 43 ramped-vc runs write their first output at 0.53-0.57 Myr, outside the 0.025 Myr
+  matching tolerance (the default series has the same 455/498 at 0.5 Myr); from 1.5 Myr on all slices
+  share the identical run set and split.
+- Sobol age_OP/v_conv crossover -- ramped-vc 0.5-10 Myr: 7.1/46.1 km, 0.5-5 Myr: 9.8/23.2 km, 5-10 Myr: none (v_conv leads throughout); const-vc 0.5-10 Myr: 53.2 km, 0.5-5 Myr: 39.6 km, 0.5-5 Myr (385 runs): 39.7 km, 5-10 Myr: none (v_conv leads throughout).
+  ramped-vc 5-10 Myr: v_conv S_T 0.48-0.67 at every depth, age_OP peaks 0.25 at 40 km, dip climbs to
+  0.31 and eta_UM to 0.18 at 100 km (val R2 0.93-0.99). Ramped convergence pushes the shallow age_OP
+  regime up (23 vs 40 km crossover in 0.5-5 Myr) because the early slow ramp weakens the v_conv control.
+- `plot_emulator_validation_sobol.py ramped-vc` now auto-selects profile_pca_10myr and draws all four
+  times and both windows, like const-vc.
