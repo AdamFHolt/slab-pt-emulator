@@ -55,8 +55,11 @@ AN = os.path.join(ROOT, "subd-model-runs", SUITE, "analysis")
 _par_base = os.path.join(ROOT, "data", "params", f"params-list.{SUITE}")
 if os.path.exists(_par_base + ".csv"):
     PAR = pd.read_csv(_par_base + ".csv")
-else:   # the .csv is gitignored; the tracked .npy has the same five columns in this order
-    PAR = pd.DataFrame(np.load(_par_base + ".npy"), columns=["v_conv", "age_SP", "age_OP", "dip_int", "eta_UM"])
+else:   # the .csv is gitignored; the tracked .npy has the same columns (ramped-vc adds t_conv)
+    _arr = np.load(_par_base + ".npy")
+    _cols = {5: ["v_conv", "age_SP", "age_OP", "dip_int", "eta_UM"],
+             6: ["v_conv", "t_conv", "age_SP", "age_OP", "dip_int", "eta_UM"]}[_arr.shape[1]]
+    PAR = pd.DataFrame(_arr, columns=_cols)
 ROCK_CSV = os.path.join(ROOT, "data", "rocks", "Agard_2018.csv")
 
 zgrid = np.arange(0, ZMAX + 0.01, 1.0)

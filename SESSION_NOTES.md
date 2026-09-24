@@ -1959,3 +1959,16 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   regime up (23 vs 40 km crossover in 0.5-5 Myr) because the early slow ramp weakens the v_conv control.
 - `plot_emulator_validation_sobol.py ramped-vc` now auto-selects profile_pca_10myr and draws all four
   times and both windows, like const-vc.
+- **Validation and sensitivity split into two multi-suite figures** (PI: "should the Sobol be separate?" --
+  yes): `src/emulator/science/plot_emulator_validation.py` and `plot_sobol_windows.py`, shared style /
+  loaders in `emu_style.py` (suite -> line style, time -> plasma, parameter -> Okabe-Ito, window -> 3
+  colours; Myriad Pro, fonts as text). `make emulator-figures`. Outputs
+  `plots/science-emulator/summary/{emulator_validation,sobol_windows}.{pdf,svg,png}`.
+  New content vs the proposal figure: PCA-truncation floor under the RMSE-vs-depth curves (0.6-3.4 C vs
+  GP 5-10 C -> the error is the GP, not the compression); pooled held-out RMSE vs time for all 20
+  slices with p95 per-run RMSE (up to 21-23 C); held-out R2 of the dTdt emulators per depth and window
+  (const-vc 5-10 Myr dips to 0.76 at 75 km, ramped-vc >= 0.92 everywhere); Sobol for all three windows
+  with bootstrap CI bands, both suites overlaid, t_ramp for ramped-vc (S_T up to 0.30 at 15 km in the
+  5-10 Myr window, ~0 in 0.5-10), 80 km deep-end line. The 3-panel single-suite script stays as the
+  proposal-style view (legends moved outside the panel earlier today). Also fixed the rocks script's
+  .npy fallback for ramped-vc's six parameter columns.

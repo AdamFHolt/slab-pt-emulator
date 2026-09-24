@@ -6,7 +6,7 @@ SHELL := /bin/bash
         profile-pca-quality-report profile-pca-quality-check-gp-m25 \
         profile-pca-sweep profile-pca-sweep-summary \
         profile-pca-gp-tuning-sweep profile-pca-gp-tuning-summary sobol-sensitivity push-tacc \
-        pull-tacc rocks-plot emulator-summary-plot
+        pull-tacc rocks-plot emulator-summary-plot emulator-figures
 
 help:
 	@echo "Targets:"
@@ -38,6 +38,7 @@ help:
 	@echo "  sobol-sensitivity   - compute + plot single-depth Sobol indices (override SOBOL_SUITES/DEPTHS/N_BASE)"
 	@echo "  rocks-plot          - all-runs slab-top T(z) vs Agard 2018 rock P-T for SUITE (SUITE=const-vc [COLOR_BY=age_OP] [DIP_MIN=35])"
 	@echo "  emulator-summary-plot - 3-panel emulator validation + Sobol summary for SUITE (SUITE=const-vc)"
+	@echo "  emulator-figures    - multi-suite validation + Sobol-windows figures (SUITES=\"const-vc ramped-vc\")"
 
 setup:
 	python3 -m venv env
@@ -90,6 +91,10 @@ rocks-plot:
 
 emulator-summary-plot:
 	env/bin/python src/emulator/science/plot_emulator_validation_sobol.py $(if $(SUITE),$(SUITE),const-vc)
+
+emulator-figures:
+	env/bin/python src/emulator/science/plot_emulator_validation.py $(if $(SUITES),$(SUITES),const-vc ramped-vc)
+	env/bin/python src/emulator/science/plot_sobol_windows.py $(if $(SUITES),$(SUITES),const-vc ramped-vc)
 
 env-status:
 	./dev-env.sh status
