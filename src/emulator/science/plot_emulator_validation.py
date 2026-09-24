@@ -9,7 +9,7 @@ Rows = suites (one per suite):
         cannot remove.
 Right column, all suites together (suite -> line style):
   (E)   pooled held-out profile RMSE vs time since initiation for every scored slice (0.5-10 Myr),
-        emulator (dark), p95 per-run RMSE (thin grey) and PCA floor (light grey).
+        emulator (dark) and PCA floor (light grey); the p95 per-run RMSE is printed in (A)/(C) instead.
   (F)   held-out R^2 of the single-depth cooling-rate (dTdt) emulators vs depth for the three
         windows (0.5-5, 0.5-10, 5-10 Myr) -- the models the Sobol indices come from.
 
@@ -139,7 +139,6 @@ for s in SUITES:
     p95 = np.array([S.val_block(Q[s][t])["emulator_reconstruction"]["per_run_rmse"]["p95"] for t in ts])
     fl = np.array([S.val_block(Q[s][t])["pca_truncation_baseline"]["rmse"] for t in ts])
     ls = S.SUITE_LS.get(s, ":")
-    axE.plot(ts, p95, color="0.45", lw=0.8, ls=ls)
     axE.plot(ts, rm, color="0.15", lw=1.3, ls=ls, marker="o" if ls == "-" else "s", ms=2.4,
              mfc="0.15" if ls == "-" else "white", mew=0.7)
     axE.plot(ts, fl, color="0.65", lw=1.1, ls=ls)
@@ -151,9 +150,12 @@ axE.set_xlabel("Time since initiation (Myr)")
 axE.set_ylabel("Held-out profile RMSE (" + S.DEG + "C)")
 axE.spines["top"].set_visible(False); axE.spines["right"].set_visible(False)
 h_e = [Line2D([0], [0], color="0.15", lw=1.3, label="GP emulator, pooled"),
-       Line2D([0], [0], color="0.45", lw=0.8, label="p95 per-run RMSE"),
        Line2D([0], [0], color="0.65", lw=1.1, label="PCA-truncation floor")]
-S.outside_legend(axE, h_e, 0.55, handlelength=1.6)
+S.outside_legend(axE, h_e, 0.62, handlelength=1.6)
+h_es = [Line2D([0], [0], color="0.15", lw=1.3, ls=S.SUITE_LS.get(s, ":"), marker="o" if S.SUITE_LS.get(s) == "-" else "s",
+               ms=2.4, mfc="0.15" if S.SUITE_LS.get(s) == "-" else "white", mew=0.7, label=S.SUITE_LABEL.get(s, s))
+        for s in SUITES]
+S.outside_legend(axE, h_es, 0.12, handlelength=2.0, title="suite", title_fontsize=6.5)
 
 # ---------------------------------------------------------------- (F) dTdt R2 vs depth
 for s in SUITES:
