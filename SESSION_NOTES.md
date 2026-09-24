@@ -1828,3 +1828,29 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   v3ctrl runs have been looked at: `cd .../const-vc-sh && SLURM_FILE=run_one.spr.slurm nohup
   ./submit_from_list.sh full-list.txt > submit_full.log 2>&1 & echo $! > submit_full.pid` (with
   `asp3_skx` exported). Pull v3ctrl with `make pull-tacc SUITE=const-vc-v3ctrl ALL=1`.
+
+### const-vc-v3ctrl verdict: version + decomposition effect is noise-level (2026-09-24)
+- All 8 v3ctrl runs (ASPECT 3.0.0, spr/112) reached 10.5 Myr; pulled with
+  `pull_runs_from_tacc.sh const-vc-v3ctrl -a` (2.0 GB), profiles extracted with the standard
+  `extend_profiles_all-mods.sh const-vc-v3ctrl 0:20 "1,20;10,20" 8` (analysis/run_XXX now on the
+  same footing as const-vc). Timestep counts match const-vc to within 1% (e.g. 6144 vs 6093 for
+  run_100); wall time 1.1-2.8 h on spr vs 2.4-6.4 h on skx -- 2.1-2.3x faster, so ~equal SUs.
+- New `src/qc-numerical-mods/qc_v3ctrl_vs_constvc.py` pairs Tprof_k of both suites (closest output
+  time, |dt| < 3 kyr in practice) and writes summary/by-depth/log CSVs plus `dT_vs_depth.png` and
+  `Tprof_per_run.png` to `plots/qc-numerical-mods/const-vc-v3ctrl/`. Self-test (const-vc vs itself)
+  gives exactly 0.
+- **Result, 0-80 km (emulator range), dT = 3.0 - 2.5 at the slab top:** median across runs of the
+  per-run mean dT is |0.02-0.25| C at 0.5/1/5/10 Myr; median RMS 0.3 / 0.7 / 1.1 / 1.2 C; the
+  across-run median dT(z) stays within +-1.5 C at every depth and time -- no systematic bias.
+  Individual runs show alternating-sign spikes of 5-20 C (worst run_210 at 5 Myr: +19.6 C at
+  55 km, -4 at 60, +11 at 70, -17 at 85): these are interface-pick jitter, not thermal -- the 2.5
+  T(z) of run_210 is itself jagged (711, 743, 741, 742 C at 80/85/90/95 km), and run_210 is the
+  fast (7.9 cm/yr), old-SP (100 Myr), shallowest-dip (31 deg) run of the set, where the near-horizontal
+  slab top makes the rightmost-x pick unstable. Ignoring 85-100 km (deep-end validity, see
+  2026-09-17) removes the >20 C values entirely.
+- **Decision rule from const-vc-v3ctrl/README applies: a few C -> negligible.** Recommendation:
+  pair const-vc-sh against the existing 2.5 const-vc record; no re-run of const-vc under 3.x.
+  The heating signal to detect is tens of C, ~10x the version noise; the version noise is the same
+  order as the pick noise already inside const-vc.
+- Not yet done: const-vc-sh `full-list.txt` feeder (PI to start on Stampede3, command in
+  const-vc-sh/README "How to operate it"). Comparison script uncommitted at time of writing.
