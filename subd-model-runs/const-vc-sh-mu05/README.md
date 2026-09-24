@@ -6,7 +6,8 @@ The 8 pilot-list runs of const-vc-sh (100 310 195 210 072 217 270 064) with ONE 
 that enters the shear-heating term is capped at a Drucker-Prager law with cohesion 1 MPa and
 friction angle asin(0.05) = 0.050021 rad, i.e.
 
-    heating stress = min( 2 eta eps_dev ,  1 MPa + 0.05 P )      (const-vc-sh: min(2 eta eps, 10 MPa + 0.5 P))
+    heating stress = min( 2 eta eps_II ,  1 MPa cos(phi) + P sin(phi) ),  phi = asin(0.05)
+    (2 eta eps_II = deviatoric stress invariant; const-vc-sh: cohesion 10 MPa, phi = 30 deg)
 
 so the dissipation follows the thermal-modelling convention tau = mu' rho g z with mu' = 0.05, the
 global best fit of Kohn et al. (2018) (0.05 +- 0.015; Ishii & Wallis 2020 give 0.03-0.13 by belt).
@@ -19,29 +20,35 @@ subduction thermal evolution flagged interface friction as the least-constrained
 ## What to expect, and what this pilot cannot show
 
 The limiter can only LOWER the heating relative to const-vc-sh. The 6 km crust channel is a fixed
-1e20 Pa s, so its viscous stress is 2 eta v/h, independent of depth and linear in v_conv; the cap
-mu' rho g z grows with depth. The cap therefore binds above a depth z* = (tau_visc - 1 MPa) / (0.05
-rho g), and below z* the heating is exactly const-vc-sh's. Per pilot run:
+1e20 Pa s in simple shear, so its shear stress (the second invariant of the deviatoric stress,
+2 eta eps_II with eps_II = v/2h) is eta v/h: independent of depth and linear in v_conv. The cap
+C cos(phi) + P sin(phi) is a yield stress in terms of the mean (full) stress, as in any
+Drucker-Prager / Coulomb law -- comparing a deviatoric invariant against a mean-stress-dependent
+yield surface is the definition of the criterion, not a units mix (the friction analogue
+tau = mu' sigma_n has the same structure). It grows with depth, so it binds above
+z* = (tau_visc - 1 MPa) / (0.05 rho g), and below z* the heating is exactly const-vc-sh's. Per pilot
+run (channel stress eta v/h; an earlier draft had 2 eta v/h, a factor 2 too high):
 
 | run | v_conv (cm/yr) | age_SP | age_OP | dip | eta_UM | tau_visc (MPa) | z* (km) |
 |---|---|---|---|---|---|---|---|
-| 100 | 3.7 | 44 | 89 | 67 | 5.6e+20 | 39 | 23 |
-| 310 | 8.0 | 45 | 51 | 44 | 9.9e+20 | 84 | 52 |
-| 195 | 8.0 | 91 | 77 | 73 | 3.3e+20 | 84 | 51 |
-| 210 | 7.9 | 100 | 21 | 31 | 2.2e+20 | 84 | 51 |
-| 072 | 7.7 | 70 | 21 | 52 | 1.0e+21 | 82 | 50 |
-| 217 | 7.2 | 84 | 43 | 47 | 9.6e+20 | 76 | 47 |
-| 270 | 3.1 | 90 | 47 | 52 | 4.0e+20 | 33 | 20 |
-| 064 | 1.0 | 65 | 33 | 28 | 5.0e+19 | 11 | 6 |
+| 100 | 3.7 | 44 | 89 | 67 | 5.6e+20 | 19 | 11 |
+| 310 | 8.0 | 45 | 51 | 44 | 9.9e+20 | 42 | 25 |
+| 195 | 8.0 | 91 | 77 | 73 | 3.3e+20 | 42 | 25 |
+| 210 | 7.9 | 100 | 21 | 31 | 2.2e+20 | 42 | 25 |
+| 072 | 7.7 | 70 | 21 | 52 | 1.0e+21 | 41 | 25 |
+| 217 | 7.2 | 84 | 43 | 47 | 9.6e+20 | 38 | 23 |
+| 270 | 3.1 | 90 | 47 | 52 | 4.0e+20 | 16 | 10 |
+| 064 | 1.0 | 65 | 33 | 28 | 5.0e+19 | 5 | 3 |
 
-So for the fast runs the cap removes most of the shallow-to-mid-depth dissipation (and its v^2
-scaling: capped heating is linear in v), while the slow runs (064, 270, 100) are barely affected.
+So the cap acts only in the top ~25 km even for the 8 cm/yr runs, and only in the top ~3-12 km
+for the slow ones (064, 270, 100); where it binds it also replaces the v^2 scaling of the
+fixed-channel heating by a linear one.
 Compare all three heating states -- const-vc, const-vc-sh, const-vc-sh-mu05 -- at 1/5/10 Myr on the
 slab-top T(z) and the `heating` field; the mu05 - sh difference is the shallow over-heating of the
 fixed-viscosity channel, the mu05 - const-vc difference is the friction-capped heating signal.
 
 What it cannot do: RAISE the deep heating to the frictional level, because the viscous channel
-stress (33-84 MPa here) is below mu' rho g z beyond z*. Kohn's 100-500 C model-rock gap at 30-80 km
+stress (5-42 MPa here) is below mu' rho g z beyond z*. Kohn's 100-500 C model-rock gap at 30-80 km
 would need channel stresses up to mu' rho g z there -- a stronger channel limited by yield, which is
 a change to the mechanics, not to the heating term. That is the deferred suite below.
 

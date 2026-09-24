@@ -1927,8 +1927,12 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   hard-linked; jobs `mu_XXX`, own scratch workspace `$SCRATCH/aspect_work/const-vc-sh-mu05/`;
   `pull_runs_from_tacc.sh` knows the workspace). const-vc-sh inputs verified unchanged (md5).
   Important caveat, worked out in the suite README: the limiter can only LOWER heating -- it binds
-  above z* = (tau_visc - 1 MPa)/(0.05 rho g), 6-23 km for the slow pilot runs and ~50 km for the
-  8 cm/yr ones, and below z* the heating equals const-vc-sh's. It cannot produce Kohn-level heating
+  above z* = (tau_visc - 1 MPa)/(0.05 rho g) with tau_visc = eta v/h (5-42 MPa): ~3-12 km for the
+  slow pilot runs and ~25 km for the 8 cm/yr ones, and below z* the heating equals const-vc-sh's.
+  (PI asked whether min(deviatoric stress, C + mu' P) mixes deviatoric and full stress: yes, by
+  design -- a Drucker-Prager yield surface is a function of the mean stress, compared against the
+  deviatoric invariant; same structure as tau = mu' sigma_n. An earlier z* estimate used 2 eta v/h,
+  a factor 2 too high; corrected here and in the suite README.) It cannot produce Kohn-level heating
   at 30-80 km; that needs the mechanics change. The deferred-suite plan (const-vc-shp) is written in
   `const-vc-sh-mu05/README.md` "Deferred" and in memory.
 - To run: `make push-tacc SUITE=const-vc-sh-mu05 LINK=const-vc-sh`, then the pilot-list feeder on spr
