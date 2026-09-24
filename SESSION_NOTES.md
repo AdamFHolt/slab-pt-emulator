@@ -1972,3 +1972,15 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   5-10 Myr window, ~0 in 0.5-10), 80 km deep-end line. The 3-panel single-suite script stays as the
   proposal-style view (legends moved outside the panel earlier today). Also fixed the rocks script's
   .npy fallback for ramped-vc's six parameter columns.
+- **Numerical-model science summary, both suites** (`src/science-numerical-mods/plot_suite_summary.py`,
+  `make numerical-summary-plot`, `plots/science-numerical-mods/suite_summary.*`; record cache
+  `<suite>/analysis/slabtop_record_0-80km.npz`, gitignored). Runs with the full 20-step record: const-vc
+  384, ramped-vc 491. Salient numbers: median slab-top T at 40 km falls 605 -> 205 C (const-vc) and
+  658 -> 220 C (ramped-vc) over 0.5-10 Myr, at 80 km 1068 -> 477 / 1112 -> 501 C; IQR at 10 Myr 74-88 C
+  (40 km), 173-196 C (80 km). t90 (time to 90 % of the 0.5-10 Myr cooling) is 6-7.5 Myr at every depth,
+  ramped-vc ~0.3-0.6 Myr later than const-vc -- the slab top is still cooling at 10 Myr, so "steady
+  state" in the 3-5 Myr sense of the literature is not reached in either suite at 20-80 km. Mean cooling
+  rate at 40 km: 70 C/Myr (0.5-5 Myr) vs 16 C/Myr (5-10 Myr) for const-vc; ramped-vc 74 vs 22 C/Myr,
+  i.e. the ramp shifts cooling into the late window. T(40 km, 5 Myr) spans 190-770 C across the design
+  with corr(log v_conv) -0.80 and corr(age_OP) -0.45 to -0.49 in both suites; the Agard rocks at 20-40 km
+  sit above the 0.5 Myr envelope of const-vc but inside ramped-vc's.

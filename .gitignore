@@ -50,3 +50,6 @@ src/emulator/models/single_depth_dt1-10m/
 subd-model-runs/*/analysis/extend_*.log
 subd-model-runs/*/analysis/extend_*.pid
 !data/rocks/*.csv
+
+# cached slab-top record arrays built by plot_suite_summary.py (regenerable)
+subd-model-runs/*/analysis/slabtop_record_*.npz
