@@ -3,11 +3,13 @@
 processed slab-top record subd-model-runs/<suite>/analysis/run_XXX/Tprof_k.csv (k = 0..20, 0.5 Myr
 steps) on the 0-80 km grid. Only runs with the full 20-step record are used.
 
- (A),(B) slab-top T(z) per suite at 0.5, 2, 5 and 10 Myr: median (line) and 5-95 % envelope (band)
-         across the design, with the Agard et al. (2018) peak P-T compilation (data/rocks/).
- (C)     slab-top T at 40 and 80 km vs time since initiation: median and interquartile range,
-         both suites -- the transient and its approach to a quasi-steady state.
- (D)     mean cooling rate vs depth for the 0.5-5 and 5-10 Myr windows: median and IQR per suite.
+ (A),(B) slab-top T(z) per suite at 0.5, 2, 5 and 10 Myr: median (line) and spread band across the
+         design, with the Agard et al. (2018) peak P-T compilation (data/rocks/).
+ (C)     slab-top T at 40 and 80 km vs time since initiation: median and band, both suites -- the
+         transient and its approach to a quasi-steady state.
+ (D)     mean cooling rate vs depth for the 0.5-5 and 5-10 Myr windows: median and band per suite.
+ The band is the same in every panel: --band iqr (25-75 %, default) or --band 90 (5-95 %); the
+ legend titles say which. The 5-95 % view of (A),(B) alone is explore_all_models_rocks.py.
  (E),(F) the two dominant controls, run by run: T at 40 km at 5 Myr, and the 5-10 Myr mean cooling
          rate at 40 km, against convergence rate, coloured by overriding-plate age (shared scale).
 
@@ -40,8 +42,12 @@ ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDe
 ap.add_argument("suites", nargs="*", default=["const-vc", "ramped-vc"])
 ap.add_argument("--refresh", action="store_true")
 ap.add_argument("--zmax", type=float, default=80.0)
+ap.add_argument("--band", choices=["iqr", "90"], default="iqr",
+                help="spread band in every panel: iqr = 25-75 %% (default), 90 = 5-95 %%")
 args = ap.parse_args()
 SUITES, ZMAX = args.suites, args.zmax
+PCT = (25, 50, 75) if args.band == "iqr" else (5, 50, 95)
+BAND_LABEL = "median, IQR (25-75 %)" if args.band == "iqr" else "median, 5-95 %"
 S.apply_style()
 
 ZG = np.arange(0.0, ZMAX + 0.01, 1.0)
@@ -118,7 +124,7 @@ for ax, s in zip([axA, axB], SUITES[:2]):
     ids, T = REC[s]
     for t in ENV_TIMES:
         k = int(round(t * 2)); A = T[:, k, :]
-        lo, med, hi = np.percentile(A, [5, 50, 95], axis=0)
+        lo, med, hi = np.percentile(A, PCT, axis=0)
         ax.fill_betweenx(ZG, lo, hi, color=S.time_color(t), alpha=0.14, lw=0)
         ax.plot(med, ZG, color=S.time_color(t), lw=1.3, ls=S.SUITE_LS.get(s, "-"))
     ax.scatter(rock.T_C, rock_z, s=5, color="0.25", zorder=5, linewidths=0)
@@ -131,7 +137,7 @@ for ax, s in zip([axA, axB], SUITES[:2]):
 axA.set_ylabel("Depth (km)"); axB.tick_params(labelleft=False)
 h_t = [Line2D([0], [0], color=S.time_color(t), lw=1.3, label=f"{t:g} Myr") for t in ENV_TIMES]
 h_t.append(Line2D([0], [0], marker="o", color="0.25", lw=0, ms=2.5, label="Agard et al. 2018\npeak P-T"))
-S.outside_legend(axB, h_t, 0.22, handlelength=1.4, title="median, 5-95 %", title_fontsize=6.5)
+S.outside_legend(axB, h_t, 0.22, handlelength=1.4, title=BAND_LABEL, title_fontsize=6.5)
 
 # ---------------------------------------------------------------- (C) T at 40 / 80 km vs time
 C_DEPTHS = [40.0, 80.0]
@@ -141,17 +147,17 @@ for s in SUITES:
     ids, T = REC[s]
     for z in C_DEPTHS:
         iz = int(np.argmin(np.abs(ZG - z))); A = T[:, 1:, iz]   # from 0.5 Myr on
-        lo, med, hi = np.percentile(A, [25, 50, 75], axis=0)
+        lo, med, hi = np.percentile(A, PCT, axis=0)
         axC.fill_between(TIMES[1:], lo, hi, color=dcol(z), alpha=0.12 if S.SUITE_LS.get(s) == "-" else 0.08, lw=0)
         axC.plot(TIMES[1:], med, **S.suite_kw(s, dcol(z)))
-        print(f"{s} T({z:g} km): median {med[0]:.0f} -> {med[-1]:.0f} C over 0.5-10 Myr; IQR at 10 Myr {hi[-1]-lo[-1]:.0f} C")
+        print(f"{s} T({z:g} km): median {med[0]:.0f} -> {med[-1]:.0f} C over 0.5-10 Myr; band width at 10 Myr {hi[-1]-lo[-1]:.0f} C")
 axC.set_xlim(0, 10.5); axC.set_xticks([0, 2.5, 5, 7.5, 10])
 axC.set_xlabel("Time since initiation (Myr)")
 axC.set_ylabel("Slab-top T (" + S.DEG + "C)")
 axC.spines["top"].set_visible(False); axC.spines["right"].set_visible(False)
 h_c = [Line2D([0], [0], color=dcol(z), lw=1.3, label=f"{z:g} km") for z in C_DEPTHS]
 leg = axC.legend(handles=h_c, fontsize=6, loc="upper right", frameon=True, facecolor="white", edgecolor="black",
-                 framealpha=0.9, handlelength=1.4, labelspacing=0.25, borderpad=0.35, title="depth (median, IQR)",
+                 framealpha=0.9, handlelength=1.4, labelspacing=0.25, borderpad=0.35, title="depth; " + BAND_LABEL,
                  title_fontsize=6)
 leg.get_frame().set_linewidth(0.5)
 axC.add_artist(leg)
@@ -163,7 +169,7 @@ for s in SUITES:
     for w, (k0, k1) in [("0.5-5 Myr", (1, 10)), ("5-10 Myr", (10, 20))]:
         rate = -(T[:, k1, :] - T[:, k0, :]) / (0.5 * (k1 - k0))    # C/Myr, positive = cooling
         RATE[(s, w)] = rate
-        lo, med, hi = np.percentile(rate, [25, 50, 75], axis=0)
+        lo, med, hi = np.percentile(rate, PCT, axis=0)
         axE.fill_betweenx(ZG, lo, hi, color=S.WINDOW_COLOR[w], alpha=0.12 if S.SUITE_LS.get(s) == "-" else 0.08, lw=0)
         axE.plot(med, ZG, markevery=10, **S.suite_kw(s, S.WINDOW_COLOR[w]))
         j = int(np.argmin(np.abs(ZG - 40)))
@@ -175,7 +181,7 @@ axE.set_ylabel("Depth (km)")
 axE.spines["top"].set_visible(False); axE.spines["right"].set_visible(False)
 h_w = [Line2D([0], [0], color=S.WINDOW_COLOR[w], lw=1.3, label=w) for w in ["0.5-5 Myr", "5-10 Myr"]]
 leg = axE.legend(handles=h_w, fontsize=6, loc="upper right", frameon=True, facecolor="white", edgecolor="black",
-                 framealpha=0.9, handlelength=1.4, labelspacing=0.25, borderpad=0.35, title="window (median, IQR)",
+                 framealpha=0.9, handlelength=1.4, labelspacing=0.25, borderpad=0.35, title="window; " + BAND_LABEL,
                  title_fontsize=6)
 leg.get_frame().set_linewidth(0.5)
 axE.add_artist(leg)          # keep it when the suite key is added beside the panel
