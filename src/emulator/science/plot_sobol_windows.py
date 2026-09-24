@@ -6,7 +6,9 @@ Top row: total-effect index S_T vs depth (5-100 km every 5 km) for every sampled
 (Okabe-Ito colours, fixed per parameter; t_ramp exists only in ramped-vc), with the bootstrap 95 %
 confidence interval (S_T +- ST_conf) as a light band. The 80 km deep-end validity line marks where the
 slab top only exists after crust arrival, so 0.5-5 Myr cooling rates below it mix arrival and cooling.
-Bottom row: held-out R^2 of the emulator behind each depth (the same suites, same line styles).
+Bottom row: held-out R^2 of the dTdt emulator behind each point above (same suite, window, depth) --
+a Sobol index is a property of the emulator, so where R^2 sags the indices above are less trustworthy.
+Same quantity as panel (F) of plot_emulator_validation.py.
 Printed: the depth(s) where S_T(age_OP) and S_T(v_conv) cross, per suite and window.
 
 Usage:  env/bin/python src/emulator/science/plot_sobol_windows.py [SUITE ...]   (default const-vc ramped-vc)
@@ -114,9 +116,13 @@ h_p = [Line2D([0], [0], color=S.PARAM_COLOR[p], lw=1.2, label=S.PARAM_LABEL[p]
 S.outside_legend(axT[-1], h_p, 0.42, handlelength=1.2, title="parameter", title_fontsize=6.5)
 S.outside_legend(axT[-1], S.suite_handles(SUITES), 0.08, handlelength=2.2, title="suite", title_fontsize=6.5)
 if not args.no_ci:
-    fig.text((L + nw * W_P + (nw - 1) * GAP + 0.06) / FIG_W, (BOT + H_BOT) / FIG_H,
+    # note under the parameter key, in the upper row's strip
+    fig.text((L + nw * W_P + (nw - 1) * GAP + 0.07) / FIG_W, (BOT + H_BOT + ROW_GAP + 0.34 * H_TOP) / FIG_H,
              "bands: bootstrap\n95 % CI of $S_T$", fontsize=6, color="0.35", ha="left", va="top")
 
+fig.text((L + nw * W_P + (nw - 1) * GAP + 0.07) / FIG_W, (BOT + H_BOT) / FIG_H,
+         "bottom row: quality of the\ndTdt GP emulator behind\neach index above (held-out\n$R^2$; same suite, window,\ndepth)",
+         fontsize=6, color="0.35", ha="left", va="top", linespacing=1.3)
 S.panel_labels(fig, [(axT[i], f"({'ABC'[i]})") for i in range(nw)] + [(axR[i], f"({'DEF'[i]})") for i in range(nw)])
 stem = "sobol_windows" + ("" if SUITES == ["const-vc", "ramped-vc"] else "_" + "_".join(SUITES))
 S.save(fig, stem)
