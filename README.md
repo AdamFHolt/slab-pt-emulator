@@ -6,6 +6,7 @@ Supported experiment suites:
 - `const-vc` (constant convergence rate)
 - `ramped-vc` (time-ramped convergence)
 - `const-vc-dd100` (const-vc with the weak crust cut off at 100 km instead of 150 km: a prescribed maximum decoupling depth; same 400-point design paired run-by-run with const-vc, run for `dip_int >= 35` only (320 runs) because shallower slabs flatten along the cutoff; see [`subd-model-runs/const-vc-dd100/README.md`](subd-model-runs/const-vc-dd100/README.md); submitted 2026-09-15)
+- `const-vc-sh` (const-vc with shear heating, ASPECT 3.0 on spr; same design, paired; see [`subd-model-runs/const-vc-sh/README.md`](subd-model-runs/const-vc-sh/README.md)); `const-vc-v3ctrl` (8-run 3.0 no-heating control, done: version effect negligible); `const-vc-sh-mu05` (8-run pilot, heating stress capped at mu' = 0.05; see [`subd-model-runs/const-vc-sh-mu05/README.md`](subd-model-runs/const-vc-sh-mu05/README.md), which also records the deferred sh+plasticity suite plan)
 
 Quick orientation:
 

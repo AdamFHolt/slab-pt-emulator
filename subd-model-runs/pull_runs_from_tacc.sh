@@ -46,7 +46,7 @@ TACC_HOST="${TACC_HOST:-stampede3.tacc.utexas.edu}"
 # $SCRATCH/aspect_work/ and share its outputs/; the 3.0 suites have their own workspace
 # $SCRATCH/aspect_work/<suite>/ (see run_one.slurm there), so their outputs/ holds one suite only.
 case "$SUITE" in
-  const-vc-sh|const-vc-v3ctrl) DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/$SUITE/outputs" ;;
+  const-vc-sh|const-vc-v3ctrl|const-vc-sh-mu05) DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/$SUITE/outputs" ;;
   *)                           DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/outputs" ;;
 esac
 TACC_OUT="${TACC_OUT:-$DEFAULT_OUT}"

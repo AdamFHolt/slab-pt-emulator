@@ -98,6 +98,12 @@ pair difference alongside the heating. To separate the two:
    `heating` adds roughly one scalar field to each vtu (const-vc writes T, p, velocity, two
    compositions, viscosity), ~15% more output.
 
+## Related pilot
+
+`const-vc-sh-mu05` (built 2026-09-24, `build_runs.const-vc-sh.py --mu05`): the 8 pilot runs with the
+heating-stress limiter at cohesion 1 MPa / friction angle asin(0.05), i.e. mu' = 0.05 (Kohn et al. 2018).
+See its README for the reasoning and the deferred mechanics-consistent (crust plasticity) suite.
+
 ## How to operate it
 
 ```bash

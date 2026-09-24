@@ -1902,3 +1902,36 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   `plots/science-numerical-mods/const-vc-dd100/explore_all_models_rocks_const-vc-dd100_age_OP.png`.
 - ramped-vc 10 Myr emulator build (`build_10myr_products.sh ramped-vc 10`) started 13:09 right
   behind the extraction; results below when done.
+
+### Interface rheology for the shear-heating work: mu'=0.05 heating-cap pilot built, plasticity suite deferred (2026-09-24, afternoon)
+- PI asked what a "slightly more realistic" interface rheology should be for a last sh suite, given
+  viscous models, pointing at the Elicit literature report (`~/Downloads/Elicit - Time-dependent
+  thermal evolution of subduction zon - Report.pdf`, 28 pp, 59 sources). Its relevant content:
+  interface friction is the least-constrained control (Kohn et al. 2018 mu' = 0.05 +- 0.015 from
+  forearc heat flow + PD15 P-T; Ishii & Wallis 2020 0.13 Sanbagawa / <= 0.03 Franciscan; Kidder
+  2013 <= 19 MPa; England & Smye 2022 30-100 MPa; Currie 2002 ~15 MPa raises the 30-40 km thrust by
+  > 200 C); frictionless models are 100-500 C colder than rocks at 30-80 km; Peacock 2020: v_conv
+  has opposing effects via advective cooling vs shear heating; Schmalholz 2026 / Gerya 2022:
+  exhumation advection explains much of the gap without high friction.
+- Assessment given: the fixed-1e20 channel of const-vc-sh has heating ~ eta (v/h)^2 -- v^2 scaling
+  and a depth-independent stress (~40 MPa at 4 cm/yr), which is the wrong shape to speak to the
+  mu' debate (tau = mu' rho g z, heating ~ v). Recommended a Drucker-Prager cap with sin(phi) = mu';
+  two variants: heating-only (ASPECT 3.0 limiter, one-line change, flow unchanged, keeps pairing)
+  and mechanics-consistent (yield in the ocrust composition + raised crust viscosity ceiling, mu'
+  possibly a 6th design dimension). Advised against T-dependent channel viscosity / rate-dependent
+  friction for now.
+- **PI decision: build the 8-run pilot with the heating stress capped at mu' ~ 0.05; defer the full
+  sh+plasticity suite.** Done: `build_runs.const-vc-sh.py --mu05` writes
+  `subd-model-runs/const-vc-sh-mu05/run-inputs/` (pilot list 100 310 195 210 072 217 270 064; cohesion
+  1e6 Pa, friction angle 0.050021 rad = asin(0.05); .prm otherwise identical to const-vc-sh, inputs
+  hard-linked; jobs `mu_XXX`, own scratch workspace `$SCRATCH/aspect_work/const-vc-sh-mu05/`;
+  `pull_runs_from_tacc.sh` knows the workspace). const-vc-sh inputs verified unchanged (md5).
+  Important caveat, worked out in the suite README: the limiter can only LOWER heating -- it binds
+  above z* = (tau_visc - 1 MPa)/(0.05 rho g), 6-23 km for the slow pilot runs and ~50 km for the
+  8 cm/yr ones, and below z* the heating equals const-vc-sh's. It cannot produce Kohn-level heating
+  at 30-80 km; that needs the mechanics change. The deferred-suite plan (const-vc-shp) is written in
+  `const-vc-sh-mu05/README.md` "Deferred" and in memory.
+- To run: `make push-tacc SUITE=const-vc-sh-mu05 LINK=const-vc-sh`, then the pilot-list feeder on spr
+  (README "How to operate it"). Not pushed or submitted this session. Smoke-test one .prm on idev
+  first (the limiter parameters are unchanged in kind, only in value, so a startup failure is
+  unlikely, but the rule stands).
