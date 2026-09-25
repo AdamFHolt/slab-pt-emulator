@@ -1988,3 +1988,98 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   i.e. the ramp shifts cooling into the late window. T(40 km, 5 Myr) spans 190-770 C across the design
   with corr(log v_conv) -0.80 and corr(age_OP) -0.45 to -0.49 in both suites; the Agard rocks at 20-40 km
   sit above the 0.5 Myr envelope of const-vc but inside ramped-vc's.
+
+### dd100 extraction pass 2 (2026-09-25)
+- PI pulled more dd100 runs: 270 pulled (excl. run_900/901), 252 with solution-00020, 18 still short of
+  step 20 on TACC. `extend_profiles_all-mods.sh const-vc-dd100 0:20 "1,10;1,20;10,20" 24` (log
+  `analysis/extend_pass2.log`) processed the 3 new complete runs (311 313 314), ~15 min end to end, 0
+  errors; record now complete for 252/252. Rerun the same command after the next pull for the rest.
+- Rocks figure regenerated (`make rocks-plot SUITE=const-vc-dd100`): 252 runs at every time (251 at 3 Myr).
+  Fractions inside / warmer than the model range: 35.8/8.9 % (0.5 Myr), 79.7/16.3 (2), 69.1/30.9 (5),
+  52.0/48.0 (10 Myr) -- unchanged from pass 1 to 0.1 %.
+- Paired Tprof_20 vs const-vc, 0-80 km, now 249 pairs: mean dT +5.0 C, median |dT| 2.2, p95 19.7 --
+  identical to the 246-pair numbers. Still to do: the dip >= 35 paired comparison.
+- **dd100 vs const-vc paired comparison, dip >= 35** (`src/science-numerical-mods/compare_paired_suites.py`,
+  `make pairs-plot SUITE=const-vc-dd100`, `plots/science-numerical-mods/const-vc-dd100/dd100_pairs.*`): 244 pairs (251
+  dd100 runs with the full record, minus the 4 dip < 35 pilot runs 038 039 090 343, intersected with
+  const-vc's 384). dT = dd100 - const-vc on 0-100 km, NaN-aware below 80 km. Median dT at 10 Myr:
+  +0.5 C (20 km), +2.5 (40), +5.7 (60), +12.9 (80), +37 C (100 km, IQR -3 to +67); at <= 5 Myr the
+  median is within +-4 C everywhere and the deep end is *colder* in dd100 at 1.5-4 Myr (100 km:
+  -4 C median at 2 Myr, IQR down to -30) before the warm anomaly grows from ~5 Myr. Pooled 0-80 km at
+  10 Myr: mean +4.7, median |dT| 2.2, p95 19.0 -- same as the unfiltered numbers. The 5-95 % envelopes
+  of the two suites coincide at 2 and 10 Myr, so the ablation does not move the model-vs-rocks story.
+  Controls of dT(100 km, 10 Myr): Spearman age_OP +0.65, eta_UM +0.28, v_conv +0.25 (dip, age_SP ~0);
+  at 40 km age_OP +0.55 and eta_UM +0.58 but the amplitude there is only a few C. I.e. the shallower
+  decoupling depth warms the slab top near the cutoff late in the run, most for old (cold, thick) OPs
+  where the const-vc cold nose extended deepest; young-OP pairs are unchanged or slightly cooler.
+
+### const-vc-sh: first 104 runs extracted; rocks, suite-summary and paired figures (2026-09-25, pm)
+- PI rsynced the const-vc-sh scratch workspace (`pull_runs_from_tacc.sh const-vc-sh -a`, ~20 GB, 14:23-15:1x):
+  106 run dirs, 104 complete through step 20. Extraction `extend_profiles_all-mods.sh const-vc-sh 0:20
+  "1,10;1,20;10,20" 24` (log `const-vc-sh/analysis/extend_pass1.log`) 15:19-15:51, 104/104 ok, 0 errors --
+  the standard script works unchanged on the ASPECT 3.0 output (as for v3ctrl). Rerun after the next pull;
+  incremental. Emulator work for sh deliberately deferred until more runs land (as with dd100).
+- Figures (all in `plots/science-numerical-mods/`): `const-vc-sh/explore_all_models_rocks_const-vc-sh_age_OP.png`
+  (`make rocks-plot SUITE=const-vc-sh`), `suite_summary_const-vc_const-vc-sh.*` (`make numerical-summary-plot
+  SUITES="const-vc const-vc-sh"`, the default const-vc+ramped-vc figure untouched), and
+  `const-vc-sh/sh_pairs.*` (`make pairs-plot SUITE=const-vc-sh`; 98 pairs, all dips -- 6 of the 104 sh runs
+  have no complete const-vc twin). `compare_paired_suites.py` (renamed from compare_dd100_pairs.py, now
+  suite-generic; panel D auto-picks the 20-80 km depth of largest median effect, 100 km for dd100).
+- **Shear heating is a first-order effect, v_conv-controlled.** dT = sh - const-vc, median [IQR] at 10 Myr:
+  +33 [15, 56] C at 20 km, +52 [22, 87] at 40, +68 [35, 119] at 60, +90 [54, 135] at 80, +100 [44, 145] at
+  100 km; pooled 0-80 km mean +59 C, p95 |dT| 160 C; every pair is warmer at 40 km (min +7, max +150 C).
+  Time dependence (panel B): at 40 km the difference peaks at ~64 C at 2 Myr, then settles to ~50 C from
+  4 Myr on (the channel is heated fastest while the wedge is still hot / strain rates highest); at 80-100 km
+  it builds through 5 Myr and then holds at ~90-100 C. Spearman with the design at 10 Myr: v_conv +0.87
+  (40 km) / +0.92 (80 km) / +0.79 (100 km); eta_UM -0.34 at 40 km (stiffer mantle -> less heating), age_OP
+  only enters at 100 km (+0.27); dip and age_SP ~0. Log-log fits dT ~ v_conv^n: n = 1.9 (40 km), 2.3 (60),
+  2.5 (80) at 2 Myr -- the eta (v/h)^2 scaling of the fixed-viscosity channel -- flattening to n = 1.2-1.4 by
+  10 Myr as diffusion into the wedge and slab takes over; at 10 Myr dT at 1/4/8 cm/yr is ~8/45/106 C
+  (40 km) and ~10/73/195 C (80 km). Matches the README's back-of-envelope (tens of degrees, ~v^2).
+- Suite-summary numbers (104 sh vs 384 const-vc, not paired): median T(40 km) 642 -> 277 C over 0.5-10 Myr
+  (const-vc 605 -> 205), T(80 km) 1082 -> 602 (1068 -> 477). Cooling rate 0.5-5 Myr at 40 km median 62 vs
+  70 C/Myr (sh cools slower shallow), 5-10 Myr 16.3 vs 16.0. T(40 km, 5 Myr) 277-632 C, corr(log v_conv)
+  -0.60 (const-vc -0.80): the v_conv control on shallow T weakens because advective cooling and shear
+  heating oppose each other (cf. Peacock 2020); corr(age_OP) strengthens to -0.64. Fast-v_conv sh runs
+  (>= 4 cm/yr) sit 100-200 C above their const-vc twins in panel E.
+- Rocks (123 Agard points, z <= 80 km): inside / warmer than the sh envelope 32/11 % at 0.5 Myr, 40/20 at
+  2, 63/32 at 5, 55/46 % at 10 Myr (const-vc 36/9, 81/16, 52/48). The hot 20-40 km cluster is still above
+  the 0.5 Myr sh envelope; the sh 2 Myr envelope is wide enough (v^2 spread) that fewer rocks fall inside
+  than for const-vc. Envelope comparison in sh_pairs panel C: at 10 Myr the sh median sits near const-vc's
+  75th percentile shallow and above its 95th at 60-100 km.
+- **Why eta_UM enters the sh warming (PI question).** Controlling for v_conv, the eta_UM partial correlation
+  with dT is ~0 at 0.5-2 Myr and grows to -0.76 (40 km) / -0.92 (20 km) by 10 Myr, so it is not the heating
+  law (the channel is clamped at 1e20; H = eta (dv/h)^2 has no eta_UM in it). Interface transects at 40 km
+  on 8 weak (eta_UM < 2e20) vs 8 stiff pairs at v_conv 3-6 cm/yr (mean 4.7 / 4.6): at 2 Myr the slip rate
+  across the channel is 4.9 / 4.2 cm/yr (~v_conv) and the peak heating 34 / 44 uW/m3 -- no difference. By
+  10 Myr the weak-mantle slab sinks faster than the plate is fed: slab velocity 6.5 cm/yr at 40 and 80 km
+  (1.4 v_conv) vs 4.4 (0.95 v_conv) for stiff, the weak-mantle slab having steepened to 76 deg at 80 km
+  (stiff 46, initial ~51). Heating scales with slip^2, so peak H is 13.5 vs 4.7 uW/m3 and the integrated
+  channel heating 0.10 vs 0.05 W/m2 (also a slightly thinner crust channel: normal thickness 10.9 vs
+  12.6 km; both grew from ~4.5 km at 2 Myr). Net: a weak upper mantle lets the slab run ahead of v_conv
+  late in the run, which doubles the shear heating; strongest at 20-40 km where the slab-top T is set by
+  the channel and conduction into the static forearc rather than by wedge flow. Sanity: v_op next to the
+  channel is < 0.05 cm/yr in all cases (the OP is not dragged), OP-side viscosity 1e23 in both groups.
+- sh_pairs panel D now log-log with the least-squares power law when the control is v_conv and the effect is
+  one-signed: dT(80 km, 10 Myr) = 10.5 v_conv^1.41 C (r = 0.92, 98/98 pairs) -> 10 / 73 / 195 C at
+  1 / 4 / 8 cm/yr. Below the channel's v^2 because diffusion into wedge and slab has had 10 Myr to act
+  (the 2 Myr exponent is 2.5 at 80 km). dd100 panel D unchanged (age_OP control, mixed sign, linear axes).
+- **Physical basis of the v_conv exponent (PI question).** Joint log-log fit of dT (sh - const-vc) on 20-80 km,
+  all pairs: 2 Myr dT ~ v^2.08 z^-0.03 sin(dip)^0.44 (R2 0.81); 5 Myr v^1.53 z^0.62 (0.85); 10 Myr v^1.28 z^0.79
+  (0.88). Interpretation: the channel is a planar heat source q = tau dv = eta_c dv^2/h (W/m2). Early
+  (~2 Myr) the heat has nowhere to go but conduction into both walls -> dT ~ (q/k) sqrt(kappa t): v^2 and
+  no depth dependence, as observed. Once the slab-side boundary layer is established the heat is carried
+  away by the subducting plate and the interface temperature rise follows the Molnar & England (1990)
+  frictional-heating balance dT ~ (tau v / k) sqrt(kappa s / v) = tau v^1/2 s^1/2 with s = path length
+  from the trench: with the viscous channel tau ~ v this is v^3/2 s^1/2 -- the 5 Myr fit (v^1.53 z^0.62)
+  reproduces it almost exactly (a constant-friction channel, tau = mu' rho g z, would instead give
+  v^1/2 z^3/2, the test the mu05 pilot speaks to). By 10 Myr the exponent drifts to ~1.3 with z^0.8: the
+  ocrust channel has thickened (h ~4.5 -> 11-12 km at 40 km), lowering tau = eta v/h, and the
+  weak-mantle runs' slip excess adds scatter rather than slope; the shallow (20-40 km) points also keep
+  warming by conduction into the static forearc. So n ~ 1.4 at 80 km, 10 Myr is the viscous-channel
+  Molnar-England 3/2 slightly eroded by channel thickening.
+- sh_pairs panel D now shows the 2, 5 and 10 Myr pairs (time colours) with one fit each, legend gives n and r
+  per time: 2 Myr dT(80 km) = 0.6 v^2.46 C (r 0.88, 97 pairs), 5 Myr 3.1 v^2.04 (0.92), 10 Myr 10.5 v^1.41 (0.92). At 80 km the 5 Myr value is still the conductive
+  transient exponent (the 80 km slab top only sees the channel heat from ~2 Myr on), the 10 Myr one the
+  eroded Molnar-England 3/2. Colour-by-eta_UM dropped from D in scaling mode (fill encodes suite, colour
+  encodes time, as in A-C); dd100 D unchanged.

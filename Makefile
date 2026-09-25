@@ -6,7 +6,7 @@ SHELL := /bin/bash
         profile-pca-quality-report profile-pca-quality-check-gp-m25 \
         profile-pca-sweep profile-pca-sweep-summary \
         profile-pca-gp-tuning-sweep profile-pca-gp-tuning-summary sobol-sensitivity push-tacc \
-        pull-tacc rocks-plot emulator-summary-plot emulator-figures numerical-summary-plot
+        pull-tacc rocks-plot emulator-summary-plot emulator-figures numerical-summary-plot pairs-plot
 
 help:
 	@echo "Targets:"
@@ -40,6 +40,7 @@ help:
 	@echo "  emulator-summary-plot - 3-panel emulator validation + Sobol summary for SUITE (SUITE=const-vc)"
 	@echo "  emulator-figures    - multi-suite validation + Sobol-windows figures (SUITES=\"const-vc ramped-vc\")"
 	@echo "  numerical-summary-plot - six-panel numerical-model science summary (SUITES=\"const-vc ramped-vc\")"
+	@echo "  pairs-plot          - paired ablation-suite vs const-vc slab-top comparison (SUITE=const-vc-dd100|const-vc-sh [REF=const-vc] [DIP_MIN=35])"
 
 setup:
 	python3 -m venv env
@@ -99,6 +100,10 @@ emulator-figures:
 
 numerical-summary-plot:
 	env/bin/python src/science-numerical-mods/plot_suite_summary.py $(if $(SUITES),$(SUITES),const-vc ramped-vc)
+
+pairs-plot:
+	env/bin/python src/science-numerical-mods/compare_paired_suites.py $(if $(SUITE),$(SUITE),const-vc-dd100) \
+		$(if $(REF),--ref $(REF),) $(if $(DIP_MIN),--dip-min $(DIP_MIN),)
 
 env-status:
 	./dev-env.sh status
