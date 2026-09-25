@@ -67,7 +67,7 @@ KS = list(range(0, 21))
 TIMES = 0.5 * np.array(KS)
 ZVALID = 80.0          # the record must be finite on 0-80 km at every step to count as complete
 OUT_DIR = os.path.join(ROOT, "plots", "science-numerical-mods", SUITE_A)
-PARAM_LABEL = {"v_conv": "v$_{conv}$ (cm/yr)", "age_SP": "age$_{SP}$ (Myr)", "age_OP": "age$_{OP}$ (Myr)",
+PARAM_LABEL = {"v_conv": r"v$_{\mathrm{conv}}$ (cm/yr)", "age_SP": r"age$_{\mathrm{SP}}$ (Myr)", "age_OP": r"age$_{\mathrm{OP}}$ (Myr)",
                "dip_int": "dip (" + S.DEG + ")", "eta_UM": r"$\eta_{UM}$ (Pa s)"}
 
 
@@ -189,7 +189,7 @@ axA.set_ylim(ZMAX, 0); axA.set_yticks(np.arange(0, ZMAX + 1, 20))
 qlo = np.nanpercentile(DT[:, [1, 4, 10, 20], :], 25, axis=0); qhi = np.nanpercentile(DT[:, [1, 4, 10, 20], :], 75, axis=0)
 x0, x1 = min(0.0, np.nanmin(qlo)), max(0.0, np.nanmax(qhi)); pad = 0.12 * (x1 - x0)
 axA.set_xlim(x0 - pad, x1 + pad)
-axA.set_xlabel(r"$\Delta$T slab top, " + SHORT + r" $-$ " + SUITE_B + " (" + S.DEG + "C)")
+axA.set_xlabel(r"$\Delta$T slab top (" + S.DEG + "C)")        # sign convention (suite - reference) goes in the caption
 axA.set_ylabel("Depth (km)")
 subtitle = f"{len(pair_ids)} pairs" + (f"\ndip $\\geq$ {DIP_MIN:g}" + S.DEG if DIP_MIN is not None else "")
 axA.text(0.96, 0.04, subtitle, transform=axA.transAxes, fontsize=6.5, ha="right", va="bottom", color="0.25")
@@ -266,7 +266,7 @@ if scaling:
     for axis in (axD.xaxis, axD.yaxis):
         axis.set_minor_formatter(NullFormatter()); axis.set_minor_locator(NullLocator())
     axD.set_ylim(max(1.0, 0.7 * ymin), 1.3 * ymax)
-    fit_txt = r"$\Delta$T $\propto$ v$_{conv}^{\,n}$" + f"\n{ok.sum()} pairs"
+    fit_txt = r"$\Delta$T $\propto$ v$_{\mathrm{conv}}^{\,n}$" + f"\n{ok.sum()} pairs"
     axD.set_ylabel(r"$\Delta$T (" + f"{ZD:g} km) (" + S.DEG + "C)")
     S.outside_legend(axD, lines, 0.56, handlelength=2.2, title="time; log-log fit", title_fontsize=6.5)
 else:
