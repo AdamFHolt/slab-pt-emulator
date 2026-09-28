@@ -2083,3 +2083,56 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   transient exponent (the 80 km slab top only sees the channel heat from ~2 Myr on), the 10 Myr one the
   eroded Molnar-England 3/2. Colour-by-eta_UM dropped from D in scaling mode (fill encodes suite, colour
   encodes time, as in A-C); dd100 D unchanged.
+
+### dd100 final pull + extraction pass 3, resubmit list (2026-09-28)
+- Both suites pulled in parallel (PI, own terminal): `pull_runs_from_tacc.sh const-vc-dd100` (lists, 15:1x-15:44)
+  alongside `pull_runs_from_tacc.sh const-vc-sh -a` (still running at 16:00). No clash: different
+  scratch sources and local trees, ~700 GB free. TACC queue empty, so the local state is final.
+- dd100 now 326 run dirs, 309 complete through step 20 (290 of the 305 dip >= 35 list + the dip < 35
+  pilot runs). Extraction `extend_profiles_all-mods.sh const-vc-dd100 0:20 "1,10;1,20;10,20" 24`
+  (log `analysis/extend_pass3.log`) 15:45-16:01, 57 new runs, 0 errors -- record complete for 309/309.
+  Figures (`make rocks-plot` / `make pairs-plot SUITE=const-vc-dd100`) NOT yet regenerated on the 309.
+- 15 dd100 runs short of step 20 (last step): 308(2) 013(12) 028(2) 032(18) 067(1) 070(3) 109(8) 118(10)
+  171(4) 179(12) 252(8) 272(10) 273(3) 280(12) 376(4). Seven also fail in const-vc (013 067 070 272 273
+  280 376, similar death times -> hard parameter combos); the other eight completed in const-vc (luck).
+  const-vc's own failures 078 228 248 391 398 completed in dd100; 051 234 379 are dip < 35.
+  List in `const-vc-dd100/run-inputs/resubmit-list.2026-09-28.txt`, resubmitted by PI ~15:00 CDT.
+  Gotcha: `submit_from_list.sh` strips whole-line comments only -- a trailing `# (2)` made it skip
+  every row on the first try (fixed with sed on TACC; local file rewritten plain).
+  `Resume computation = auto` + checkpoints on scratch -> these resume from the last checkpoint.
+- Yield refresher: const-vc 385/400 complete, ramped-vc 491/500.
+- Resubmit outcome: 7 resumed fine (308 028 067 070 109 118 272); 8 (013 032 171 179 252 273 280 376) died
+  < 1 min after resume with the same deterministic failure as the first time -- `linear_solver_failed`
+  in the ocrust composition advection, retry with the other preconditioner also failed (run_013 at
+  t = 6.36 Myr, first step after resume dt 573 -> 5285 yr). Not a checkpoint problem. PI resubmitted the
+  8 with `CFL number` 0.25 -> 0.125 in the prm (original kept as prm.orig on TACC, resume from the
+  same checkpoint; Composition solver tolerance 1e-9 left alone as the second lever). All 15 running
+  as of ~15:30 CDT. Note for the record: the last 3-4 Myr of those 8 use CFL 0.125.
+- dd100 figures regenerated on the 309 (16:1x): `make rocks-plot SUITE=const-vc-dd100` -- 309 runs at every
+  time (308 at 3 Myr), rocks fractions inside / warmer: 35.8/8.9 (0.5 Myr), 79.7/16.3 (2), 69.1/30.9 (5),
+  52.0/48.0 (10 Myr), unchanged from the 252-run pass to 0.1 %. `compare_paired_suites.py const-vc-dd100
+  --refresh` (the npz record cache had to be rebuilt -- `make pairs-plot` alone silently reused the
+  251-run cache): 308 dd100 runs with the full record, 299 pairs (was 244). Median dT at 10 Myr
+  +0.4 / +2.5 / +5.4 / +13.0 / +36.8 C at 20/40/60/80/100 km; 0-80 km pooled mean +4.6, median |dT| 2.1,
+  p95 18.5 -- all within 0.6 C of the 244-pair numbers. Controls unchanged: age_OP (+0.66) then eta_UM.
+- **CFL rescue works** (PI, ~16:15): the 8 CFL-0.125 resumes all got past their failure step and are running
+  normally. TODO for the other suites: const-vc's 15 failures (013 051 067 070 078 228 234 248 272 273 280
+  376 379 391 398) and ramped-vc's 9 have never been resubmitted; try plain resume first, then CFL 0.125
+  for the deterministic ocrust-advection deaths. Same for anything const-vc-sh ends up short of.
+- const-vc-sh pull finished 16:14: 400/400 run dirs complete through step 20 (106 GB) -- nothing to
+  resubmit. Extraction pass 2 started 16:15 (`extend_profiles_all-mods.sh const-vc-sh 0:20
+  "1,10;1,20;10,20" 24`, log `const-vc-sh/analysis/extend_pass2.log`, 296 new runs).
+- const-vc-sh extraction pass 2 done 17:25 (70 min, 24-way): 400/400 runs with the full 0-20 record, 0 errors.
+  Figures regenerated on the 400 (17:2x), record caches refreshed (`--refresh` on compare_paired_suites.py
+  and plot_suite_summary.py; the make targets alone reuse the 104-run npz):
+  - rocks (`make rocks-plot SUITE=const-vc-sh`): 400 at every time; inside / warmer than model range
+    33.3/8.9 (0.5 Myr), 44.7/16.3 (2), 65.0/30.1 (5), 55.3/44.7 (10 Myr).
+  - sh_pairs: 384 pairs (was 98), all dips. Median dT (sh - const-vc) at 10 Myr +34 / +53 / +72 / +91 / +99 C
+    at 20/40/60/80/100 km; pooled 0-80 km mean +57.6 C, p95 150 -- within a few C of the 98-pair numbers.
+    Spearman with v_conv +0.90 (40 km) / +0.92 (80 km) / +0.80 (100 km); eta_UM -0.33 at 40 km.
+    Panel D fits at 80 km: 2 Myr 0.5 v^2.65 (r 0.89), 5 Myr 3.8 v^1.98 (0.89), 10 Myr 12.5 v^1.34 (0.92)
+    -- the 98-pair exponents (2.46 / 2.04 / 1.41) hold.
+  - suite_summary const-vc vs const-vc-sh: sh T(40 km) median 634 -> 269 C over 0.5-10 Myr (const-vc
+    605 -> 205); sh 10 Myr band 49 C vs const-vc 74 C at 40 km; cooling rate 0.5-5 Myr at 40 km 63 vs 70 C/Myr.
+- Suite status end of day: const-vc 385/400, ramped-vc 491/500, dd100 309 (+15 rerunning on TACC, 8 with
+  CFL 0.125), const-vc-sh 400/400. sh emulator work no longer blocked on run count.
