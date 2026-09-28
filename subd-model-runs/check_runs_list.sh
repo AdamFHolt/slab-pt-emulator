@@ -13,6 +13,8 @@
 #   TARGET_STEP  zero-padded solution step that marks "done" (00020 = 10 Myr at 0.5 Myr output)
 #   -p           problems only (suppress OK rows), like the original check_runs.sh
 #   BASE_DIR     env override for the outputs root (default $SCRATCH/aspect_work)
+#   OUTPUTS_DIR  env override for the outputs directory itself (default $BASE_DIR/outputs), e.g.
+#                OUTPUTS_DIR=$SCRATCH/aspect_work/outputs/const-v2 for the moved const-vc outputs
 #
 # Status per run:
 #   OK               solution-<TARGET_STEP>.pvtu present
@@ -32,8 +34,9 @@ for a in "$@"; do
   esac
 done
 [[ -f "$LIST" ]] || { echo "No list file: $LIST"; exit 1; }
-[[ -d "$BASE/outputs" ]] || { echo "No outputs dir at $BASE/outputs (set BASE_DIR)"; exit 1; }
-echo "outputs root: $BASE   target step: $TARGET_STEP"
+OUTPUTS="${OUTPUTS_DIR:-$BASE/outputs}"
+[[ -d "$OUTPUTS" ]] || { echo "No outputs dir at $OUTPUTS (set BASE_DIR or OUTPUTS_DIR)"; exit 1; }
+echo "outputs dir: $OUTPUTS   target step: $TARGET_STEP"
 
 printf "%-10s %-16s %-14s %s\n" "RUN" "STATUS" "MAX_PVTU_STEP" "SOLUTION_DIR"
 shopt -s nullglob
@@ -45,7 +48,7 @@ while IFS= read -r raw || [[ -n "${raw:-}" ]]; do
   [[ "$line" =~ ^[0-9]+$ ]] || { echo "SKIP: not a number: '$line'"; continue; }
   run="$(printf 'run_%03d' "$((10#$line))")"
   n_all=$((n_all + 1))
-  run_dir="$BASE/outputs/$run"
+  run_dir="$OUTPUTS/$run"
   sol="$run_dir/solution"
 
   if [[ ! -d "$run_dir" ]]; then

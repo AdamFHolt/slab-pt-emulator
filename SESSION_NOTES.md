@@ -2136,3 +2136,84 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
     605 -> 205); sh 10 Myr band 49 C vs const-vc 74 C at 40 km; cooling rate 0.5-5 Myr at 40 km 63 vs 70 C/Myr.
 - Suite status end of day: const-vc 385/400, ramped-vc 491/500, dd100 309 (+15 rerunning on TACC, 8 with
   CFL 0.125), const-vc-sh 400/400. sh emulator work no longer blocked on run count.
+
+### Why const-vc-sh went 400/400: ASPECT 3.0 caps dt growth; const-vc/ramped-vc resubmits prepared (2026-09-28, evening)
+- Diagnosis from the ASPECT-written `parameters.prm` of run_013 in both suites: 3.0 defaults `Maximum
+  relative increase in time step = 91` (dt may grow <= 1.91x per step); 2.5 leaves it unlimited
+  (2147483647). The sh template never sets it, so the sh suite inherited the cap. 3.0 also defaults
+  `Nonlinear solver failure strategy = continue with next timestep` (every sh log ends with a
+  "nonlinear solver failures occurred" warning, 1601 in total over the 400 runs) -- effectively 2.5's
+  silent continue-on-max-iterations, not a new rescue.
+- The 2.5 deaths carry the dt-jump signature: after a refinement-triggered tiny step the CFL dt rebounds in
+  one jump and the ocrust composition advection solve dies on it. const-vc run_013: dt 415 -> 3264 -> 5215 yr,
+  dead at step 1377 (4.26 Myr). Max step-to-step dt ratio within the last 5 steps: const-vc 10 of 15
+  failures at 7.7-10.5x (013 067 078 234 273 280 376 379 391 398; the other five 051 070 228 248 272 have
+  no jump, a different death); ramped-vc 6 of 9 at 7.8-13x (029 033 047 246 453 468; not 179 353 475).
+  The dd100 resume deaths were the same jump (573 -> 5285 yr on the first step after restart). No sh run
+  ever exceeded 1.91x (run_013 hit the cap 345 of 3544 steps). The CFL-halving rescue is the blunt form
+  of the same lever.
+- ramped-vc run_356 stopped at 10.06 Myr but has step 20, so it counts as complete: 9 ramped failures,
+  15 const-vc. Lists: `const-vc/run-inputs/resubmit-list.2026-09-28.txt`,
+  `ramped-vc/run-inputs/resubmit-list.2026-09-28.txt`.
+- PI moved the finished 2.5 outputs on scratch: `$SCRATCH/aspect_work/outputs/const-v2/run_XXX` and
+  `.../outputs/ramped-v2/run_XXX` (dd100's 15 reruns occupy `outputs/run_XXX`, 7 of them the same numbers
+  as const-vc failures). So the resumes need the prm's `Output directory` repointed, and the checkpoints
+  (restart.*) must be in the moved dirs -- they were never pulled locally.
+- New `subd-model-runs/prep_resubmit_dtcap.sh SUITE_DIR OUT_SUBDIR LIST [-n]` (runs on Stampede3 from
+  production-runs_v2/): per run keeps `run_XXX.prm.orig`, sets `Output directory = outputs/OUT_SUBDIR/run_XXX`,
+  adds `set Maximum relative increase in time step = 91` after the CFL line (idempotent), and checks
+  `restart.mesh` exists in the moved dir. Tested on a mock of the TACC layout (dry run, edit, re-run
+  no-op, .orig byte-identical to the local prm). Applied to all 24, not only the dt-jump ones: the cap is
+  inert on a run that never jumps, and one recipe for every rescued run is easier to document. Note for
+  the record: these 24 runs carry the cap for their remaining 0.3-9 Myr; everything else in const-vc /
+  ramped-vc ran uncapped.
+- Helpers updated for the moved layout: `pull_runs_from_tacc.sh` defaults const-vc -> outputs/const-v2 and
+  ramped-vc -> outputs/ramped-v2; `check_runs.sh` / `check_runs_list.sh` take `OUTPUTS_DIR=` (the outputs
+  directory itself) in addition to `BASE_DIR`.
+- Not yet done: the prep script and the two lists still have to be copied to TACC, run, and the lists fed to
+  `submit_from_list.sh` (from const-vc-new/ and ramped-vc-new/). Same-number job names (`run_013` etc.)
+  collide with the dd100 reruns only cosmetically, and the staged `$SCRATCH/aspect_work/run_XXX.prm` copy
+  is only a problem if a dd100 job of the same number were still PENDING when the const-vc job starts --
+  check `squeue -u adamholt` first. The feeder's throttle (30 on `run_XXX` names) counts dd100's jobs too.
+- **Submitted** (PI, ~17:05-17:15 CDT): prep script run on TACC for both suites, all 24 resubmits in the skx
+  queue (const-vc 15 via the feeder; ramped-vc 5 via the feeder, then 353 453 468 475 with THROTTLE=40 after
+  the 30-job default throttle stalled on the 10 dd100 jobs still running -- 34 < the skx limit of 40).
+  Watch: the deterministic ones (const-vc 013 067 078 234 273 280 376 379 391 398, ramped-vc 029 033 047
+  246 453 468) must get past their old death step within the first minutes; fallback is CFL 0.125 on top.
+- **Resubmit went wrong (17:15-17:45)**: the prep script was only dry-run, never applied (no .prm.orig, prms
+  still `outputs/run_XXX`, no cap), and the lists were submitted anyway. Ramped-vc 029 033 047 179 246 353
+  therefore resumed the dd100 checkpoints in the shared `outputs/run_XXX` (at 10.46 Myr), ran 32 steps of
+  ramped physics on a dd100 state and exited 0 at 10.5 Myr -- **dd100 outputs/run_{029,033,047,179,246,353}
+  on TACC are contaminated at step 21 (statistics/log.txt appended, solution-00021 rewritten)**; the local
+  dd100 record (steps 0-20, pulled 2026-09-28 15:45) is unaffected. Do NOT re-pull dd100 with the default
+  lists; pull the resubmit list only. Ramped 453 468 475 (no dd100 twin) started from t=0 uncapped in
+  outputs/run_XXX; const-vc's 15 were still pending -> all cancelled by job id (never `scancel -n run_XXX`:
+  dd100 jobs share the names).
+- Root problem: the moved `outputs/ramped-v2/run_XXX` (Dec 2025) keep only restart.mesh.info /
+  restart.resume.z; restart.mesh + restart.mesh_fixed.data are gone (scratch purge, presumably), so no
+  resume is possible -- the 2.5 failures must be RERUN FROM t=0 with the cap. const-v2 being checked.
+  `prep_resubmit_dtcap.sh` gained `--fresh` (moves a checkpoint-less run dir to run_XXX.dead-<date> so the
+  fresh run starts clean in outputs/OUT_SUBDIR/run_XXX) and now says loudly when a dry run or warnings mean
+  the prms are not ready. Tested on the mock again.
+- Contamination check (17:50): run_179 (a dd100 CFL rerun, finished ~16:09, not yet pulled) also got 9 ramped
+  steps (10.49 -> 10.5 Myr) and a rewritten step 21; its step 20 (16:09) is the dd100 rerun's own. Verdict: all
+  six dd100 dirs (029 033 047 179 246 353) are intact through step 20; their solution-00021* files on TACC
+  were renamed `*.contaminated-ramped` so no pull can fetch them (they show as "no step 21" in the pull
+  count; the local step-21 copies of 029 033 047 246 353 are the good ones). run_179's TACC statistics
+  carries 9 wrong tail rows past 10.49 Myr; nothing in the record reads statistics. Local dd100 record and
+  figures (steps 0-20, pulled 15:45) unaffected.
+- Both suites' rescues are from t=0: const-v2 has no restart.mesh_fixed.data for any of the 15 either. PI
+  cancelled all 24 wrong submissions by job id (only the 10 dd100 jobs remain). Next: scp the updated
+  prep script, `prep_resubmit_dtcap.sh <suite> <sub> <list> -n --fresh` for both suites, then without -n,
+  verify .prm.orig + the two edited lines, then `THROTTLE=40 ./submit_from_list.sh` per suite. ramped-vc's
+  run_one.slurm is 10 h (const-vc-new's on TACC is 20 h, unlike the local copy) -> resubmit the ramped list
+  once more after wallclock; they resume from their own checkpoint in ramped-v2.
+- **Reruns submitted properly (17:28-17:29 CDT)**: prep script applied for real (`--fresh`, .prm.orig kept, 15 +
+  9 dead dirs moved to run_XXX.dead-2026-09-28, prms verified: Output directory outputs/{const,ramped}-v2/run_XXX
+  + cap 91). Jobs 3547644-3547661 (const-vc 15, 20 h limit, waiting for nodes behind the 10 dd100 jobs) and
+  3547662-3547673 (ramped-vc 9, 10 h limit, running). All 24 run from t=0 with the cap for the whole run.
+  Follow-ups: (1) after ~10 min confirm `ramped-v2/run_029/log.txt` is fresh and dt ratios <= 1.91;
+  (2) the ramped 9 will hit the 10 h wallclock short of 10.5 Myr -> resubmit the same list from ramped-vc-new
+  (THROTTLE=40), they resume from their own checkpoints in ramped-v2; (3) pull const-vc / ramped-vc with the
+  updated defaults (v2 dirs), dd100 with its resubmit list only; (4) leftover uncapped partial dirs
+  outputs/run_{453,468,475} from the cancelled jobs can be deleted.

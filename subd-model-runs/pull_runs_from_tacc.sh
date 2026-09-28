@@ -43,10 +43,14 @@ done
 TACC_USER="${TACC_USER:-adamholt}"
 TACC_HOST="${TACC_HOST:-stampede3.tacc.utexas.edu}"
 # Outputs root on scratch.  The 2.5 suites (const-vc, ramped-vc, dd100) all ran in
-# $SCRATCH/aspect_work/ and share its outputs/; the 3.0 suites have their own workspace
+# $SCRATCH/aspect_work/ and shared its outputs/ while running; the 3.0 suites have their own workspace
 # $SCRATCH/aspect_work/<suite>/ (see run_one.slurm there), so their outputs/ holds one suite only.
+# Since 2026-09-28 the finished const-vc and ramped-vc outputs live in their own subdirectories of that
+# shared outputs/ (moved by the PI so dd100's reruns and the 2026-09-28 resubmits cannot collide).
 case "$SUITE" in
   const-vc-sh|const-vc-v3ctrl|const-vc-sh-mu05) DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/$SUITE/outputs" ;;
+  const-vc)                    DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/outputs/const-v2" ;;
+  ramped-vc)                   DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/outputs/ramped-v2" ;;
   *)                           DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/outputs" ;;
 esac
 TACC_OUT="${TACC_OUT:-$DEFAULT_OUT}"
