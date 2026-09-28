@@ -2217,3 +2217,7 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   (THROTTLE=40), they resume from their own checkpoints in ramped-v2; (3) pull const-vc / ramped-vc with the
   updated defaults (v2 dirs), dd100 with its resubmit list only; (4) leftover uncapped partial dirs
   outputs/run_{453,468,475} from the cancelled jobs can be deleted.
+- 17:50: the const-vc 15 sat in WaitNod (20 h limit does not backfill; the 10 h ramped jobs did). PI cancelled
+  them by id and resubmitted with `SBATCH_TIMELIMIT=10:00:00 THROTTLE=40 ./submit_from_list.sh` (env var
+  overrides the batch script's #SBATCH -t). So ALL 24 reruns are 10 h jobs: tomorrow resubmit BOTH lists
+  once more (same command, THROTTLE=40) to carry them from their wallclock checkpoints to 10.5 Myr.
