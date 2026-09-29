@@ -98,7 +98,7 @@ def main() -> int:
     noise_lows = [float(x) for x in _items(args.noise_lows)]
 
     for suite in suites:
-        if suite not in {"const-vc", "ramped-vc"}:
+        if suite not in {"const-vc", "ramped-vc", "const-vc-sh", "const-vc-dd100"}:
             raise ValueError("suites must contain only 'const-vc' or 'ramped-vc'")
     for kernel in kernels:
         if kernel not in {"matern25", "matern15", "rbf"}:

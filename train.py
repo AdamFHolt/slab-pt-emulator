@@ -145,8 +145,8 @@ def main() -> int:
     cfg = _load_config((REPO_ROOT / args.config).resolve() if not Path(args.config).is_absolute() else Path(args.config))
 
     suite = str(cfg.get("suite", "const-vc")).strip()
-    if suite not in {"const-vc", "ramped-vc"}:
-        raise ValueError("suite must be 'const-vc' or 'ramped-vc'.")
+    if suite not in {"const-vc", "ramped-vc", "const-vc-sh", "const-vc-dd100"}:
+        raise ValueError("suite must be 'const-vc', 'ramped-vc', 'const-vc-sh' or 'const-vc-dd100'.")
 
     data_root = Path(cfg.get("data_root", "src/emulator/data/single_depth")).resolve()
     out_root = Path(cfg.get("out_root", "src/emulator/models/single_depth")).resolve()

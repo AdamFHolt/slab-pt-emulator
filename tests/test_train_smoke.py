@@ -321,7 +321,7 @@ class TrainConfigSmokeTests(unittest.TestCase):
                 check=False,
             )
             self.assertNotEqual(0, proc.returncode)
-            self.assertIn("suite must be 'const-vc' or 'ramped-vc'.", proc.stderr)
+            self.assertIn("suite must be 'const-vc', 'ramped-vc', 'const-vc-sh' or 'const-vc-dd100'.", proc.stderr)
         finally:
             cfg_path.unlink(missing_ok=True)
 

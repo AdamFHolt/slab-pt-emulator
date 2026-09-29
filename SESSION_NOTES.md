@@ -2325,3 +2325,24 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   sweep script has no run filter; exploratory anyway). Expectation stated to the PI: the dd100 emulator will be
   indistinguishable from const-vc's at <= 80 km (median pair dT 2 C at 40 km); its information is at 85-100 km
   and in the 5-10 Myr window. Redo with the same command once the last 10 dd100 runs land.
+- **Phase A done 12:50** (2 h 44 min; stages: fits 11 min, Sobol 5, sd-plots 11, pca-default 22, 10 Myr series 30 for
+  both suites, sweeps + ramped GP tuning 77 (!), science/QC/figures/tests 7; 28 unit tests pass, 0 stage failures).
+  Single-depth val (0.5-5 Myr dTdt) vs last week's baselines: const-vc R2 0.996/0.969/0.982/0.924 at 10/40/80/100 km
+  (was 0.997/0.974/0.971/0.913), RMSE 0.26/2.13/3.90/10.5 C/Myr (was 0.21/1.92/5.06/10.1); ramped-vc 0.999/0.992/
+  0.983/0.955 (was 0.998/0.995/0.969/0.950), RMSE 0.19/1.67/4.46/8.87 (was 0.20/1.42/6.45/10.1). So: deep models
+  (80-100 km) improved with the extra runs, shallow ones a hair worse (the 15 added const-vc runs are the hard
+  parameter corners). 10 Myr profile-PCA series val profile RMSE at 0.5/3/5/10 Myr: const-vc 4.6/9.0/7.6/8.7 C
+  (60 val runs), ramped-vc 2.8/8.0/8.6/7.4 C (69). Sobol ST(age_OP)-vs-ST(v_conv) crossover (0.5-5 / 0.5-10 /
+  5-10 Myr): const-vc 53 / 40 / 40 km, ramped-vc 45 / 10 / 21 km (+ the matched-run control = default now).
+  PCA sweep best: ramped-vc k10 whitened, val profile RMSE 8.04 C (p95 16.9).
+  Gate misses (both marginal, both const-vc, thresholds seeded from the 384-run fits): 10km_dTdt RMSE 0.262 vs
+  0.260 limit (R2 0.996, MAE inside); profileT_pca_t3Myr_k10 score-space macro R2 0.453 vs 0.465 (profile RMSE
+  9.0 vs 11.45 limit, p95 18.6 vs 22.9). Suggested to the PI: re-seed both suites' gates from today's fits with
+  the same slack rule at the end; not done yet.
+- **Phase B false start 12:50-12:52**: `train.py` has its own whitelist (`suite must be 'const-vc' or 'ramped-vc'`,
+  missed by the argparse-choices grep) -> all 70 sh single-depth fits failed in seconds, Sobol/plots/PCA training
+  cascaded on missing models. Killed; whitelist widened in train.py (+ the message in tests/test_train_smoke.py) and
+  in run_profile_pca_gp_tuning_sweep.py; 17 train smoke tests pass; `train.py --config configs/gp.const-vc-sh.yaml
+  --dry-run` accepted. Relaunched 12:52 as one chain (scratchpad `rebuild_full_v2.sh`): const-vc-sh (all stages) then
+  const-vc-dd100 (no sweeps); log `rebuild-2026-09-29/driver_sh_dd100.log`. The sd-train summary now goes to
+  `sd_train_summary_<suite>.log` (the phase-A one was overwritten by the false start).
