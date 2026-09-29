@@ -40,9 +40,9 @@ def _load_params(params_path: Path) -> pd.DataFrame:
 
 
 def _default_feature_cols(suite: str) -> list[str]:
-    if suite == "const-vc":
-        return ["v_conv", "age_SP", "age_OP", "dip_int", "eta_UM"]
-    return ["v_conv", "t_conv", "age_SP", "age_OP", "dip_int", "eta_UM"]
+    if suite == "ramped-vc":  # the only suite with a ramp time
+        return ["v_conv", "t_conv", "age_SP", "age_OP", "dip_int", "eta_UM"]
+    return ["v_conv", "age_SP", "age_OP", "dip_int", "eta_UM"]  # const-vc, const-vc-sh, const-vc-dd100
 
 
 def _read_profile_file(path: Path) -> tuple[float, np.ndarray, np.ndarray]:
@@ -187,7 +187,7 @@ def _split_indices(n_rows: int, val_frac: float, seed: int) -> tuple[np.ndarray,
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Build profile-PCA emulator datasets from Tprof per-run outputs.")
-    ap.add_argument("--suite", choices=["const-vc", "ramped-vc"], required=True)
+    ap.add_argument("--suite", choices=["const-vc", "ramped-vc", "const-vc-sh", "const-vc-dd100"], required=True)
     ap.add_argument("--analysis-root", default=None,
                     help="Path to suite analysis dir containing run_*/Tprof_*.csv. Defaults to subd-model-runs/<suite>/analysis.")
     ap.add_argument("--params", default=None,

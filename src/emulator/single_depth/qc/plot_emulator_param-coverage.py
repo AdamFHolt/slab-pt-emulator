@@ -241,7 +241,7 @@ def main():
     p.add_argument("--models-root", default=str(Path(__file__).parent.parent / "models" / "single_depth"),
                    help="Root containing suite folders (e.g., ./models)")
 
-    p.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc"])
+    p.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc", "const-vc-sh", "const-vc-dd100"])
     p.add_argument("--variant", required=True,
                    help="Dataset variant suffix after '<depth>km_' (e.g., dTdt, dTdt_thermalParam)")
     p.add_argument("--algo", default="gp_rbf",

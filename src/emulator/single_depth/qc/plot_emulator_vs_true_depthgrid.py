@@ -110,7 +110,7 @@ def main():
                    help="Root containing suite folders (e.g., ./models)")
 
     # which suite/model variant
-    p.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc"])
+    p.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc", "const-vc-sh", "const-vc-dd100"])
     p.add_argument("--variant", default="dTdt",
                    help="Dataset variant suffix after '<depth>km_' (e.g., dTdt, dTdt_thermalParam, dTdt_thermalParam_etaRatio)")
     p.add_argument("--algo", default="gp_rbf",

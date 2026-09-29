@@ -1,0 +1,33 @@
+# const-vc-dd100 emulators are trained on the dip_int >= 35 runs only (the suite was run for those; the 4 low-dip
+# pilot runs are NaN-ed out of the master tables / excluded from the profile run lists). 314 runs on 2026-09-29.
+suite: const-vc-dd100
+
+# These point to folder roots that contain suite subfolders.
+data_root: src/emulator/data/profile_pca
+out_root: src/emulator/models/profile_pca
+
+dataset:
+  subdir: runs
+  # profile-pca: discover profile PCA dataset folders in data_root/<suite>.
+  mode: profile-pca
+
+  # Optional regex filter applied to discovered profile-PCA folders.
+  # Examples:
+  # pattern: "t5"
+  # pattern: "fixed-time"
+
+model:
+  subdir: runs
+  type: gp
+  seed: 42
+  kernel: matern25
+  gp_restarts: 25
+  ls_init: 1.0
+  ls_bounds: [1e-3, 1e3]
+  noise_init: 3e-3
+  noise_bounds: [1e-8, 1.0]
+  alpha: 1e-6
+
+execution:
+  fail_fast: true
+  dry_run: false

@@ -2287,3 +2287,41 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   32.5/64.2/74.8/56.1 % at 0.5/2/5/10 Myr), dd100 314 -- all within 0.1-1 % of before.
 - Not committed yet (PI to decide): SESSION_NOTES, prep_resubmit_dtcap.sh, the regenerated figures/masters,
   the new dd100 list.
+
+### Emulator rebuild on the full const-vc / ramped-vc sets + first const-vc-sh emulators (2026-09-29, from 10:06)
+- PI decision: rebuild the const-vc and ramped-vc emulators on the complete records (400 / 500 runs; the
+  models so far were 384 / 491) and build the const-vc-sh emulators.
+- Driver: scratchpad `rebuild_full.sh` (SUITES env + stages), a generalisation of the 2026-09-17 `rebuild_z100.sh`:
+  masters, sd-preprocess (5-100 km dTdt + thermalParam, dt1-20 / dt10-20 windows per suite, dt1-10m for const-vc),
+  sd-train (P=40), sobol (+ windows + sobol_windows_summary.csv per suite), sd-plots (+ quality gate), pca-default
+  (t 0.5-5 Myr k10 whitened + k8 raw, qc, quality report/gate), pca-10myr (run_10myr_series.sh on
+  worklist_full_depth.txt, 20-way), pca-sweeps (k 4-10 raw/whitened; gp tuning for ramped-vc), pca-science,
+  num-qc (make_all_plots.sh + pairplots; clusters + heatmaps for const-vc), figures (plot_emulator_validation,
+  plot_sobol_windows, plot_emulator_validation_sobol), tests. Logs in scratchpad `rebuild-2026-09-29/`.
+  Phase A = `SUITES="const-vc ramped-vc"` started 10:06; phase B = `SUITES=const-vc-sh` queued to start when A exits.
+- `master_DT1-10.matched385.csv` (const-vc 0.5-5 Myr window on the runs reaching step 20, the Sobol matched-run
+  control) is regenerated from `logs-extend/worklist.txt`, which now holds all 400 -> it is a copy of
+  master_DT1-10.csv and the dt1-10m products duplicate the default window. Kept so nothing downstream breaks;
+  the name is now historical.
+- const-vc-sh enablement (code): the 11 `--suite` argparse `choices=["const-vc", "ramped-vc"]` in src/emulator
+  now also accept const-vc-sh and const-vc-dd100; `preprocess_single_depth_training.py` and
+  `preprocess_profile_pca.py` picked the 6-parameter (t_conv) feature set for every suite other than const-vc --
+  now only ramped-vc gets t_conv, everything else the 5-parameter design; `run_profile_pca_sweep.py` suite check
+  widened. New configs `gp.const-vc-sh{,.profile-pca,.dt1-20,.dt10-20,.profile-pca.10myr}.yaml` = the const-vc
+  ones with the suite renamed (Matern 5/2, 25 restarts, seed 42). emu_style already knew const-vc-sh.
+  sh masters built (400/400 for 1-10, 1-20, 10-20), `worklist_full_depth.txt` = 400 (all finite on 0-80 km at
+  steps 1-20). Smoke tests: 40 km dTdt dataset 340/60, profile-PCA t=3 k=10 400 rows, 0-80 km, k=10.
+- Quality gates (`configs/emulator-quality.gp_m25.yaml`, `configs/profile-pca-quality.gp_m25.yaml`) have no
+  const-vc-sh entries: the validators iterate over the suites IN the yaml, so sh is simply not gated yet. Seed sh
+  thresholds from its first report baselines with the same rule (r2 - 0.01, rmse x1.25, mae x1.25) once trained.
+- PI: also build a const-vc-dd100 emulator (queued as phase C behind sh, via scratchpad `rebuild_full_v2.sh`,
+  a copy of the driver that (a) NaN-s the 4 low-dip pilot runs (038 039 090 343) out of the dd100 masters
+  after `build_master_dt.py`, so the single-depth datasets (drop NaN rows) and the Sobol bounds (training-data
+  quantiles) see a clean dip_int >= 35 domain, and (b) calls `preprocess_profile_pca.py` directly with
+  `--runs-file logs-extend/worklist_full_depth.txt` instead of `make profile-pca-preprocess`, for the same
+  reason). dd100 worklist_full_depth = 309 (dip >= 35, Tprof 1-20 finite on 0-80 km; run_004 fails as in
+  const-vc). Configs `gp.const-vc-dd100{,.profile-pca,.dt1-20,.dt10-20,.profile-pca.10myr}.yaml` cloned from
+  const-vc with a header noting the dip >= 35 domain and the 314-run state. No PCA sweeps for dd100 (the
+  sweep script has no run filter; exploratory anyway). Expectation stated to the PI: the dd100 emulator will be
+  indistinguishable from const-vc's at <= 80 km (median pair dT 2 C at 40 km); its information is at 85-100 km
+  and in the 5-10 Myr window. Redo with the same command once the last 10 dd100 runs land.

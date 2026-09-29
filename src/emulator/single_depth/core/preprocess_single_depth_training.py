@@ -182,10 +182,10 @@ def main():
                         help="If set, filter hierarchical master to this depth_km.")
     args = parser.parse_args()
 
-    if args.suite == "const-vc":
-        DEFAULT_PARAM_COLS = ["v_conv", "age_SP", "age_OP", "dip_int", "eta_UM"]
-    else:  # ramped-vc
+    if args.suite == "ramped-vc":  # the only suite with a ramp time
         DEFAULT_PARAM_COLS = ["v_conv", "t_conv", "age_SP", "age_OP", "dip_int", "eta_UM"]
+    else:  # const-vc and its paired variants (const-vc-sh, const-vc-dd100) share the 5-parameter design
+        DEFAULT_PARAM_COLS = ["v_conv", "age_SP", "age_OP", "dip_int", "eta_UM"]
 
     # Resolve root and important paths
     repo_root = _resolve_root(os.environ.get(args.root_env))

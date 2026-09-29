@@ -167,7 +167,7 @@ def _scatter(df: pd.DataFrame, title: str, outpath: Path):
 
 def main():
     p = argparse.ArgumentParser(description="Compare param-sweep fits for one dataset.")
-    p.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc"])
+    p.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc", "const-vc-sh", "const-vc-dd100"])
     p.add_argument("--data-name", required=True,
                    help="Dataset folder name, e.g. 40km_dTdt or 40km_dTdt_thermalParam")
     p.add_argument("--sweep-root", default=str(Path("src/emulator/models/single_depth")),

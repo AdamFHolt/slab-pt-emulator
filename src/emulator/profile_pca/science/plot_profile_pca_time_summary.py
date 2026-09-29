@@ -61,7 +61,7 @@ def _predict_raw_scores(model, X_std: np.ndarray, y_mu: np.ndarray, y_sd: np.nda
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Summarize profile-PCA time evolution for one suite.")
-    ap.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc"])
+    ap.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc", "const-vc-sh", "const-vc-dd100"])
     ap.add_argument("--data-root", default=str(REPO_ROOT / "src" / "emulator" / "data" / "profile_pca"))
     ap.add_argument("--models-root", default=str(REPO_ROOT / "src" / "emulator" / "models" / "profile_pca"))
     ap.add_argument("--model-tag", default="gp_m25")

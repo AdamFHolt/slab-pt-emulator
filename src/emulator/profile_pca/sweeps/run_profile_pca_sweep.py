@@ -64,7 +64,7 @@ def _iter_jobs(
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Run a profile-PCA sweep over k and score-space choices.")
-    ap.add_argument("--suites", default="const-vc,ramped-vc", help="Comma-separated suite list.")
+    ap.add_argument("--suites", default="const-vc,ramped-vc", help="Comma-separated suite list (const-vc, ramped-vc, const-vc-sh, const-vc-dd100).")
     ap.add_argument("--times", default="3", help="Comma-separated target times in Myr.")
     ap.add_argument("--ks", default="4,6,8,10", help="Comma-separated PCA component counts.")
     ap.add_argument("--score-spaces", default="raw,whitened", help="Comma-separated score-space choices.")
@@ -86,8 +86,8 @@ def main() -> int:
         if step not in {"preprocess", "train", "evaluate"}:
             raise ValueError("steps must be chosen from: preprocess, train, evaluate")
     for suite in suites:
-        if suite not in {"const-vc", "ramped-vc"}:
-            raise ValueError("suites must contain only 'const-vc' or 'ramped-vc'")
+        if suite not in {"const-vc", "ramped-vc", "const-vc-sh", "const-vc-dd100"}:
+            raise ValueError("suites must be const-vc, ramped-vc, const-vc-sh or const-vc-dd100")
     for score_space in score_spaces:
         if score_space not in {"raw", "whitened"}:
             raise ValueError("score-spaces must contain only 'raw' or 'whitened'")

@@ -113,7 +113,7 @@ def _load_time_panel(
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Plot depth-dependent profile-PCA sensitivity for one trained dataset.")
-    ap.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc"])
+    ap.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc", "const-vc-sh", "const-vc-dd100"])
     ap.add_argument("--time", type=float, default=3.0, help="Target time in Myr.")
     ap.add_argument("--times", default=None, help="Optional space- or comma-separated times in Myr for multi-panel output.")
     ap.add_argument("--k", type=int, default=10)

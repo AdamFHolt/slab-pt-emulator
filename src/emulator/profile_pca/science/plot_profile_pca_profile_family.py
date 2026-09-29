@@ -114,7 +114,7 @@ def _load_profiles(
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Plot low/median/high profile families for one key parameter across profile-PCA times.")
-    ap.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc"])
+    ap.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc", "const-vc-sh", "const-vc-dd100"])
     ap.add_argument("--times", default="0.5 3 5", help="Space- or comma-separated times in Myr.")
     ap.add_argument("--feature", default="v_conv")
     ap.add_argument("--k", type=int, default=10)

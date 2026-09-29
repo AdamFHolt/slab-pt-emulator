@@ -415,7 +415,7 @@ def _build_default_basename(
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Compute a burial/exhumation depth-temperature-time path from profile-PCA emulators.")
-    ap.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc"])
+    ap.add_argument("--suite", required=True, choices=["const-vc", "ramped-vc", "const-vc-sh", "const-vc-dd100"])
     ap.add_argument("--k", type=int, default=10)
     ap.add_argument("--model-tag", default="gp_m25")
     ap.add_argument("--start-time-myr", type=float, default=0.5, help="Burial start time in Myr.")
