@@ -2333,7 +2333,9 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   (80-100 km) improved with the extra runs, shallow ones a hair worse (the 15 added const-vc runs are the hard
   parameter corners). 10 Myr profile-PCA series val profile RMSE at 0.5/3/5/10 Myr: const-vc 4.6/9.0/7.6/8.7 C
   (60 val runs), ramped-vc 2.8/8.0/8.6/7.4 C (69). Sobol ST(age_OP)-vs-ST(v_conv) crossover (0.5-5 / 0.5-10 /
-  5-10 Myr): const-vc 53 / 40 / 40 km, ramped-vc 45 / 10 / 21 km (+ the matched-run control = default now).
+  5-10 Myr): const-vc 40 / 53 / none, ramped-vc 10 and 21 / 7 and 45 / none km (the summary log lists windows
+  alphabetically -- an earlier reading of this line, also in commit 7d0ced3f's message, had the const-vc windows
+  swapped; the matched-run control = the default now).
   PCA sweep best: ramped-vc k10 whitened, val profile RMSE 8.04 C (p95 16.9).
   Gate misses (both marginal, both const-vc, thresholds seeded from the 384-run fits): 10km_dTdt RMSE 0.262 vs
   0.260 limit (R2 0.996, MAE inside); profileT_pca_t3Myr_k10 score-space macro R2 0.453 vs 0.465 (profile RMSE
@@ -2380,3 +2382,54 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   pca-science num-qc figures` (worklist_full_depth.txt recomputed with the dip filter first), then re-seed its
   gates (delete the dd100 blocks in the two yamls, rerun the seeder). Driver kept as
   `misc/rebuild_emulators_2026-09-29.sh` (S= env sets the log dir; SUITES= the suites; stages as arguments).
+
+### Plot consistency, the sh emulator at depth, and the sh-vs-const-vc Sobol reading (2026-09-29, 14:10-14:45)
+- **(i) Plot inventory per suite** (suite name normalised, `plots/`): identical sets for the four suites in every
+  directory the driver produces (single-depth QC 30+60+2, sobol 41 + 20 + 20, science single_depth 11 + scaling 4,
+  profile-PCA default-runs 18, science profile-pca 5 + paths 9, summary 3, cooling-window json, num-qc 31).
+  Deliberate asymmetries: const-vc-only Tprof_heatmaps (400), run_clusters, colored pairplots at 4 depths (others 2),
+  sobol_dt1-10m + the presentation sensitivity-lines png; ramped-vc-only gp-tuning. Gaps found and closed: dd100 had
+  no PCA sweeps (the sweep script had no run filter -> `run_profile_pca_sweep.py --runs-file`, absolute path,
+  dd100 k4-10 raw/whitened run 14:1x-14:4x, sweep summary now over four suites); sh and dd100 lacked
+  `late_time_profile_qc.csv` (run; sh: 14/400 runs warm over 5-10 Myr at 80 km, 45 at 100 km -- shear heating,
+  not a QC failure; dd100 1 / 9 of 314). Left as one-offs: `slab_arrival_time_by_depth.csv` and
+  `slab_tip_depth_t20.csv` (const-vc/ramped-vc, 2026-09-17 ad-hoc analysis, no script for the former) and the
+  2026-03-12 param-sweep QC pngs (legacy).
+- **(ii) Is the weaker sh emulator at depth a problem?** Numbers (val, C/Myr): 0.5-5 Myr window at 60/70/80/90/100 km
+  sh RMSE 2.4/3.8/5.3/5.8/10.8 vs const-vc 2.7/3.6/3.9/7.1/10.5 -- the same absolute error; sh's R2 is lower
+  (0.93 vs 0.98 at 80 km) because heating narrows the spread of cooling rates (val std 20 vs 29 at 80 km). 5-10 Myr
+  window: sh genuinely worse at 60-90 km (3.2/3.7/5.2/5.7 vs 2.0/2.5/3.5/4.6), thermalParam features do not help
+  (R2 +0.00-0.01). 0.5-10 Myr window: R2 0.907/0.799/0.864 at 55/60/65 km is ONE validation run: run_201 (v 7.1,
+  dip 28, age_SP 68, log eta_UM 19.94 -- the fastest shallow-dip low-viscosity corner) is predicted 10-15 C/Myr
+  too fast-cooling; without it R2 0.958-0.974; reseeding the GP (7, 11) reproduces the fit exactly, so it is the
+  data, not the optimiser. run_201's heating is not extreme at 10 Myr (+105 C at 60 km, rank 120/400) but is early
+  (+136 C at 40 km at 2 Myr), i.e. the 0.5 Myr end of the window is where the corner misbehaves. Interaction share
+  of the Sobol variance (sum ST - sum S1) is larger in sh at >= 60 km (0.5-0.9 vs 0.3-0.6), consistent with a
+  more non-additive response. VERDICT: not a problem for the science products -- the 10 Myr profile-PCA emulator
+  (the T(z,t) product) is as good for sh as for const-vc (9.0 vs 8.7 C at 10 Myr), and the Sobol rankings at
+  70-100 km rest on R2 0.87-0.95 models, fine for ordering. It IS a caveat for quantitative deep dTdt predictions
+  in the fast / shallow-dip / low-eta_UM corner (errors up to ~15 C/Myr there vs a 0.5 C/Myr median). If that
+  corner matters later: a v_conv^2- or heating-scale feature, a log target, or denser sampling of the corner.
+- **(iii) sh vs const-vc Sobol reading** (`plots/science-emulator/summary/sobol_windows_const-vc_const-vc-sh`, new
+  two-suite figure; ST tables in each suite's sobol_windows_summary.csv):
+  1. The shallow structure is untouched by heating: age_OP dominates above ~40 km in every window with the same
+     ST (0.7-0.85), the age_OP / v_conv crossover is at 40 km (0.5-5 Myr) in both suites and 53-54 km (0.5-10 Myr)
+     in both; neither has a crossover in 5-10 Myr (v_conv first at every depth).
+  2. Below the crossover, heating takes variance away from v_conv and hands it to eta_UM and age_SP: 0.5-10 Myr
+     at 60 km ST(v_conv) 0.52 -> 0.41, ST(eta_UM) 0.19 -> 0.48 (eta_UM is the SECOND control from 50 to 90 km in
+     sh, above age_OP); 5-10 Myr ST(eta_UM) 0.05-0.13 -> 0.14-0.42 at all depths (0.42 at 10 km!); 0.5-5 Myr
+     ST(age_SP) 0.05-0.08 -> 0.15-0.17 at 50-80 km.
+  3. Physical reading: the channel viscosity is fixed (1e20), so the heating rate eta (v/h)^2 has no eta_UM in it
+     directly; eta_UM enters through the wedge: a weaker wedge (low eta_UM) both feeds hotter mantle to the
+     interface and takes up more of the plate-boundary shear, so the interface strain rate -- and hence the
+     heating -- depends on eta_UM as much as on v_conv. Old subducting plates (age_SP) are thicker and stiffer,
+     concentrating shear in the channel. The v_conv exponent of the pair dT falling from ~2.7 at 2 Myr to 1.3 at
+     10 Myr (sh_pairs panel D) is the same effect seen in time: the early heating is the clean eta v^2 signal, the
+     late heating is throttled by the wedge.
+  4. Dip matters more with heating at depth: ST(dip) 0.24 vs 0.18 at 90-100 km (0.5-5 Myr), 0.26 vs 0.14-0.27
+     (0.5-10 Myr) -- a shallower slab has a longer heated interface above a given depth.
+  5. Late-window (5-10 Myr) v_conv dominance is stronger in const-vc (ST 0.57-0.84) than sh (0.46-0.72): in sh
+     part of the v_conv signal is redistributed to eta_UM and its interactions.
+  Caveat from (ii): the sh indices at >= 60 km come from R2 0.80-0.95 emulators (panel E/F), so treat the sh
+  eta_UM/age_SP numbers below 60 km as +-0.1. For the paper: figure = the two-suite sobol_windows; numbers = the
+  crossover depths (unchanged) and the eta_UM ST jump at 50-90 km.

@@ -74,6 +74,8 @@ def main() -> int:
         help="Comma-separated steps to run: preprocess,train,evaluate",
     )
     ap.add_argument("--dry-run", action="store_true", help="Print commands without executing them.")
+    ap.add_argument("--runs-file", default=None,
+                    help="Optional run-id list passed to preprocess_profile_pca.py (e.g. const-vc-dd100's dip >= 35 set).")
     args = ap.parse_args()
 
     suites = _csv_items(args.suites)
@@ -120,7 +122,8 @@ def main() -> int:
                     dataset_name,
                     "--outdir",
                     str(dataset_dir.parent),
-                ],
+                ]
+                + (["--runs-file", str(Path(args.runs_file).resolve())] if args.runs_file else []),
                 dry_run=args.dry_run,
             )
 
