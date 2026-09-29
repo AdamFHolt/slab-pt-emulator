@@ -2433,3 +2433,12 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   Caveat from (ii): the sh indices at >= 60 km come from R2 0.80-0.95 emulators (panel E/F), so treat the sh
   eta_UM/age_SP numbers below 60 km as +-0.1. For the paper: figure = the two-suite sobol_windows; numbers = the
   crossover depths (unchanged) and the eta_UM ST jump at 50-90 km.
+
+### Paper-1 plan and channel-rheology spot checks agreed (2026-09-29, ~15:00)
+- Written up in `docs/paper-plan.md` (living note; linked from README). Summary: paper 1 = baseline + three
+  one-term ablations (ramp, heating, decoupling depth) around the robust two-layer control structure; rock
+  comparison OUT (paper 2: emulator reachability / inversion, mu' as a design dimension); five figures listed.
+  Rheology: run the mu05 pilot (free, shallow-only) then the mechanics-consistent shp pilot (DP yield in ocrust,
+  raised crust viscosity ceiling, consistent limiter; 8 runs, check flow first); the shp pilot decides whether
+  the full paired shp suite (mu' = 0.05 fixed) replaces sh as the paper's heating ablation. Next: abstract,
+  push/submit mu05, draft the shp builder variant, paper figures, dd100 finish, gate re-seed.

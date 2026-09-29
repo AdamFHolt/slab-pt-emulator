@@ -13,6 +13,7 @@ Quick orientation:
 - [`Makefile`](/home/holt/Projects/SlabPT-emulator/Makefile) is the main day-to-day command entrypoint.
 - [`train.py`](/home/holt/Projects/SlabPT-emulator/train.py) is the main config-driven training entrypoint.
 - [`docs/repo-map.md`](/home/holt/Projects/SlabPT-emulator/docs/repo-map.md) summarizes the repo structure and identifies legacy helpers.
+- [`docs/paper-plan.md`](/home/holt/Projects/SlabPT-emulator/docs/paper-plan.md) is the paper-1 plan (central claim, ablation table, figures, scope) and the channel-rheology spot-check plan with its decision rule (agreed 2026-09-29).
 - [`docs/tacc-runbook.md`](/home/holt/Projects/SlabPT-emulator/docs/tacc-runbook.md) is the Stampede3 procedure: push inputs, submit in the background, check, pull outputs.
 - Emulator scripts are grouped by workflow under:
   - `src/emulator/single_depth/`
