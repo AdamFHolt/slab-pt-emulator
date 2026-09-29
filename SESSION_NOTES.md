@@ -2221,3 +2221,69 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   them by id and resubmitted with `SBATCH_TIMELIMIT=10:00:00 THROTTLE=40 ./submit_from_list.sh` (env var
   overrides the batch script's #SBATCH -t). So ALL 24 reruns are 10 h jobs: tomorrow resubmit BOTH lists
   once more (same command, THROTTLE=40) to carry them from their wallclock checkpoints to 10.5 Myr.
+
+### Reruns pulled: const-vc 400/400, ramped-vc 500/500, dd100 5 of 15 finished (2026-09-29, morning)
+- PI pulled the three suites with the resubmit lists only (`pull_runs_from_tacc.sh SUITE <list>`), ~09:00-09:30
+  EDT. Local mtimes are TACC mtimes (rsync -a), shown in EDT = CDT + 1 h.
+- **const-vc 15 and ramped-vc 9: all 24 complete.** Every run has statistics to 10.5 Myr, solution steps 20 and
+  21, ASPECT 2.5.0, `Maximum relative increase in time step = 91`, Output directory outputs/{const,ramped}-v2,
+  no exception in log.txt. Max step-to-step dt ratio in every log is exactly 1.91 (the cap) -- none took the
+  8-13x jump that killed the originals. Wallclock from t=0: const-vc 1.4-2.3 h (4874-8377 s), ramped-vc
+  1.0-3.1 h (3699-11271 s), i.e. far inside the 10 h limit; yesterday's "resubmit both lists once more today"
+  is moot. Suites: const-vc 400/400, ramped-vc 500/500.
+- **dd100: 5 of the 15 reruns finished (032 171 179 252 273), 10 did not**, contrary to yesterday's reading
+  ("7 resumed fine, 8 rescued by CFL 0.125"):
+  - 013 280 376 (CFL 0.125 resumes) got 1.5-4.7 Myr further, then died again with the same ocrust signature
+    (`Solving ocrust system ... retrying linear solve with different preconditioner...` is the last log line)
+    at 7.81 / 7.66 / 7.04 Myr (steps 2852 / 3368 / 4336; last solution 15 / 15 / 14). CFL halving delays the
+    death, it does not remove it.
+  - 028 067 070 109 118 272 308 (CFL 0.25, "resumed fine") ran only 4-17 steps after the 15:00 CDT resume:
+    their log.txt / statistics mtimes are 15:00-15:01 CDT, the last solution files are the pre-resume ones
+    (09-15 .. 09-23), log ends mid-step with no error text. Nothing changed since yesterday's 15:44 pull. So
+    they died within a minute of resuming too; "7 resumed fine" was the squeue view, not the outcome. Whether
+    the "10 dd100 jobs still running" at 17:15-17:50 CDT were these (hung / requeued?) is unknown --
+    `squeue -u adamholt` and the outputs/run_028 log tail on TACC will say.
+  - run_179 reached step 20 (10.5 Myr) with CFL 0.25; its step-21 files came over as `*.contaminated-ramped`
+    (renamed on TACC yesterday), harmless, the record uses steps 0-20.
+- dd100 next: resume the 10 from their checkpoints in the shared `outputs/run_XXX` with the dt cap, the recipe
+  that took const-vc/ramped-vc to 24/24. `prep_resubmit_dtcap.sh` learned `OUT_SUBDIR=.` for that layout
+  (Output directory stays outputs/run_XXX, no "another suite's run" note), the report no longer prints the
+  cap's trailing comment as its value, re-tested on the mock (dry run, edit, idempotent re-run, .orig kept).
+  List: `const-vc-dd100/run-inputs/resubmit-list.2026-09-29.txt` (013 028 067 070 109 118 272 280 308 376).
+  CFL is left per run (0.125 on 013 280 376, 0.25 on the rest); the .prm.orig from yesterday's CFL edit is
+  kept as is (the script only writes .orig when none exists). On TACC, from production-runs_v2/:
+  `scp` the script, `./prep_resubmit_dtcap.sh const-vc-dd100 . const-vc-dd100/resubmit-list.2026-09-29.txt -n`,
+  then without -n, then `cd const-vc-dd100 && SBATCH_TIMELIMIT=10:00:00 THROTTLE=40 ./submit_from_list.sh
+  resubmit-list.2026-09-29.txt`. Check squeue first: cancel any leftover dd100 job of these numbers by id.
+- Record: 13 of the 24 rerun runs had a stale partial `analysis/run_XXX` (23 files: steps 0-10 + DT_1_10 from
+  the 2026-09-17 pass on the old dead runs; const-vc 234 248 272 280 391 398, ramped-vc 033 047 179 246 353
+  468 475). Moved out of the tree (session scratchpad, regenerable) so the rerun's own steps 0-10 get
+  extracted instead of mixing the uncapped dead run's early steps with the capped rerun's late steps.
+  Extraction chain `extend_profiles_all-mods.sh SUITE 0:20 "1,10;1,20;10,20" 24` for const-vc, ramped-vc,
+  const-vc-dd100 started 09:36 (logs `const-vc/analysis/extend_rerun-2026-09-29.log`,
+  `ramped-vc/analysis/extend_rerun-2026-09-29.log`, `const-vc-dd100/analysis/extend_pass4.log`).
+- **dd100 resubmitted (PI, ~08:50 CDT)**: script + list scp'd, `prep_resubmit_dtcap.sh const-vc-dd100 .
+  const-vc-dd100/resubmit-list.2026-09-29.txt` dry run then applied: 10/10 "ok: resume from checkpoint",
+  cap unset -> 91, Output directory unchanged (spot-checked run_013 / run_028 prms). Queue was empty (no
+  leftover dd100 jobs). `SBATCH_TIMELIMIT=10:00:00 THROTTLE=40 ./submit_from_list.sh
+  resubmit-list.2026-09-29.txt` from const-vc-dd100/: all 10 pending (WaitNod) ahead of the Stampede3
+  maintenance at 09:00 CDT (logins rebooted). They should start when the scheduler returns; if the queue
+  was flushed, resubmit the same line (prms already prepared). Check after: `squeue -u adamholt`, then
+  `grep 'dt=' $SCRATCH/aspect_work/outputs/run_028/log.txt | tail` -- dt growth per step must stay <= 1.91x
+  past the old death step. Pull afterwards with the 2026-09-29 list only.
+- Extraction chain done 09:36-10:0x, 0 errors: const-vc 400/400 full records (15 new), ramped-vc 500/500 (9 new),
+  dd100 314/314 (5 new: 032 171 179 252 273; pass 4 log `extend_pass4.log`). Masters rebuilt for all three
+  suites (`build_master_dt.py --force`, pairs 1-10 / 1-20 / 10-20; dd100 masters list 013 028 067 070 109 118
+  272 280 308 376 + the stray 900 901 as missing). `logs-extend/worklist_full_depth.txt` recomputed (Tprof_1..20
+  present and finite on 0-80 km): const-vc 399 (+15; run_004 still fails), ramped-vc 500 (+9); old lists kept as
+  `.2026-09-29.bak`. NOTE the emulators were trained on 384 / 491 -- rebuilding on the full sets is an open
+  decision (build_10myr_products.sh ~90 min per suite).
+- Caches + figures refreshed (`--refresh`): suite_summary (const-vc 399 / ramped-vc 500; const-vc T(40 km)
+  606 -> 208 C, band 78 C at 10 Myr), suite_summary_const-vc_const-vc-sh, sh_pairs now 399 pairs (was 384):
+  pooled 0-80 km mean +56.1 C (was 57.6), v_conv rho 0.91/0.93 at 40/80 km, 80 km fits 0.4 v^2.68 / 3.9 v^1.97 /
+  12.9 v^1.32 -- unchanged within noise. dd100_pairs 309 pairs (was 299): median dT at 10 Myr +0.4/+2.3/+5.2/
+  +12.8/+33.6 C at 20/40/60/80/100 km, pooled mean +4.5, median |dT| 1.9, p95 18.3 -- same as the 299-pair
+  numbers within 0.3 C; controls age_OP then eta_UM unchanged. rocks plots: const-vc 400, ramped-vc 500 (inside
+  32.5/64.2/74.8/56.1 % at 0.5/2/5/10 Myr), dd100 314 -- all within 0.1-1 % of before.
+- Not committed yet (PI to decide): SESSION_NOTES, prep_resubmit_dtcap.sh, the regenerated figures/masters,
+  the new dd100 list.

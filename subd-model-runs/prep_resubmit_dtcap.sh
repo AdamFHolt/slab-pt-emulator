@@ -5,9 +5,11 @@
 #   ./prep_resubmit_dtcap.sh SUITE_DIR OUT_SUBDIR LIST_FILE [-n] [--fresh]
 #
 #   SUITE_DIR   suite directory under production-runs_v2/ holding run_XXX/run_XXX.prm
-#               (const-vc-new, ramped-vc-new)
+#               (const-vc-new, ramped-vc-new, const-vc-dd100)
 #   OUT_SUBDIR  where the run's outputs were moved to under $SCRATCH/aspect_work/outputs/
-#               (const-v2, ramped-v2); the prm's Output directory becomes outputs/OUT_SUBDIR/run_XXX
+#               (const-v2, ramped-v2); the prm's Output directory becomes outputs/OUT_SUBDIR/run_XXX.
+#               Use '.' for a suite whose outputs sit directly in the shared outputs/run_XXX
+#               (const-vc-dd100): the Output directory line then stays outputs/run_XXX.
 #   LIST_FILE   run numbers, one per line, '#' whole-line comments (submit_from_list.sh format)
 #   -n          dry run: report what would change, touch nothing
 #   --fresh     rerun from t=0 instead of resuming: a run whose outputs/OUT_SUBDIR/run_XXX has no usable
@@ -50,7 +52,7 @@ OUTROOT="${OUTROOT:-${SCRATCH:?SCRATCH not set}/aspect_work/outputs}"
 [[ -d "$BASE/$SUITE_DIR" ]] || { echo "no suite dir: $BASE/$SUITE_DIR"; exit 1; }
 [[ -f "$LIST_FILE" ]]      || { echo "no list file: $LIST_FILE"; exit 1; }
 [[ -d "$OUTROOT/$OUT_SUBDIR" ]] || { echo "no outputs dir: $OUTROOT/$OUT_SUBDIR"; exit 1; }
-echo "suite $BASE/$SUITE_DIR  ->  outputs/$OUT_SUBDIR/run_XXX,  cap $CAP %,  list $LIST_FILE$( ((DRY)) && echo '  [dry run]')$( ((FRESH)) && echo '  [--fresh: no checkpoint -> rerun from t=0]')"
+echo "suite $BASE/$SUITE_DIR  ->  outputs/$([[ $OUT_SUBDIR == . ]] || echo "$OUT_SUBDIR/")run_XXX,  cap $CAP %,  list $LIST_FILE$( ((DRY)) && echo '  [dry run]')$( ((FRESH)) && echo '  [--fresh: no checkpoint -> rerun from t=0]')"
 echo
 
 n=0; n_ok=0; n_warn=0
@@ -61,11 +63,11 @@ while IFS= read -r raw || [[ -n "${raw:-}" ]]; do
   run="$(printf 'run_%03d' "$((10#$line))")"
   n=$((n + 1))
   prm="$BASE/$SUITE_DIR/$run/$run.prm"
-  outdir="outputs/$OUT_SUBDIR/$run"
+  outdir="outputs/$OUT_SUBDIR/$run"; [[ "$OUT_SUBDIR" == "." ]] && outdir="outputs/$run"
   status="ok"
 
   if [[ ! -f "$prm" ]]; then echo "$run  MISSING PRM $prm"; n_warn=$((n_warn + 1)); continue; fi
-  ckpt="$OUTROOT/$OUT_SUBDIR/$run"
+  ckpt="$OUTROOT/$OUT_SUBDIR/$run"; [[ "$OUT_SUBDIR" == "." ]] && ckpt="$OUTROOT/$run"
   if [[ -f "$ckpt/restart.mesh" && -f "$ckpt/restart.mesh_fixed.data" ]]; then
     status="ok: resume from checkpoint"
   elif (( FRESH )); then
@@ -78,10 +80,10 @@ while IFS= read -r raw || [[ -n "${raw:-}" ]]; do
   else
     status="NO CHECKPOINT at $ckpt (restart.mesh + restart.mesh_fixed.data) -- resume impossible; use --fresh to rerun from t=0"
   fi
-  [[ -d "$OUTROOT/$run" ]] && status="$status (note: $OUTROOT/$run also exists -- another suite's $run; untouched)"
+  [[ "$OUT_SUBDIR" != "." && -d "$OUTROOT/$run" ]] && status="$status (note: $OUTROOT/$run also exists -- another suite's $run; untouched)"
 
-  have_out="$(grep -E '^\s*set Output directory\s*=' "$prm" | sed -E 's/.*=\s*//')"
-  have_cap="$(grep -E '^\s*set Maximum relative increase in time step\s*=' "$prm" | sed -E 's/.*=\s*//' || true)"
+  have_out="$(grep -E '^\s*set Output directory\s*=' "$prm" | sed -E 's/^[^=]*=\s*//; s/\s*#.*$//')"
+  have_cap="$(grep -E '^\s*set Maximum relative increase in time step\s*=' "$prm" | sed -E 's/^[^=]*=\s*//; s/\s*#.*$//' || true)"
   grep -qE '^\s*set CFL number\s*=' "$prm" || { echo "$run  no 'set CFL number' line to anchor the cap on; skipped"; n_warn=$((n_warn + 1)); continue; }
 
   if (( ! DRY )); then
