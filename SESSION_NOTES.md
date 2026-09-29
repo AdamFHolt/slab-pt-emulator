@@ -2346,3 +2346,37 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   --dry-run` accepted. Relaunched 12:52 as one chain (scratchpad `rebuild_full_v2.sh`): const-vc-sh (all stages) then
   const-vc-dd100 (no sweeps); log `rebuild-2026-09-29/driver_sh_dd100.log`. The sd-train summary now goes to
   `sd_train_summary_<suite>.log` (the phase-A one was overwritten by the false start).
+- **Phases B + C done** (const-vc-sh 12:52-13:42, 50 min; const-vc-dd100 13:42-14:05, 23 min; 0 training failures:
+  sh 70 + dd100 70 single-depth fits, 6 + 6 profile-PCA t0.5-5 fits, 20 + 20 10 Myr fits, sh sweeps k4-10).
+  Gotcha: the root Makefile vanished from the working tree when the first (bad) sh attempt was killed mid
+  `make profile-pca-preprocess` (12:52; `git status` showed ` D Makefile`), so every make-based step in B/C
+  failed with "No rule to make target" (pca qc, quality report/check, sweep summary, tests). Restored with
+  `git checkout -- Makefile` 14:07 and re-ran those steps by hand (all ok); a stray identical copy that appeared
+  at subd-model-runs/Makefile (14:32) was deleted. Everything not make-based (fits, Sobol, 10 Myr series,
+  science plots, num-qc, figures) ran fine in the driver.
+- const-vc-sh emulators (400 runs, 340/60 split): single-depth val R2 / RMSE (C/Myr) 0.992/0.36, 0.978/1.68,
+  0.929/5.31, 0.853/10.8 at 10/40/80/100 km -- clearly worse than const-vc at >= 80 km (0.982/3.90, 0.924/10.5):
+  shear heating adds v_conv-controlled structure at depth the 5-parameter GP finds harder. profile-PCA t3 k10
+  whitened: score R2 0.357 (const-vc 0.453), profile RMSE 8.75 C, p95 18.7; sweeps k4/6/8/10 val profile RMSE
+  34.4/28.4/24.6/21.3 C (score R2 falls 0.88 -> 0.36 with k, as for the other suites; the sweep summary now
+  covers three suites). 10 Myr series val profile RMSE 5.5/8.7/8.5/9.0 C at 0.5/3/5/10 Myr (60 val runs).
+  Sobol ST crossover age_OP vs v_conv: 0.5-5 Myr 42 km (plus a shallow crossing at ~7 km), 0.5-10 Myr 54 km
+  (+ ~7 km), 5-10 Myr none (v_conv dominates everywhere with heating on).
+- const-vc-dd100 emulators (309 runs dip >= 35, 263/46 split; low-dip pilots excluded): single-depth val
+  0.997/0.24, 0.987/1.63, 0.986/3.39, 0.935/6.50 at 10/40/80/100 km -- better than const-vc's at every depth,
+  most at 100 km (6.5 vs 10.5 C/Myr): the dip >= 35 domain removes the flat-slab corner. profile-PCA t3: score R2
+  0.442, profile RMSE 6.74 C, p95 12.5. 10 Myr series 5.4/6.7/6.4/5.5 C at 0.5/3/5/10 Myr (46 val runs).
+  Sobol crossover: 0.5-5 Myr 42 km, 0.5-10 Myr 57 km, 5-10 Myr several crossings 30-47 km (age_OP and v_conv
+  ST nearly equal over 25-50 km in the late window).
+- Quality gates seeded for both new suites (`src/emulator/seed_quality_thresholds.py`, same slack rule as the
+  existing entries: 30 single-depth datasets + profileT_pca_t3Myr_k10 each); `make quality-check-gp-m25
+  QUALITY_SUITES=const-vc-sh,const-vc-dd100` 60/60, profile-PCA gate 2/2 (by construction, they are today's
+  baselines). const-vc's two marginal misses (10 km RMSE, t3 score R2) are still open. `make test` 28/28.
+- Figures: per-suite `plots/science-emulator/summary/<suite>/emulator_validation_sobol_<suite>` for all four
+  suites; combined `emulator_validation` / `sobol_windows` for the default pair plus
+  `_const-vc_ramped-vc_const-vc-sh` and `_const-vc_const-vc-sh_const-vc-dd100` variants.
+- Redo for dd100 after its last 10 runs land: extract, `build_master_dt.py` x3, then
+  `SUITES=const-vc-dd100 rebuild_full_v2.sh masters sd-preprocess sd-train sobol sd-plots pca-default pca-10myr
+  pca-science num-qc figures` (worklist_full_depth.txt recomputed with the dip filter first), then re-seed its
+  gates (delete the dd100 blocks in the two yamls, rerun the seeder). Driver kept as
+  `misc/rebuild_emulators_2026-09-29.sh` (S= env sets the log dir; SUITES= the suites; stages as arguments).

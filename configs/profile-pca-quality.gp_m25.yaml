@@ -24,3 +24,17 @@ thresholds:
       score_rmse_max: 0.70
       profile_rmse_max: 10.04
       profile_p95_rmse_max: 17.99
+
+  const-vc-sh:
+    profileT_pca_t3Myr_k10:
+      score_r2_min: 0.337
+      score_rmse_max: 0.83
+      profile_rmse_max: 10.93
+      profile_p95_rmse_max: 23.39
+
+  const-vc-dd100:
+    profileT_pca_t3Myr_k10:
+      score_r2_min: 0.422
+      score_rmse_max: 0.79
+      profile_rmse_max: 8.42
+      profile_p95_rmse_max: 15.62
