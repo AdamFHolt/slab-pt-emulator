@@ -62,14 +62,16 @@ inherits the fixed-channel caveat, and a reviewer from that camp can dismiss it 
    const-vc, v3ctrl and sh. Cheap (8 spr jobs, hours). Limited: the cap only LOWERS heating and only binds above
    z* = 3-12 km (slow runs) to ~25 km (8 cm/yr); below z* it is exactly sh. Answers "is the shallow channel
    over-heated?", nothing about 30-80 km. Run because it is free.
-2. **const-vc-shp pilot** (mechanics-consistent, the real spot check) -- Drucker-Prager yield in the `ocrust`
-   composition (cohesion 1-5 MPa, friction angle asin(mu'), mu' = 0.05), crust Maximum viscosity raised from
-   1.005e20 to ~1e21-1e22 so the channel is yield-limited (tau = mu' rho g z) over the depths that matter, heating
-   limiter set consistently (same cohesion / friction). Same 8 pilot runs. Cost: 1-2 days of prm work + smoke
-   tests (48-rank idev on one prm before the feeder, as for every prm change) + ~1 day of runs. Risk: it changes
-   the FLOW -- check trench coupling, wedge / decoupling behaviour and flattening on the 8 (cf. the dd100 lesson)
-   before reading any temperature. Tests whether a frictional channel changes the 30-80 km heating magnitude and
-   whether eta_UM keeps its new role.
+2. **const-vc-shp pilot** (realistic interface, the real spot check; redesigned 2026-10-01) -- the `ocrust`
+   channel (6 km, z < 150 km) made BRITTLE-DUCTILE: Drucker-Prager friction (1 MPa, mu' = 0.05) on wet-quartzite
+   dislocation creep (Hirth et al. 2001, n 4, Q 135 kJ/mol, f_H2O 1 GPa), window 2.5e18-2.5e23, heating limiter
+   left at sh's (mechanics sets the stress; a global mu' cap mostly cuts incoming-plate heating, seen in mu05).
+   Envelope check (`src/build-numerical-mods/channel_strength_envelope.py`): frictional above a transition at
+   30-55 km / 250-320 C, weak below (< 15 MPa at 80 km) -> expect MORE heating than sh at 20-50 km and MUCH LESS
+   at 60-100 km; stress exponent 4 gives heating ~ v^1.25 instead of sh's v^2. Same 8 pilot runs. Risk: it
+   changes the FLOW -- check trench coupling, wedge / decoupling behaviour and flattening on the 8 (cf. the dd100
+   lesson) before reading any temperature. Tests whether a realistic channel changes the 30-80 km heating and
+   whether eta_UM keeps its new role. (First build, friction on olivine to 150 km with a 1e21 ceiling, replaced.)
 3. **Full const-vc-shp suite** -- 400 paired runs, mu' = 0.05 fixed: ~2 days of spr time (sh took ~1.5 days of
    feeding at 24 jobs), 70 min extraction, ~1 h emulator build (pipeline is suite-generic now). Only if 2 says
    the story changes.
@@ -85,16 +87,16 @@ plus channel shear stress vs depth (is the yield branch active where intended?) 
 Do not let mu' absorb the exhumation-advection part of the model-rock gap (Schmalholz 2026, Gerya 2022), which
 fixed-trench models cannot produce.
 
-**Not planned:** temperature-dependent channel viscosity (emergent brittle-ductile transition), rate-dependent
-friction -- unconstrained and solver risk.
+**Not planned:** rate-and-state friction; other channel flow laws (blueschist, serpentinite) and f_H2O / mu' as
+design dimensions are paper 2. (Temperature-dependent channel creep, earlier "not planned", is now the shp design.)
 
 ## 3. Next steps, in order
 
 1. Abstract first (30 min): forces the choice of central claim. First sentence = the claim in section 1.
-2. ~~Push + submit the mu05 pilot~~ DONE 2026-10-01 08:44 (8 spr jobs mu_XXX, 3554206-3554215).
-3. shp pilot: prms BUILT 2026-10-01 (`build_runs.const-vc-sh.py --shp`, 8 runs under `subd-model-runs/const-vc-shp/`,
-   README there: yield 1 MPa / 2.866 deg in the channel, viscosity window 2.5e18-1e21, heating cap to match).
-   Next: push (`LINK=const-vc-sh`), smoke-test run_100 as a 40 min batch job, feed the other seven; CHECK THE FLOW first.
+2. ~~Push + submit the mu05 pilot~~ DONE 2026-10-01 08:44; 5/8 analysed (`mu05_triplets`), 195 270 064 to resubmit.
+3. shp pilot: prms REBUILT 2026-10-01 with the brittle-ductile channel (`build_runs.const-vc-sh.py --shp`, 8 runs under
+   `subd-model-runs/const-vc-shp/`, README there has the per-run expectation table and recipe). Next: push
+   (`LINK=const-vc-sh`), smoke-test run_100 as a 40 min batch job, feed the other seven; CHECK THE FLOW first.
 4. Paper figures 1-5; the three-ablation Sobol figure is a suite-list change to `plot_sobol_windows.py`.
 5. dd100: 4 of the 10 done 2026-09-30 (pull with `run-inputs/done-list.2026-09-30.txt`); the other 6 were killed by a
    partition outage and resubmitted 2026-10-01 (`resubmit-list.2026-10-01.txt`). Then extract, masters, rebuild its

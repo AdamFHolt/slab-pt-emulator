@@ -2480,3 +2480,70 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
 - Not pushed, not submitted. Operating recipe in the README: push with LINK=const-vc-sh, smoke-test run_100 as a
   40 min batch job (SBATCH_TIMELIMIT, no idev), then feed the other seven. eta_max 1e22 variant available by flag
   if the PI wants the fully yield-limited channel (stiffer deep interface, bigger flow change).
+
+### mu05 pilot: 5/8 done, first triplet comparison (2026-10-01, afternoon)
+- sacct: mu_100 310 210 072 217 COMPLETED (1.1-2.7 h spr), all to step 21. mu_195 / mu_064 CANCELLED at 2:02
+  with no log file (PartitionDown signature, as dd100 09-30); mu_270 FAILED in 3:24 with "Missing PRM" for a
+  file the feeder had seen at submit -- all three between 10:00 and 10:09 on three nodes, i.e. one TACC-side
+  incident (filesystem/partition). Resubmit list `const-vc-sh-mu05/resubmit-list.2026-10-01.txt` (195 270 064)
+  given to the PI; the PI re-pushed the suite. On TACC the lists live in the suite dir, not run-inputs/.
+- Pulled the 5 (`pull_runs_from_tacc.sh const-vc-sh-mu05 -a`), extracted with
+  `extend_profiles_all-mods.sh const-vc-sh-mu05 0:20 "1,20;10,20" 5` (~10 min).
+- New `src/science-numerical-mods/compare_pilot_triplets.py`: per pilot run, slab-top T(z) at 1/5/10 Myr for
+  const-vc / sh / mu05 (any suite list via --suites; shp later) + a last-minus-second column; table csv.
+  Output `plots/science-numerical-mods/const-vc-sh-mu05/mu05_triplets.*`. Tested with v3ctrl standing in.
+- **Result:** mu05 keeps 81-92 % of the sh heating (dT vs const-vc, median over 20-80 km) at 5 and 10 Myr in
+  every run; mu05 - sh median -5 / -11 / -11 C at 1 / 5 / 10 Myr, worst -88 C (run_210, ~35 km, 1 Myr),
+  -57 at 5 Myr, -36 at 10 Myr (run_210, 60 km). run_100 (3.7 cm/yr) unchanged (<= 4 C). The deficit is NOT
+  confined above z* = 3-25 km: at 1 Myr it peaks at 35-50 km in the fast runs, at 5-10 Myr it spans 20-80 km.
+  Likely downdip advection of the shallow deficit (8 cm/yr carries slab-top material 20 -> 40+ km in < 0.5 Myr)
+  and/or the limiter binding in high-stress spots (wedge corner) deeper than the eta v/h estimate; the heating
+  field would separate the two. Qualitative picture unchanged: the sh heating pattern (v_conv-scaled, growing
+  with depth) survives the friction cap with a ~10-20 % reduction. As planned, mu05 cannot test the deep
+  over-heating question; that is the shp pilot's job.
+- **Where mu05 removes heat** (shear_heating from analysis/run_XXX/t{k}.csv, gridded 0.5 km, split by
+  ocrust > 0.5 and distance to it; scratch script, not kept): run_072 10 Myr, kW/m along strike, sh -> mu05:
+  channel 0-20 km 6.2 -> 3.1, channel 20-100 km unchanged (~8.2 -> 8.4); outside the channel at 20-60 km
+  17.7 -> 6.4, almost all on the slab side ~235 km (heating-weighted) from the channel, i.e. inside the
+  incoming plate. run_210 the same pattern; at 1 Myr the channel itself is also capped at 30-50 km (early
+  transient). So the mu05 slab-top deficit at 40-80 km = halved shallow channel heat advected downdip +
+  far-field plate heating cut by the GLOBAL limiter. Consequence for shp: with DP friction in the channel the
+  mu' = 0.05 limiter is redundant there and only cuts plate heating; open choice (asked PI) between sh's
+  10 MPa / 30 deg limiter in shp (clean one-term ablation vs sh) and the built 0.05 limiter.
+
+### shp channel rheology rethink: toward a realistic interface (2026-10-01, late afternoon)
+- PI: shp should move toward a realistic interface; asked why the channel is frictional to 150 km. Findings:
+  the as-built shp channel creeps with the MANTLE olivine law (per-run prefactors from eta_UM), so it is
+  always at the friction limit or the 1e21 ceiling (130 MPa at 80 km) -- the thermal-model end member, not
+  realistic. Proposed and accepted: wet-quartzite dislocation creep (Hirth et al. 2001, log A -11.2 MPa^-n s^-1,
+  n 4, Q 135 kJ/mol, m 1, fixed f_H2O) in the ocrust phase-1 under the same DP friction (1 MPa, mu' 0.05),
+  heating limiter back to sh's 10 MPa / 30 deg (mechanics sets the stress), ceiling 2.5e23. Reason for a lab
+  law over an idealized n = 1 law: the stress exponent sets the v_conv scaling of heating (n 4 -> ~v^1.25
+  vs sh's v^2), which is what drives the paper's deep Sobol result. Channel thickness = the 6 km ocrust.
+- New `src/build-numerical-mods/channel_strength_envelope.py`: envelopes along median const-vc slab-top paths
+  per v_conv tercile (1/5/10 Myr), sh vs shp-as-built vs shp-qtz; ASPECT visco_plastic forms (creep with the
+  0.3 K/km viscosity adiabat, 2D DP, clamp after yield) coded from the docs -- confirm vs the 3.0 source on
+  TACC (grep lines in the docstring); lab -> invariant prefactor A_lab f 3^((n+1)/2)/2 checked against the
+  lab form to 1e-9. ASPECT prefactor at f 1 GPa: 4.917826e-32 Pa^-4 s^-1.
+  Plot `plots/science-numerical-mods/const-vc-shp/channel_strength_envelope.{pdf,png}`.
+- Result (5 Myr paths): shp-qtz frictional down to a brittle-ductile transition at 30 / 39 / 44 km
+  (slow / mid / fast terciles; 250-316 C over 1-10 Myr; deepens with time and v as the slab top cools),
+  peak stress 50-70 MPa and peak heating flux 90-150 mW/m2 there, then weak: 1-14 MPa at 80 km
+  (sh 11-36, as-built 114-130). f_H2O x3 moves the creep stress by 3^(1/4) = 1.3x, the BDT a few km.
+  Prediction: vs sh, MORE heating at 20-50 km, MUCH LESS at 60-100 km -- the opposite of the as-built
+  expectation table. Caveats: unheated paths (heating will make the BDT shallower, self-limiting); slab-top
+  T is the cold edge of the 6 km channel (creep will localise on the hot wedge side); dynamic pressure ignored.
+- ASPECT 3.0 source checked on TACC by the PI: creep `dislocation_creep.cc` l. 98-105 (0.5 A^-1/n eps^((1-n)/n)
+  exp((E+PV)/nRT)), 2D yield C cos phi + P sin phi `drucker_prager.cc` l. 96-101 with P floored at 0
+  (`visco_plastic.cc` l. 324), T for viscosity T + grad*P (l. 149), clamp after yield (l. 387) -- all as coded.
+- **shp REBUILT** (`build_runs.const-vc-sh.py --shp`, the as-built olivine/1e21/mu'-cap variant replaced, it was
+  never pushed; `--shp-eta-max` removed): 9 lines per prm in ocrust phase 1 -- DP 1 MPa / 2.866 deg; dislocation
+  n 4, E 135e3, A 4.917826e-32, V 0 (stress exponents / activation energies now per-composition maps); diffusion
+  prefactor 1e-40; window 2.5e18-2.5e23; heating limiter unchanged (sh's). 400 sh prms byte-identical after the
+  rebuild (md5 of all). README rewritten (per-run BDT / stress table, recipe with the corrected list paths);
+  docs/paper-plan.md section 2 + next steps updated. Not pushed.
+- End of day (14:35 CDT): `shp_100` smoke test submitted (job 3555507, spr, 40 min limit; submitted with
+  `asp3_skx=` not exported -- dies at once with "asp3_skx not set" if the login env did not export it); mu05
+  195/270/064 resubmitted (3555313/14/16); dd100 six still waiting on skx. Solver question (PI): shp keeps sh's
+  Picard "iterated Stokes" (2e-4, 200 it) to keep the pairing; read the smoke log's iteration counts -- steady
+  100-200 or unconverged steps -> Newton ("iterated Newton Stokes") before feeding the other seven.

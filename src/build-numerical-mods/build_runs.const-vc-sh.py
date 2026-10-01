@@ -48,19 +48,23 @@ Mechanics untouched (the cap only enters the heating term), so the runs still pa
 with const-vc / const-vc-sh run_XXX.  Decided 2026-09-24; the mechanics-consistent
 version (Drucker-Prager yield in the crust composition) is a later suite.
 
---shp builds the mechanics-consistent pilot, subd-model-runs/const-vc-shp/run-inputs/ (8 runs,
-same pilot list): the const-vc-sh .prm files with the crust channel made FRICTIONAL instead of a
-fixed 1e20 Pa s layer.  In the visco-plastic material model the ocrust composition's shallow phase
-(z < 150 km) gets Drucker-Prager yield (cohesion 1 MPa, friction angle asin(0.05) = 2.866 deg, so
-tau_y = 1 MPa + 0.05 P ~ mu' rho g z) and its viscosity window 0.995e20-1.005e20 is opened to
-2.5e18 (global floor) - 1e21 (--shp-eta-max=... to change the ceiling): the channel viscosity is
-then min(eta_max, tau_y / 2 eps_II), yield-limited wherever the strain rate is high (the plate
-interface), viscous-capped where it is not (crust on the plate surface, deep slab top at low v).
-The heating limiter is set to the same cohesion / friction so heating stress = mechanical stress.
-This CHANGES THE FLOW: check trench coupling, wedge decoupling and slab flattening on the 8 before
-reading temperatures (docs/paper-plan.md section 2).  Decided 2026-09-29 as spot check 2 of 2.
+--shp builds the realistic-interface pilot, subd-model-runs/const-vc-shp/run-inputs/ (8 runs, same
+pilot list): the const-vc-sh .prm files with the crust channel (ocrust composition, first phase,
+z < 150 km, 6 km thick) given a brittle-ductile rheology instead of the fixed 1e20 Pa s layer:
+  * Drucker-Prager friction: cohesion 1 MPa, friction angle asin(0.05) = 2.866 deg (mu' = 0.05, Kohn
+    et al. 2018), so tau_y = 1 MPa + 0.05 P where the channel is cold;
+  * wet-quartzite dislocation creep (Hirth et al. 2001: log10 A = -11.2 MPa^-n s^-1, n = 4, Q = 135 kJ/mol,
+    water-fugacity exponent 1 at a fixed f_H2O = 1 GPa) where it is hot; diffusion creep off; converted
+    to ASPECT's invariant form, A = A_lab f 3^((n+1)/2) / 2 = 4.917826e-32 Pa^-4 s^-1;
+  * viscosity window 2.5e18-2.5e23 (neither bound is a control);
+  * shear-heating limiter UNCHANGED (sh's 10 MPa / 30 deg): the channel stress is set by its mechanics,
+    and a global mu' cap would also cut plate heating (seen in the mu05 pilot, 2026-10-01).
+Pre-build check: src/build-numerical-mods/channel_strength_envelope.py (brittle-ductile transition at
+30-55 km / 250-320 C along const-vc paths, weak below).  This CHANGES THE FLOW: check trench coupling,
+wedge decoupling and slab flattening on the 8 before reading temperatures (docs/paper-plan.md sec. 2).
+Decided 2026-09-29 as spot check 2 of 2; rheology changed to quartzite + friction 2026-10-01.
 
-Usage:  python src/build-numerical-mods/build_runs.const-vc-sh.py [--control] [--mu05] [--shp [--shp-eta-max=1e21]]
+Usage:  python src/build-numerical-mods/build_runs.const-vc-sh.py [--control] [--mu05] [--shp]
 Reconciliation of the collaborator's test file (subd-model-runs/const-vc-sh/example/)
 with the production settings: subd-model-runs/const-vc-sh/README.md.
 """
@@ -82,7 +86,6 @@ MU05 = "--mu05" in sys.argv[1:]
 SHP_SUITE = "const-vc-shp"
 SHP_DIR = ROOT / "subd-model-runs" / SHP_SUITE / "run-inputs"
 SHP = "--shp" in sys.argv[1:]
-SHP_ETA_MAX = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--shp-eta-max=")), "1e21")
 TEMPLATE = ROOT / "data" / "ref-model" / "model_template_fixed-trench.const-vc-sh.prm"
 
 OLD_FORM = """subsection Formulation
@@ -411,49 +414,55 @@ if MU05:
     copy_scripts(MU_DIR, f"production-runs_v2/{MU_SUITE}")
     shutil.copy2(PILOT_LIST, MU_DIR / "pilot-list.txt")
 
-# --- shp: frictional (Drucker-Prager) crust channel + consistent heating cap -------------------
-# visco_plastic takes friction angles in DEGREES (the heating plugin in radians): asin(0.05) =
-# 0.050021 rad = 2.866 deg.  Only the ocrust composition's FIRST phase (z < 150 km, the channel)
-# changes; its deeper phases already carry the mantle window and no yield, as before.
-# The minimum viscosity MUST come down with the yield: ASPECT clamps the yield-limited viscosity
-# tau_y / (2 eps_II) to [min, max] afterwards, so with the old 0.995e20 floor the channel could
-# never be weaker than const-vc-sh's and the friction law would only ever stiffen it.
-OLD_CRUST_MIN = "ocrust: 0.995e20|2.5e18|2.5e18"
-NEW_CRUST_MIN = "ocrust: 2.5e18|2.5e18|2.5e18"
-OLD_CRUST_MAX = "ocrust: 1.005e20|2.5e23|2.5e23"
-NEW_CRUST_MAX = f"ocrust: {SHP_ETA_MAX}|2.5e23|2.5e23"
-OLD_CRUST_COH = "ocrust:  1.e10|1.e10|1.e10"
-NEW_CRUST_COH = "ocrust:  1.e6|1.e10|1.e10"
-OLD_CRUST_PHI = "ocrust:  30|30|30"
-NEW_CRUST_PHI = "ocrust:  2.866|30|30"
+# --- shp: brittle-ductile crust channel (friction + wet-quartzite creep) ------------------------
+# Only the ocrust composition's FIRST phase (z < 150 km, the channel) changes; its deeper phases keep
+# the mantle laws.  visco_plastic takes friction angles in DEGREES: asin(0.05) = 2.866 deg.  The window
+# floor MUST come down with the yield (ASPECT clamps after yielding, visco_plastic.cc l. 387).
+# The quartzite prefactor is the one channel_strength_envelope.py checks against the lab form.
+QTZ_A = "4.917826e-32"          # Pa^-4 s^-1, Hirth et al. (2001) at f_H2O = 1 GPa, invariant form
+SHP_SUBS = [
+    ("ocrust: 0.995e20|2.5e18|2.5e18", "ocrust: 2.5e18|2.5e18|2.5e18"),
+    ("ocrust: 1.005e20|2.5e23|2.5e23", "ocrust: 2.5e23|2.5e23|2.5e23"),
+    ("ocrust:  1.e10|1.e10|1.e10", "ocrust:  1.e6|1.e10|1.e10"),
+    ("ocrust:  30|30|30", "ocrust:  2.866|30|30"),
+    ("    set Stress exponents for dislocation creep    = 3.5\n",
+     "    set Stress exponents for dislocation creep    = background: 3.5|3.5,  ocrust: 4|3.5|3.5,  op: 3.5|3.5\n"),
+    ("    set Activation energies for dislocation creep = 530.e3\n",
+     "    set Activation energies for dislocation creep = background: 530.e3|530.e3,  ocrust: 135.e3|530.e3|530.e3,  op: 530.e3|530.e3\n"),
+    ("ocrust: 18e-6|18e-6|0.0", "ocrust: 0.0|18e-6|0.0"),
+]
 SHP_RHEO_NOTE = (
-    "    # const-vc-shp: the crust channel (ocrust, z < 150 km) is FRICTIONAL -- Drucker-Prager yield at\n"
-    "    # cohesion 1 MPa, friction angle 2.866 deg = asin(0.05) (mu' = 0.05, Kohn et al. 2018), viscosity\n"
-    f"    # window opened from 0.995e20-1.005e20 to 2.5e18-{SHP_ETA_MAX}: eta = min(eta_max, tau_y / 2 eps_II),\n"
-    "    # yield-limited on the interface (tau = 1 MPa + 0.05 P), viscous-capped at low strain rate.\n")
+    "    # const-vc-shp: the crust channel (ocrust, z < 150 km) is BRITTLE-DUCTILE -- Drucker-Prager friction\n"
+    "    # (cohesion 1 MPa, 2.866 deg = asin(0.05), mu' = 0.05) on wet-quartzite dislocation creep (Hirth et al.\n"
+    "    # 2001, n 4, Q 135 kJ/mol, f_H2O 1 GPa; A = 4.917826e-32 Pa^-4 s^-1 in invariant form; diffusion off),\n"
+    "    # window 2.5e18-2.5e23.  Frictional where cold, creeping where hot (BDT ~250-320 C).\n")
 n_shp = 0
 if SHP:
+    import re as _re
+    rx_dis = _re.compile(r"(Prefactors for dislocation creep\s*=.*?ocrust: )([0-9.eE+-]+)(\|)")
+    rx_dif = _re.compile(r"(Prefactors for diffusion creep\s*=.*?ocrust: )([0-9.eE+-]+)(\|)")
     pilot = [l.strip().zfill(3) for l in PILOT_LIST.read_text().split() if l.strip()]
     SHP_DIR.mkdir(parents=True, exist_ok=True)
     for rid in pilot:
         name = f"run_{rid}"
         text = (OUT_DIR / name / f"{name}.prm").read_text()      # derived from the const-vc-sh .prm
-        for frag in (OLD_CAP, OLD_CRUST_MIN, OLD_CRUST_MAX, OLD_CRUST_COH, OLD_CRUST_PHI,
-                     "    # Plasticity parameters using drucker-prager\n"):
-            assert text.count(frag) == 1, f"{name}: expected once: {frag!r}"
-        new = (text.replace(OLD_CAP, NEW_CAP.replace("const-vc-sh-mu05", SHP_SUITE))
-                   .replace(OLD_CRUST_MIN, NEW_CRUST_MIN).replace(OLD_CRUST_MAX, NEW_CRUST_MAX)
-                   .replace(OLD_CRUST_COH, NEW_CRUST_COH).replace(OLD_CRUST_PHI, NEW_CRUST_PHI)
-                   .replace("    # Plasticity parameters using drucker-prager\n",
-                            SHP_RHEO_NOTE + "    # Plasticity parameters using drucker-prager\n")
-                   .replace("# This file is auto-generated by build_runs.const-vc-sh.py (target: ASPECT >= 3.0)",
-                            "# This file is auto-generated by build_runs.const-vc-sh.py --shp (target: ASPECT >= 3.0)\n"
-                            f"# FRICTIONAL-CHANNEL PILOT: {NEW_SUITE}/run-inputs/{name}/{name}.prm with the ocrust channel\n"
-                            "# (z < 150 km) given Drucker-Prager yield (cohesion 1 MPa, friction angle asin(0.05) = 2.866 deg)\n"
-                            f"# and its viscosity window opened to 2.5e18-{SHP_ETA_MAX} (was pinned at 1e20), plus the\n"
-                            "# shear-heating stress cap set to the same law (1 MPa, 0.050021 rad).  The FLOW changes:\n"
-                            "# check coupling / flattening against const-vc-sh before reading temperatures."))
-        assert len(new.splitlines()) == len(text.splitlines()) + 5 + 4
+        new = text
+        for old, rep in SHP_SUBS + [("    # Plasticity parameters using drucker-prager\n",
+                                     SHP_RHEO_NOTE + "    # Plasticity parameters using drucker-prager\n")]:
+            assert new.count(old) == 1, f"{name}: expected once: {old!r}"
+            new = new.replace(old, rep)
+        for rx, val in ((rx_dis, QTZ_A), (rx_dif, "1e-40")):
+            new, k = rx.subn(lambda m: m.group(1) + val + m.group(3), new)
+            assert k == 1, f"{name}: prefactor line not matched once"
+        assert OLD_CAP in new, f"{name}: heating limiter should stay at sh's"
+        new = new.replace(
+            "# This file is auto-generated by build_runs.const-vc-sh.py (target: ASPECT >= 3.0)",
+            "# This file is auto-generated by build_runs.const-vc-sh.py --shp (target: ASPECT >= 3.0)\n"
+            f"# BRITTLE-DUCTILE CHANNEL PILOT: {NEW_SUITE}/run-inputs/{name}/{name}.prm with the ocrust channel\n"
+            "# (z < 150 km) given Drucker-Prager friction (1 MPa, mu' 0.05) on wet-quartzite creep (Hirth 2001)\n"
+            "# instead of the fixed 1e20 Pa s; heating limiter unchanged.  The FLOW changes: check coupling /\n"
+            "# flattening against const-vc-sh before reading temperatures.")
+        assert len(new.splitlines()) == len(text.splitlines()) + 4 + 4
         dst_run = SHP_DIR / name
         (dst_run / "inputs").mkdir(parents=True, exist_ok=True)
         (dst_run / f"{name}.prm").write_text(new)
@@ -474,4 +483,4 @@ print(f"Finished: {n_ok} run directories under {OUT_DIR} "
       f"with BASE_DIR -> {NEW_BASE}"
       + (f"; version-control set: {n_ctrl} runs under {CTRL_DIR}" if CONTROL else "")
       + (f"; mu'=0.05 heating-cap pilot: {n_mu} runs under {MU_DIR}" if MU05 else "")
-      + (f"; frictional-channel pilot (eta_max {SHP_ETA_MAX}): {n_shp} runs under {SHP_DIR}" if SHP else ""))
+      + (f"; brittle-ductile channel pilot: {n_shp} runs under {SHP_DIR}" if SHP else ""))
