@@ -48,7 +48,19 @@ Mechanics untouched (the cap only enters the heating term), so the runs still pa
 with const-vc / const-vc-sh run_XXX.  Decided 2026-09-24; the mechanics-consistent
 version (Drucker-Prager yield in the crust composition) is a later suite.
 
-Usage:  python src/build-numerical-mods/build_runs.const-vc-sh.py [--control] [--mu05]
+--shp builds the mechanics-consistent pilot, subd-model-runs/const-vc-shp/run-inputs/ (8 runs,
+same pilot list): the const-vc-sh .prm files with the crust channel made FRICTIONAL instead of a
+fixed 1e20 Pa s layer.  In the visco-plastic material model the ocrust composition's shallow phase
+(z < 150 km) gets Drucker-Prager yield (cohesion 1 MPa, friction angle asin(0.05) = 2.866 deg, so
+tau_y = 1 MPa + 0.05 P ~ mu' rho g z) and its viscosity window 0.995e20-1.005e20 is opened to
+2.5e18 (global floor) - 1e21 (--shp-eta-max=... to change the ceiling): the channel viscosity is
+then min(eta_max, tau_y / 2 eps_II), yield-limited wherever the strain rate is high (the plate
+interface), viscous-capped where it is not (crust on the plate surface, deep slab top at low v).
+The heating limiter is set to the same cohesion / friction so heating stress = mechanical stress.
+This CHANGES THE FLOW: check trench coupling, wedge decoupling and slab flattening on the 8 before
+reading temperatures (docs/paper-plan.md section 2).  Decided 2026-09-29 as spot check 2 of 2.
+
+Usage:  python src/build-numerical-mods/build_runs.const-vc-sh.py [--control] [--mu05] [--shp [--shp-eta-max=1e21]]
 Reconciliation of the collaborator's test file (subd-model-runs/const-vc-sh/example/)
 with the production settings: subd-model-runs/const-vc-sh/README.md.
 """
@@ -67,6 +79,10 @@ MU_DIR = ROOT / "subd-model-runs" / MU_SUITE / "run-inputs"
 PILOT_LIST = OUT_DIR / "pilot-list.txt"
 CONTROL = "--control" in sys.argv[1:]
 MU05 = "--mu05" in sys.argv[1:]
+SHP_SUITE = "const-vc-shp"
+SHP_DIR = ROOT / "subd-model-runs" / SHP_SUITE / "run-inputs"
+SHP = "--shp" in sys.argv[1:]
+SHP_ETA_MAX = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--shp-eta-max=")), "1e21")
 TEMPLATE = ROOT / "data" / "ref-model" / "model_template_fixed-trench.const-vc-sh.prm"
 
 OLD_FORM = """subsection Formulation
@@ -126,7 +142,7 @@ SCRIPTS = ["run_one.slurm", "submit_from_list.sh", "submit_rolling.sh"]
 # pattern across the whole account, so the 3.0 suites get their own prefixes.  The run
 # DIRECTORY stays run_XXX (the batch script derives it from RUN_ID); the prefix only names the
 # job and its log files.
-JOB_PREFIX = {NEW_SUITE: "sh_", CTRL_SUITE: "v3c_", MU_SUITE: "mu_"}
+JOB_PREFIX = {NEW_SUITE: "sh_", CTRL_SUITE: "v3c_", MU_SUITE: "mu_", SHP_SUITE: "shp_"}
 
 # Throttle by partition, not by job name: Stampede3's job limit is per user per queue (spr 24,
 # skx 40) and const-vc-sh and const-vc-v3ctrl feed spr at the same time, so each feeder counts
@@ -206,6 +222,8 @@ SPR_NOTE = {
 #     too (run_one.spr.slurm in that suite) so the control absorbs both.""",
     MU_SUITE: """#   * Same queue / rank count as const-vc-sh production, so the mu05-vs-sh pair
 #     difference is the heating cap alone.""",
+    SHP_SUITE: """#   * Same queue / rank count as const-vc-sh production, so the shp-vs-sh pair
+#     difference is the frictional channel (mechanics + heating cap) alone.""",
     CTRL_SUITE: """#   * This is the version-control set: it MUST run on the same queue/rank count as
 #     const-vc-sh production, so that comparing it with the 2.5 skx/48-rank const-vc
 #     outputs measures version + decomposition together.  If const-vc-sh goes to spr,
@@ -393,9 +411,67 @@ if MU05:
     copy_scripts(MU_DIR, f"production-runs_v2/{MU_SUITE}")
     shutil.copy2(PILOT_LIST, MU_DIR / "pilot-list.txt")
 
+# --- shp: frictional (Drucker-Prager) crust channel + consistent heating cap -------------------
+# visco_plastic takes friction angles in DEGREES (the heating plugin in radians): asin(0.05) =
+# 0.050021 rad = 2.866 deg.  Only the ocrust composition's FIRST phase (z < 150 km, the channel)
+# changes; its deeper phases already carry the mantle window and no yield, as before.
+# The minimum viscosity MUST come down with the yield: ASPECT clamps the yield-limited viscosity
+# tau_y / (2 eps_II) to [min, max] afterwards, so with the old 0.995e20 floor the channel could
+# never be weaker than const-vc-sh's and the friction law would only ever stiffen it.
+OLD_CRUST_MIN = "ocrust: 0.995e20|2.5e18|2.5e18"
+NEW_CRUST_MIN = "ocrust: 2.5e18|2.5e18|2.5e18"
+OLD_CRUST_MAX = "ocrust: 1.005e20|2.5e23|2.5e23"
+NEW_CRUST_MAX = f"ocrust: {SHP_ETA_MAX}|2.5e23|2.5e23"
+OLD_CRUST_COH = "ocrust:  1.e10|1.e10|1.e10"
+NEW_CRUST_COH = "ocrust:  1.e6|1.e10|1.e10"
+OLD_CRUST_PHI = "ocrust:  30|30|30"
+NEW_CRUST_PHI = "ocrust:  2.866|30|30"
+SHP_RHEO_NOTE = (
+    "    # const-vc-shp: the crust channel (ocrust, z < 150 km) is FRICTIONAL -- Drucker-Prager yield at\n"
+    "    # cohesion 1 MPa, friction angle 2.866 deg = asin(0.05) (mu' = 0.05, Kohn et al. 2018), viscosity\n"
+    f"    # window opened from 0.995e20-1.005e20 to 2.5e18-{SHP_ETA_MAX}: eta = min(eta_max, tau_y / 2 eps_II),\n"
+    "    # yield-limited on the interface (tau = 1 MPa + 0.05 P), viscous-capped at low strain rate.\n")
+n_shp = 0
+if SHP:
+    pilot = [l.strip().zfill(3) for l in PILOT_LIST.read_text().split() if l.strip()]
+    SHP_DIR.mkdir(parents=True, exist_ok=True)
+    for rid in pilot:
+        name = f"run_{rid}"
+        text = (OUT_DIR / name / f"{name}.prm").read_text()      # derived from the const-vc-sh .prm
+        for frag in (OLD_CAP, OLD_CRUST_MIN, OLD_CRUST_MAX, OLD_CRUST_COH, OLD_CRUST_PHI,
+                     "    # Plasticity parameters using drucker-prager\n"):
+            assert text.count(frag) == 1, f"{name}: expected once: {frag!r}"
+        new = (text.replace(OLD_CAP, NEW_CAP.replace("const-vc-sh-mu05", SHP_SUITE))
+                   .replace(OLD_CRUST_MIN, NEW_CRUST_MIN).replace(OLD_CRUST_MAX, NEW_CRUST_MAX)
+                   .replace(OLD_CRUST_COH, NEW_CRUST_COH).replace(OLD_CRUST_PHI, NEW_CRUST_PHI)
+                   .replace("    # Plasticity parameters using drucker-prager\n",
+                            SHP_RHEO_NOTE + "    # Plasticity parameters using drucker-prager\n")
+                   .replace("# This file is auto-generated by build_runs.const-vc-sh.py (target: ASPECT >= 3.0)",
+                            "# This file is auto-generated by build_runs.const-vc-sh.py --shp (target: ASPECT >= 3.0)\n"
+                            f"# FRICTIONAL-CHANNEL PILOT: {NEW_SUITE}/run-inputs/{name}/{name}.prm with the ocrust channel\n"
+                            "# (z < 150 km) given Drucker-Prager yield (cohesion 1 MPa, friction angle asin(0.05) = 2.866 deg)\n"
+                            f"# and its viscosity window opened to 2.5e18-{SHP_ETA_MAX} (was pinned at 1e20), plus the\n"
+                            "# shear-heating stress cap set to the same law (1 MPa, 0.050021 rad).  The FLOW changes:\n"
+                            "# check coupling / flattening against const-vc-sh before reading temperatures."))
+        assert len(new.splitlines()) == len(text.splitlines()) + 5 + 4
+        dst_run = SHP_DIR / name
+        (dst_run / "inputs").mkdir(parents=True, exist_ok=True)
+        (dst_run / f"{name}.prm").write_text(new)
+        for f in sorted((OUT_DIR / name / "inputs").iterdir()):
+            dst = dst_run / "inputs" / f.name
+            if not dst.exists():
+                try:
+                    os.link(f, dst)
+                except OSError:
+                    shutil.copy2(f, dst)
+        n_shp += 1
+    copy_scripts(SHP_DIR, f"production-runs_v2/{SHP_SUITE}")
+    shutil.copy2(PILOT_LIST, SHP_DIR / "pilot-list.txt")
+
 print(f"Finished: {n_ok} run directories under {OUT_DIR} "
       f"(prm: Formulation custom + stress-limited shear heating + block AMG explicit + 'heating' output; "
       f"inputs hard-linked from {SRC_SUITE}); scripts: {', '.join(SCRIPTS)} + run_one.spr.slurm "
       f"with BASE_DIR -> {NEW_BASE}"
       + (f"; version-control set: {n_ctrl} runs under {CTRL_DIR}" if CONTROL else "")
-      + (f"; mu'=0.05 heating-cap pilot: {n_mu} runs under {MU_DIR}" if MU05 else ""))
+      + (f"; mu'=0.05 heating-cap pilot: {n_mu} runs under {MU_DIR}" if MU05 else "")
+      + (f"; frictional-channel pilot (eta_max {SHP_ETA_MAX}): {n_shp} runs under {SHP_DIR}" if SHP else ""))

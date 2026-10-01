@@ -91,12 +91,13 @@ friction -- unconstrained and solver risk.
 ## 3. Next steps, in order
 
 1. Abstract first (30 min): forces the choice of central claim. First sentence = the claim in section 1.
-2. Push + submit the mu05 pilot (`make push-tacc SUITE=const-vc-sh-mu05 LINK=const-vc-sh`, then the feeder
-   from the suite dir on Stampede3 with `SLURM_FILE=run_one.spr.slurm`; README "How to operate it").
-3. Build the shp pilot prms as a `--shp` variant of `build_runs.const-vc-sh.py` (Claude to draft); smoke-test one;
-   submit the 8.
+2. ~~Push + submit the mu05 pilot~~ DONE 2026-10-01 08:44 (8 spr jobs mu_XXX, 3554206-3554215).
+3. shp pilot: prms BUILT 2026-10-01 (`build_runs.const-vc-sh.py --shp`, 8 runs under `subd-model-runs/const-vc-shp/`,
+   README there: yield 1 MPa / 2.866 deg in the channel, viscosity window 2.5e18-1e21, heating cap to match).
+   Next: push (`LINK=const-vc-sh`), smoke-test run_100 as a 40 min batch job, feed the other seven; CHECK THE FLOW first.
 4. Paper figures 1-5; the three-ablation Sobol figure is a suite-list change to `plot_sobol_windows.py`.
-5. dd100: pull the 10 with `run-inputs/resubmit-list.2026-09-29.txt` only, extract, masters, rebuild its emulator
-   with the driver, re-seed its gates.
+5. dd100: 4 of the 10 done 2026-09-30 (pull with `run-inputs/done-list.2026-09-30.txt`); the other 6 were killed by a
+   partition outage and resubmitted 2026-10-01 (`resubmit-list.2026-10-01.txt`). Then extract, masters, rebuild its
+   emulator with the driver, re-seed its gates.
 6. Housekeeping: re-seed the const-vc gates (two marginal misses) if agreed; tidy the notes.
 7. Paper 2 list: rock reachability / inversion with the emulators; mu' as a design dimension.

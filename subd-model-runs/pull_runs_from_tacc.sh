@@ -48,7 +48,7 @@ TACC_HOST="${TACC_HOST:-stampede3.tacc.utexas.edu}"
 # Since 2026-09-28 the finished const-vc and ramped-vc outputs live in their own subdirectories of that
 # shared outputs/ (moved by the PI so dd100's reruns and the 2026-09-28 resubmits cannot collide).
 case "$SUITE" in
-  const-vc-sh|const-vc-v3ctrl|const-vc-sh-mu05) DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/$SUITE/outputs" ;;
+  const-vc-sh|const-vc-v3ctrl|const-vc-sh-mu05|const-vc-shp) DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/$SUITE/outputs" ;;
   const-vc)                    DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/outputs/const-v2" ;;
   ramped-vc)                   DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/outputs/ramped-v2" ;;
   *)                           DEFAULT_OUT="/scratch/04714/adamholt/aspect_work/outputs" ;;

@@ -54,6 +54,9 @@ a change to the mechanics, not to the heating term. That is the deferred suite b
 
 ## Deferred: the mechanics-consistent "sh + plasticity" suite (not built)
 
+**Update 2026-10-01: built as the 8-run pilot `const-vc-shp` (`build_runs.const-vc-sh.py --shp`, README in
+`subd-model-runs/const-vc-shp/`); the notes below are the original plan.**
+
 Plan recorded 2026-09-24 for a later suite (working name const-vc-shp):
 - Drucker-Prager yield in the `ocrust` composition of the visco-plastic material model (currently
   switched off: cohesion 1e10, 30 deg): cohesion ~1-5 MPa, friction angle asin(mu'), so the channel
