@@ -2442,3 +2442,23 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   raised crust viscosity ceiling, consistent limiter; 8 runs, check flow first); the shp pilot decides whether
   the full paired shp suite (mu' = 0.05 fixed) replaces sh as the paper's heating ablation. Next: abstract,
   push/submit mu05, draft the shp builder variant, paper figures, dd100 finish, gate re-seed.
+
+### dd100 dt-cap resumes: 4 done, 6 killed by a partition outage (2026-10-01)
+- `check_runs_list.sh` on the 2026-09-29 list: OK for 067 280 308 376 (step 21, 10.5 Myr, statistics and
+  pvtu dated 2026-09-30 11:12-12:08; logs show one "Resuming from snapshot" each, first steps 450 / 3350 /
+  700 / 4325 = their own checkpoints, wallclock 1.3-2.2 h). 013 028 070 109 118 272 unchanged since 09-28.
+- Why: sacct shows all ten 09-29 08:47 submissions sat in the skx queue ~25 h and started 09-30 09:41-09:56;
+  the six were `CANCELLED by 0`, Reason `PartitionDown`, exactly 2:03 after start (TACC-side kill, no
+  log file written). The four on nodes that stayed up completed. Their restart.mesh + restart.mesh_fixed.data
+  and patched prms (cap 91; CFL 0.125 on 013, 0.25 on the rest) are untouched -> plain resubmit
+  (`run-inputs/resubmit-list.2026-10-01.txt`, no prep step). Pull the four with `done-list.2026-09-30.txt`.
+- Two false leads while reading logs: (a) the newest `logs/run_013|070|272.*.out` are const-vc-new's 09-28
+  t=0 reruns (shared logs dir and job names, "Termination requested by criterion: end time"); (b) the
+  09-28 15:00 "plain resumes" of 028 067 070 109 118 272 308 did not die within a minute -- they hung in the
+  ocrust solve until the 10 h TIMEOUT with statistics frozen at 15:00. The cap fixed that hang for 067 and
+  308 (resumed and finished), so the same is expected for the remaining six.
+- 08:41 CDT: the six dd100 resumes resubmitted on skx (jobs 3554192-3554197, plain resubmit, prms already
+  capped). 08:44: const-vc-sh-mu05 pilot pushed (LINK=const-vc-sh) and the 8 pilot jobs submitted on spr
+  (mu_100 310 195 210 072 217 270 064, jobs 3554206-3554215, run_one.spr.slurm). All 14 pending at 08:45.
+  Next while they queue: draft the `--shp` variant of build_runs.const-vc-sh.py (docs/paper-plan.md section 2,
+  option 2); smoke-test one prm before any submission.
