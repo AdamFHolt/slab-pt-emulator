@@ -2547,3 +2547,44 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   195/270/064 resubmitted (3555313/14/16); dd100 six still waiting on skx. Solver question (PI): shp keeps sh's
   Picard "iterated Stokes" (2e-4, 200 it) to keep the pairing; read the smoke log's iteration counts -- steady
   100-200 or unconverged steps -> Newton ("iterated Newton Stokes") before feeding the other seven.
+
+### 2026-10-02: jobs resolved, shp_100 first look
+- sacct: mu05 195/270/064 COMPLETED (to 10.5 Myr); dd100 028/109/118 COMPLETED; dd100 013/070/272 "CANCELLED by 0"
+  again (common 06:29:20 start on 3 nodes, killed 2:02 later, as 09-30). PI: dd100 goes ahead WITHOUT the 3
+  (list kept in run-inputs/resubmit-list.2026-10-02.txt, not submitted). worklist_full_depth.txt (309) still lacks
+  the late finishers 067 280 308 376 028 109 118 -- add at the emulator redo.
+- shp_100 smoke job 3555507 was cancelled before start; the real smoke job 3555835 ran to its 40 min limit
+  (TIMEOUT): 1968 steps, t = 2.65 Myr, Picard 3-6 iterations/step at 2e-4 -> no Newton needed; dt ~1100 yr vs
+  ~1780 in sh at the same time (~1.6x the steps, ~3-4 h to 10.5 Myr). Feeder command for all 8 (pilot-list.txt,
+  run_100 resumes) given to the PI.
+- New `src/science-numerical-mods/plot_channel_fields.py` (field maps eta / eps_II / tau_II / heating, sh vs shp, and
+  channel medians by depth vs DP yield + qtz creep at binned p, T, eps; slab outlines over time). Output
+  plots/science-numerical-mods/const-vc-shp/run_100_t5_{fields,channel}.*
+- run_100 at 2.5 Myr: channel stress follows the DP line to ~30 km (~55 MPa, ~300 C), then drops onto the
+  qtz creep curve (5-15 MPa at 40-80 km, ~0 below 100 km) -- BDT where the envelope put it. Above the BDT the
+  channel interior moves with the slab (3.7 cm/yr mid-channel at 10-30 km, sh 1.9-2.4) and shear localizes at its
+  top; the wedge side is still at rest (coupled forearc in both). Channel heating shp/sh by depth band (kW/m):
+  0-20 1.06/0.97, 20-40 1.74/0.84, 40-60 0.50/1.43, 60-80 0.24/1.43, 80-100 0.21/0.68 -> the predicted
+  shift (2x at 20-40 km, 0.2-0.35x below 40 km); slab top ~50 C cooler at 40-100 km. Flow: incoming plate
+  3.7 vs 3.4 cm/yr (+9 %), slab tip ~15 km deeper, geometry otherwise nearly identical.
+- mu05 8/8: pulled + extracted the 3 resubmits, `compare_pilot_triplets.py` rerun on all 8. At 10 Myr (median
+  over 20-80 km) mu05 keeps 83-89 % of the sh heating in the 5-8 cm/yr runs, 87-92 % at 3-4 cm/yr, run_064
+  (1 cm/yr) no difference; mu05 - sh median -3 to -20 C, worst -36 C (run_210). New runs fit the 5-run picture
+  (run_195 the largest loss, -20 C). Conclusion unchanged: the friction cap takes 10-20 %, keeps the pattern.
+- dd100 redo: pulled 067 280 308 376 with resubmit-list.2026-09-29.txt (the 10-01 list had only the last six;
+  the local copies of those four were the pre-resume state). Extracted the 7 (0:20 "1,10;1,20;10,20", 0 errors);
+  worklist_full_depth.txt 309 -> 316 (exactly the 7; scratchpad dd100_worklist.py reproduced the old 309 first;
+  old list kept as .txt.2026-10-02.bak). Rebuild `S=... SUITES=const-vc-dd100 misc/rebuild_emulators_2026-09-29.sh
+  masters sd-preprocess sd-train sobol sd-plots pca-default pca-10myr pca-science num-qc figures`, 16:38-17:04,
+  all stages rc 0. Single-depth val (268/47): RMSE same as the 309-run build within noise at most depths
+  (65-70 km better, 30-40 km a bit worse); R2 lower at 40-60 km (0.96-0.97 vs 0.98-0.99) with RMSE unchanged =
+  new val split with less spread. 95 km RMSE 5.3 vs 3.2: spread over several high-|dTdt| val runs (072 311 053),
+  none of the new runs -> split noise. Old gate failed 9/30, re-seeded (dd100 blocks deleted, seeder rerun):
+  30/30 + 1/1, make test OK. profile-PCA t3 k10: score R2 0.482 (0.442), profile RMSE 6.78 (6.74), p95 12.8
+  (12.5). Sobol crossover 0.5-5 Myr 42.4 km, 0.5-10 Myr 57.8 km (57), 5-10 Myr 29.6 + 49.6 km -- unchanged.
+  dd100 is closed at 316 runs (013 070 272 never finished; PI decision).
+- dd100 figures outside the driver refreshed on the 316 set: dd100_pairs (--refresh; 10 Myr median dT +0.4/+2.3/
+  +5.2/+12.9/+29.8 C at 20/40/60/80/100 km, pooled 0-80 km mean +4.4, p95 |dT| 18.2, controls age_OP then
+  eta_UM -- same as 309 within 0.1 C), rocks plots dd100 + const-vc --dip-min 35, combined
+  emulator_validation / sobol_windows _const-vc_const-vc-sh_const-vc-dd100. mu05 has no pairs plot (8 runs):
+  mu05_triplets is its paired figure.

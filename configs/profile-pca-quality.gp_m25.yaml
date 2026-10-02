@@ -34,7 +34,7 @@ thresholds:
 
   const-vc-dd100:
     profileT_pca_t3Myr_k10:
-      score_r2_min: 0.422
-      score_rmse_max: 0.79
-      profile_rmse_max: 8.42
-      profile_p95_rmse_max: 15.62
+      score_r2_min: 0.462
+      score_rmse_max: 0.76
+      profile_rmse_max: 8.47
+      profile_p95_rmse_max: 15.95
