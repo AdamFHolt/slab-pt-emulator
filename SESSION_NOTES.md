@@ -2588,3 +2588,33 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   eta_UM -- same as 309 within 0.1 C), rocks plots dd100 + const-vc --dip-min 35, combined
   emulator_validation / sobol_windows _const-vc_const-vc-sh_const-vc-dd100. mu05 has no pairs plot (8 runs):
   mu05_triplets is its paired figure.
+
+### 2026-10-05: shp pilot 5/8 back -- the oceanic crust is stripped off the incoming plate (pilot invalid as built)
+- sacct (shp jobs 3558944-51, spr): 100 210 072 217 064 COMPLETED to 10.5 Myr (2.5-7 h; 210 needed 14991 steps);
+  310 NODE_FAIL at 1 min, 195 / 270 CANCELLED at 2:02 (PartitionDown signature), none left an output dir.
+  Resubmit list `const-vc-shp/run-inputs/resubmit-list.2026-10-05.txt` (310 195 270) + commands given to the PI
+  -- HOLD it until the rheology fix below is decided.
+- Pulled + extracted the 5 (`extend_profiles_all-mods.sh const-vc-shp 0:20 "1,20;10,20" 5`, 0 errors; the
+  10-02 smoke-test t1-t5 CSVs of run_100 moved aside first). compare_pilot_triplets.py with shp FAILED: run_210
+  Tprof_16-20 empty -> no ocrust > 0.5 left on the interface.
+- **Diagnosis:** shp put DP 1 MPa / mu' 0.05 + wet-quartzite creep + floor 2.5e18 on ocrust PHASE 1 = all crust
+  above 150 km, i.e. ALSO the whole incoming-plate crust, not only the channel. That crust is now a ~1-2 MPa
+  layer at the viscosity floor (10^18.4 at 1 km depth, sh 10^20.0) and is dragged toward the trench faster than
+  the plate (run_072, 0.5 Myr: 14-17 cm/yr at 1 km vs 6.6 at 20 km depth; sh 7.5 vs 6.7). It stretches and
+  thins (5.8 km -> 4.3 at 1 Myr -> 2-3 km at 2 Myr), drops below the mesh resolution, and the field is lost
+  (gridded crust area z < 400 km, run_072: sh 7933 -> 6607 km2 over 10 Myr, shp 7933 -> 5241 (2 Myr) ->
+  3647 (4 Myr) -> 1216 (10 Myr)). Figure plots/science-numerical-mods/const-vc-shp/crust_loss_run_072.png.
+  All five lose crust; fastest in the fast runs (072 / 210 / 217: interface crust gone at 7-10 Myr), run_100 thins
+  slowly (still ~0.9-1 on the interface at 10 Myr), run_064 (1 cm/yr) mostly intact.
+- Consequence: once the channel is gone the slab rubs mantle on mantle -- 10 Myr heating outside the channel
+  15-31 kW/m per 20 km band (sh 0.5-3.4), incoming plate slows (072 6.5 -> 4.3 cm/yr, 217 6.1 -> 3.8, sh
+  unchanged). Late-time shp temperatures are NOT a rheology result. At 5 Myr (channel thinned but present) the
+  10-02 pattern holds in 100 / 072 / 217: BDT 34-38 km, channel heating 20-40 km 2-3x sh, 60-100 km less;
+  table plots/.../const-vc-shp/shp_vs_sh_channel_summary_5runs.csv; channel plots run_XXX_t{10,20}_*.
+- Missed at the smoke test: only the channel was checked at 2.5 Myr. Add a crust-area conservation check
+  (incoming-plate crust thickness / gridded ocrust area vs time) to any future rheology smoke test.
+- Fix options put to the PI (not built): (A) gate the shp rheology with depth -- a new ocrust phase transition at
+  ~10-15 km so the incoming crust (0-7 km) keeps sh's fixed 1e20 and only the channel below gets DP + qtz;
+  (B) raise the cohesion 1 -> ~10-20 MPa so the incoming crust does not yield (one number; shallow channel
+  stronger); (C) plastic strain weakening (strong intact crust that weakens to 1 MPa / 0.05 with strain; needs a
+  plastic_strain field + seeded initial channel). Re-smoke a FAST run (072 or 210) with the crust check.

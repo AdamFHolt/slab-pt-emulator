@@ -97,6 +97,11 @@ design dimensions are paper 2. (Temperature-dependent channel creep, earlier "no
 3. shp pilot: prms REBUILT 2026-10-01 with the brittle-ductile channel (`build_runs.const-vc-sh.py --shp`, 8 runs under
    `subd-model-runs/const-vc-shp/`, README there has the per-run expectation table and recipe). Next: push
    (`LINK=const-vc-sh`), smoke-test run_100 as a 40 min batch job, feed the other seven; CHECK THE FLOW first.
+   **2026-10-05: pilot INVALID as built** -- 5/8 ran to 10.5 Myr, but the shp rheology sits on ocrust phase 1 (all
+   crust < 150 km, incl. the incoming plate), which is dragged to the trench, thins below resolution and is lost
+   (interface crust gone at 7-10 Myr in the fast runs). Fix to choose (SESSION_NOTES 2026-10-05): depth gate via a
+   new ocrust phase at ~10-15 km (recommended) / cohesion 10-20 MPa / plastic strain weakening; then re-smoke a
+   FAST run with a crust-area check and rerun all 8. 310 195 270 resubmit on hold.
 4. Paper figures 1-5; the three-ablation Sobol figure is a suite-list change to `plot_sobol_windows.py`.
 5. dd100: 4 of the 10 done 2026-09-30 (pull with `run-inputs/done-list.2026-09-30.txt`); the other 6 were killed by a
    partition outage and resubmitted 2026-10-01 (`resubmit-list.2026-10-01.txt`). Then extract, masters, rebuild its

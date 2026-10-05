@@ -110,3 +110,11 @@ rate-and-state friction, a channel thinner than the 6 km crust (resolution), yie
 phases (> 150 km). History: the first --shp build (2026-10-01 morning, never pushed) used friction on the
 mantle olivine law with a 1e21 ceiling and the mu' = 0.05 heating cap -- frictional to 150 km, 130 MPa at
 80 km; replaced the same day (SESSION_NOTES).
+
+## Status 2026-10-05: INVALID as built -- do not resubmit
+
+The shp rheology is set on ocrust phase 1 = all crust above 150 km, so the incoming-plate crust is also a
+1-2 MPa layer at the viscosity floor; it is dragged into the trench, thins below resolution and the crust field
+is lost (fast runs lose the interface crust at 7-10 Myr). Diagnosis and fix options: SESSION_NOTES 2026-10-05,
+plots/science-numerical-mods/const-vc-shp/crust_loss_run_072.png. `run-inputs/resubmit-list.2026-10-05.txt`
+(310 195 270) is on hold until the rebuild. Any rebuild's smoke test: a FAST run, and check crust area vs time.
