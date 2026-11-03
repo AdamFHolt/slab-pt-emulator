@@ -2653,3 +2653,9 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   it is ~3-8 MPa (1e20 x ~1 cm/yr over 5 km = 6.6 MPa). The same numbers say B at 10-20 MPa would still yield in
   part of the fast-run bending zone. 5 MPa would yield to ~5x higher viscosity than 1 MPa (floor reached only at
   eps > 1e-12), so it may weaken the sink without removing it -- untested.
+- PI asked for three fix variants on 072 + 210: `build_runs.const-vc-sh.py --shp-fix` (refactored the shp
+  branch into make_shp(); the 400 sh + 8 shp prms regenerate byte-identical, md5 of all) writes
+  const-vc-shp-c5 (cohesion 5 MPa), const-vc-shp-c10 (10 MPa), const-vc-shp-gate10 (new ocrust phase boundary at
+  10 km, width 1 km; above it every ocrust entry = sh's phase-1 value, so fixed 1e20 and no yield; all 12 ocrust
+  lists 3 -> 4 entries, phase-transition lists 2 -> 3, asserted). Job prefixes c5_ / c10_ / g10_, own scratch
+  workspaces; pull_runs_from_tacc.sh knows them; recipe in const-vc-shp/README.md. Not pushed / submitted.

@@ -118,3 +118,22 @@ The shp rheology is set on ocrust phase 1 = all crust above 150 km, so the incom
 is lost (fast runs lose the interface crust at 7-10 Myr). Diagnosis and fix options: SESSION_NOTES 2026-10-05,
 plots/science-numerical-mods/const-vc-shp/crust_loss_run_072.png. `run-inputs/resubmit-list.2026-10-05.txt`
 (310 195 270) is on hold until the rebuild. Any rebuild's smoke test: a FAST run, and check crust area vs time.
+
+## Crust-loss fix tests (built 2026-11-03)
+
+The pilot as built loses its incoming-plate crust (SESSION_NOTES 2026-10-05 and 2026-11-03): the 1 MPa
+cohesion lets the top ~0.5 km of the incoming crust yield to the viscosity floor under the prescribed top
+velocity, the discrete velocity there is not divergence-free, and the advected crust field leaks away
+(53-55 % by 4 Myr at 7-8 cm/yr). Three fixes, each on runs 072 and 210 (`build_runs.const-vc-sh.py --shp-fix`,
+list `fix-list.txt` in each suite):
+
+| suite | change vs const-vc-shp | job prefix |
+|---|---|---|
+| const-vc-shp-c5 | channel cohesion 1 -> 5 MPa | c5_ |
+| const-vc-shp-c10 | channel cohesion 1 -> 10 MPa | c10_ |
+| const-vc-shp-gate10 | new ocrust phase above 10 km (width 1 km) = sh's crust (fixed 1e20, no yield) | g10_ |
+
+Push each with `make push-tacc SUITE=<suite> LINK=const-vc-sh`; on TACC, from the suite dir,
+`SLURM_FILE=run_one.spr.slurm ./submit_from_list.sh fix-list.txt` (export asp3_skx first). Run to the normal
+end time. Pass: `crust_budget.py --run 072 --suites const-vc-sh <suite>` crust integral and h_in_500 track sh,
+incoming-plate speed within a few % of sh's; then channel / heating as in the pilot checks.
