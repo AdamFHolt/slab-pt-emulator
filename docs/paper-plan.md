@@ -5,6 +5,9 @@ Living planning note. Decisions and the reasoning behind them; the chronological
 
 ## 1. What paper 1 is
 
+**Working title (chosen 2026-11-03):** *Two-layer control on early slab-top temperatures revealed by emulating
+subduction models*. Keep "Gaussian process", "surrogate" and "Sobol" for the abstract / keywords.
+
 **Venue (decided 2026-11-03): JGR: Solid Earth**, everything in one paper -- full methods, emulator validation,
 the three ablations and the channel-rheology pilots (mu05, shp) in the main text, not a letter + SI. GRL was
 considered and rejected (would push the method and robustness to the SI). Paper 2 = rock data + Bayesian
