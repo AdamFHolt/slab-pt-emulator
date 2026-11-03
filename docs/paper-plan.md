@@ -105,9 +105,13 @@ design dimensions are paper 2. (Temperature-dependent channel creep, earlier "no
    **2026-11-03 re-diagnosis:** the loss is a numerical crust sink (non-zero discrete divergence in a yielded
    surface skin under the prescribed top velocity), uniform over the whole incoming plate, scaling with v_conv;
    not drag toward the trench. (C) ruled out by the PI; A vs B still open. Smoke test = `crust_budget.py`.
+   **2026-11-03 NEXT (PI runs them):** three fix tests on 072 + 210, BUILT not pushed -- const-vc-shp-c5 (cohesion
+   5 MPa), -c10 (10 MPa), -gate10 (ocrust phase boundary at 10 km; crust above = sh's 1e20). Commands, pass
+   criteria and predictions: `subd-model-runs/const-vc-shp/README.md` "Crust-loss fix tests" + SESSION_NOTES
+   2026-11-03. Prediction: gate10 passes, c10 partial (near-trench leak, plate ~drive speed), c5 least. Winner ->
+   rebuild all 8 with it (310 195 270 included), then the pilot comparison (paper-plan section 2).
 4. Paper figures 1-5; the three-ablation Sobol figure is a suite-list change to `plot_sobol_windows.py`.
-5. dd100: 4 of the 10 done 2026-09-30 (pull with `run-inputs/done-list.2026-09-30.txt`); the other 6 were killed by a
-   partition outage and resubmitted 2026-10-01 (`resubmit-list.2026-10-01.txt`). Then extract, masters, rebuild its
-   emulator with the driver, re-seed its gates.
+5. ~~dd100 finish + emulator redo~~ DONE 2026-10-02: closed at 316 runs (013 070 272 abandoned), emulator rebuilt,
+   gates re-seeded, Sobol unchanged.
 6. Housekeeping: re-seed the const-vc gates (two marginal misses) if agreed; tidy the notes.
 7. Paper 2 list: rock reachability / inversion with the emulators; mu' as a design dimension.

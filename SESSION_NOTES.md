@@ -2659,3 +2659,20 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   10 km, width 1 km; above it every ocrust entry = sh's phase-1 value, so fixed 1e20 and no yield; all 12 ocrust
   lists 3 -> 4 entries, phase-transition lists 2 -> 3, asserted). Job prefixes c5_ / c10_ / g10_, own scratch
   workspaces; pull_runs_from_tacc.sh knows them; recipe in const-vc-shp/README.md. Not pushed / submitted.
+- **Predictions recorded before the fix runs (2026-11-03), to check against:**
+  gate10 (~85 %): crust integral within a few % of sh to 4-5 Myr, h_in_500 ~5.9 km, plate speed back near sh's
+  (072 ~6.5 vs shp 7.2-7.4 cm/yr; shp's stiffer crust coupled the plate to the top-BC drive), no late plate
+  slowdown; top-10 km channel heats like sh, BDT ~35-40 km and 2-3x heating at 20-40 km should survive.
+  Surprise = loss continuing in the channel below 10 km -> sink not only a skin effect -> numerical fix
+  (particles / other advection), and c5/c10 would be undermined too.
+  c10: better than shp (~60 %), good enough (~25 %): far field mostly unyielded but a stiff (up to 2.5e23) crust
+  carries more than sh's 3-6 MPa; bending zone (p ~ 0, sh p90 15-28 MPa) yields -> near-trench thinning; loss
+  ~1/3-1/2 of shp's; plate at or above shp's speed, ~drive (7.7) -> pairing off 10-15 %; shallow channel
+  stronger (14.5 -> 23.5 MPa at 10 km), BDT a few km deeper.
+  c5 (~70 %): slows, does not stop the loss (~half of shp's in 072, less in 210); doing well would mean the
+  floor contrast, not yielding itself, drives the sink.
+- **STATE AT END OF SESSION:** PI will push + submit the 6 fix runs later (commands in const-vc-shp/README.md
+  "Crust-loss fix tests"; export asp3_skx first). On return: pull (`make pull-tacc SUITE=const-vc-shp-<x>`),
+  extract like the pilot (`extend_profiles_all-mods.sh <suite> 0:20 ...`, see the 2026-10-05 entry), run
+  `crust_budget.py --run 072 --suites const-vc-sh const-vc-shp const-vc-shp-c5 const-vc-shp-c10
+  const-vc-shp-gate10` (and 210), compare with the predictions above, pick the fix with the PI, rebuild all 8.
