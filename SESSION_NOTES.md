@@ -2643,3 +2643,13 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
 - For the fix choice: both A (depth gate; incoming crust back to sh's 1e20) and B (cohesion 10-20 MPa; skin
   does not yield) remove the skin. A leaves floor-viscosity material in the channel next to strong mantle, where
   the same sink could act -- not tested. Any rebuild smoke test: crust_budget.py integral + h_in_500 vs sh.
+- A vs B write-up given (recommend A, gate at 10 km, narrow width). Then "would 5 MPa cohesion work?" ->
+  new `crust_stress.py` (tau_II in incoming crust, far field / bending zone, by depth, t = 1 Myr). sh's unyielded
+  1e20 crust carries median 6.2-6.4 MPa far field in 072 (210 3.3, 100 2.7, 064 0.4) and 6-8 MPa (p90 15-28) in the
+  150 km before the trench in 072/210; pressure there is ~0 (dynamic), so the yield stays ~C to 4-6 km. Against
+  5 MPa + 0.05 P: 80 % (0-1 km) / 42 % (1-2 km) of 072's far-field crust and 28-63 % of the fast runs' bending-zone
+  crust exceed it -- and sh's 1e20 stresses are a LOWER bound for an unyielded quartzite crust (up to 2.5e23; shp's
+  unyielded crust at 4-6 km carries 10-17 MPa median). CORRECTION: earlier today I said sh's crust carries < 1 MPa;
+  it is ~3-8 MPa (1e20 x ~1 cm/yr over 5 km = 6.6 MPa). The same numbers say B at 10-20 MPa would still yield in
+  part of the fast-run bending zone. 5 MPa would yield to ~5x higher viscosity than 1 MPa (floor reached only at
+  eps > 1e-12), so it may weaken the sink without removing it -- untested.
