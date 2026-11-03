@@ -5,6 +5,11 @@ Living planning note. Decisions and the reasoning behind them; the chronological
 
 ## 1. What paper 1 is
 
+**Venue (decided 2026-11-03): JGR: Solid Earth**, everything in one paper -- full methods, emulator validation,
+the three ablations and the channel-rheology pilots (mu05, shp) in the main text, not a letter + SI. GRL was
+considered and rejected (would push the method and robustness to the SI). Paper 2 = rock data + Bayesian
+inversion with the emulators.
+
 **Central claim.** In the first 10 Myr of subduction the slab-top temperature has a two-layer control
 structure -- overriding-plate age above ~40 km, convergence rate below -- and that structure is robust to the
 physics choices people argue about. A baseline ensemble (const-vc, 400 runs) and three one-term ablations
