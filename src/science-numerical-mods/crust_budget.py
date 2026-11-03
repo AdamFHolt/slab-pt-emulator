@@ -135,7 +135,7 @@ df.to_csv(os.path.join(OUT, f"crust_budget_{RUN}.csv"), index=False, float_forma
 
 # ------------------------------------------------------------------ figure
 fig, axs = plt.subplots(2, 3, figsize=(14, 7.5))
-ls = {su: s for su, s in zip(args.suites, ["--", "-", ":", "-."])}
+ls = {su: s for su, s in zip(args.suites, ["--", "-", ":", "-.", (0, (5, 1)), (0, (1, 3)), (0, (3, 1, 1, 1, 1, 1))])}
 cols = {"int": "k", "a05": "0.5"}
 ax = axs[0, 0]
 for su in args.suites:

@@ -2673,6 +2673,6 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   floor contrast, not yielding itself, drives the sink.
 - **STATE AT END OF SESSION:** PI will push + submit the 6 fix runs later (commands in const-vc-shp/README.md
   "Crust-loss fix tests"; export asp3_skx first). On return: pull (`make pull-tacc SUITE=const-vc-shp-<x>`),
-  extract like the pilot (`extend_profiles_all-mods.sh <suite> 0:20 ...`, see the 2026-10-05 entry), run
+  extract like the pilot (`extend_profiles_all-mods.sh <suite> 0:20 "1,20;10,20" 5`, as on 2026-10-05), run
   `crust_budget.py --run 072 --suites const-vc-sh const-vc-shp const-vc-shp-c5 const-vc-shp-c10
   const-vc-shp-gate10` (and 210), compare with the predictions above, pick the fix with the PI, rebuild all 8.
