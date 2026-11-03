@@ -102,6 +102,9 @@ design dimensions are paper 2. (Temperature-dependent channel creep, earlier "no
    (interface crust gone at 7-10 Myr in the fast runs). Fix to choose (SESSION_NOTES 2026-10-05): depth gate via a
    new ocrust phase at ~10-15 km (recommended) / cohesion 10-20 MPa / plastic strain weakening; then re-smoke a
    FAST run with a crust-area check and rerun all 8. 310 195 270 resubmit on hold.
+   **2026-11-03 re-diagnosis:** the loss is a numerical crust sink (non-zero discrete divergence in a yielded
+   surface skin under the prescribed top velocity), uniform over the whole incoming plate, scaling with v_conv;
+   not drag toward the trench. (C) ruled out by the PI; A vs B still open. Smoke test = `crust_budget.py`.
 4. Paper figures 1-5; the three-ablation Sobol figure is a suite-list change to `plot_sobol_windows.py`.
 5. dd100: 4 of the 10 done 2026-09-30 (pull with `run-inputs/done-list.2026-09-30.txt`); the other 6 were killed by a
    partition outage and resubmitted 2026-10-01 (`resubmit-list.2026-10-01.txt`). Then extract, masters, rebuild its

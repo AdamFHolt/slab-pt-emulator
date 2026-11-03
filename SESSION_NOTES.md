@@ -2618,3 +2618,28 @@ one-run sensitivity test (run_089, both schemes, slab-top T(z) at 5 Myr) is avai
   (B) raise the cohesion 1 -> ~10-20 MPa so the incoming crust does not yield (one number; shallow channel
   stronger); (C) plastic strain weakening (strong intact crust that weakens to 1 MPa / 0.05 with strain; needs a
   plastic_strain field + seeded initial channel). Re-smoke a FAST run (072 or 210) with the crust check.
+
+### 2026-11-03: shp crust loss re-diagnosed -- a numerical sink on the incoming plate, not drag-and-stretch
+- PI asked how we know the 10-05 cause. Tested with new `src/science-numerical-mods/crust_budget.py` (per run, sh vs
+  shp, t = 0-10 Myr: crust integral vs area > 0.5, incoming thickness at 50/200/500 km before the trench, crust minus
+  plate speed, channel normal thickness + downward flux at 20/50/100 km) on the 5 shp runs; outputs
+  `plots/science-numerical-mods/const-vc-shp/crust_budget_run_XXX.{csv,png}`. Plus `crust_divergence.py`.
+- **Location confirmed, mechanism wrong.** The loss is on the incoming plate (the channel thins later, following
+  the supply: channel flux > trench inflow while it drains), but NOT by dragging toward the trench:
+  (1) the crust INTEGRAL drops, not just the > 0.5 area -- run_072 shp 7836 -> 3491 km2 at 4 Myr, before the slab
+  reaches 400 km; sh conserves to < 0.1 % (7836 -> 7837); (2) the incoming crust thins UNIFORMLY over 1000 km
+  (072: 5.9 -> 4.9 / 3.0 / 1.4 km at 1 / 2 / 3 Myr at 500 km before the trench, same as at 50 km); (3) after 0.5 Myr
+  the crust does not outrun its plate (dv 0-2 cm/yr, as sh's +0.4-1.3) and horizontal strain rate is ~0.
+- **Mechanism:** the discrete velocity in the incoming crust is not divergence-free in shp: crust-weighted div
+  -0.2 to -0.6 /Myr (top 1 km -0.3 to -0.9) with exx ~ 0, vs ~0 in sh. ASPECT advects composition in advective
+  form, so int c div dz is a crust sink: predicted -1.6 / -1.7 km/Myr in 072 at 1 / 2 Myr vs observed dH/dt ~ -1.8.
+  Where: a yielded skin at the top -- at x 1400, 1 Myr, eta 2.5e18 at z 0, 7.6e18 at 0.5 km, 3e20-1e21 below
+  (DP 1 MPa at ~0 pressure yields under the shear between the prescribed top velocity v_conv and the plate,
+  7.74 vs 7.19 cm/yr); vy jumps 0 -> -0.029 cm/yr in that one 0.49 km cell. sh carries the same mismatch
+  (7.74 -> 6.7) as smooth shear across its 1e20 crust. Snapshot values are noisy (Picard, 0.5 Myr output).
+- **Controls by run** (crust integral lost by 4 Myr): 072 55 %, 210 53 %, 217 53 % (v 7.2-7.9), 100 27 % (3.7),
+  064 12 % (1.0; far field intact, loss only within ~200 km of the trench). v_conv (= the top-boundary drive) is
+  the control; age_OP (072/210 21 Myr but 217 43 Myr loses the same), eta_UM, dip, age_SP do not line up.
+- For the fix choice: both A (depth gate; incoming crust back to sh's 1e20) and B (cohesion 10-20 MPa; skin
+  does not yield) remove the skin. A leaves floor-viscosity material in the channel next to strong mantle, where
+  the same sink could act -- not tested. Any rebuild smoke test: crust_budget.py integral + h_in_500 vs sh.
