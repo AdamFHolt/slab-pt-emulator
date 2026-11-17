@@ -8,10 +8,19 @@ Living planning note. Decisions and the reasoning behind them; the chronological
 **Working title (chosen 2026-11-03):** *Two-layer control on early slab-top temperatures revealed by emulating
 subduction models*. Keep "Gaussian process", "surrogate" and "Sobol" for the abstract / keywords.
 
-**Venue (decided 2026-11-03): JGR: Solid Earth**, everything in one paper -- full methods, emulator validation,
-the three ablations and the channel-rheology pilots (mu05, shp) in the main text, not a letter + SI. GRL was
-considered and rejected (would push the method and robustness to the SI). Paper 2 = rock data + Bayesian
-inversion with the emulators.
+**Venue (decided 2026-11-17): AGU Advances.** Long format, high profile, and not JGR (the PI is a JGR AE and has
+submitted there a lot lately). Competitive: it needs the shp pilot in the paper, and the framing has to be broad
+(why early slab-top temperatures matter: rock record, subduction initiation), with the plain-language summary
+written to that. Considered and rejected 2026-11-17: GRL (without sh the result reads as incremental; with sh
+the method and robustness go to the SI), JGR: Solid Earth (decided 2026-11-03, superseded for the reason above),
+EPSL (good fallback). Fallback if shp stalls: sh as the viscous end-member + mu05, with the channel at depth stated
+as the open question. Paper 2 = rock data + Bayesian inversion with the emulators.
+
+**Pitch / novelty (PI, 2026-11-17):** the paper is about the TIME-DEPENDENCE of slab-top temperature. That
+dependence has recently been argued to matter, but it has had no rigorous exploration and no scalings. Lead with
+how the controls and the temperatures evolve over 0.5-10 Myr (the control boundary moving with time, the heating
+scaling going from v^2.7 to v^1.3); the two-layer structure is the organising result, not the novelty claim.
+Draft Key Points + abstract with geology framing are in the 2026-11-17 conversation; rewrite them time-first.
 
 **Central claim.** In the first 10 Myr of subduction the slab-top temperature has a two-layer control
 structure -- overriding-plate age above ~40 km, convergence rate below -- and that structure is robust to the
@@ -36,11 +45,12 @@ Note for that section: with the fixed-viscosity channel, heating warms the slab 
 fraction of exhumed rocks warmer than the hottest model (48 % -> 45 % at 10 Myr); heating homogenises
 (10 Myr band at 40 km 49 C vs 74 C) rather than reaches.
 
-**Figures (5):** (1) ensemble overview + design; (2) compact emulator validation (single-depth + profile-PCA,
-all suites); (3) Sobol windows for the baseline; (4) the three ablations against the baseline (Sobol ST vs depth,
-three windows -- `plot_sobol_windows.py` with the suite list; the two-suite const-vc / sh version exists at
-`plots/science-emulator/summary/sobol_windows_const-vc_const-vc-sh`); (5) heating magnitude and scaling vs
-v_conv (`const-vc-sh/sh_pairs`, panel D).
+**Figures (5 + pilot, 2026-11-17 for AGU Advances):** (1) ensemble overview + design; (2) compact emulator
+validation (single-depth + profile-PCA, all suites); (3) Sobol windows for the baseline; (4) the three ablations
+against the baseline (Sobol ST vs depth, three windows -- `plot_sobol_windows.py` with the suite list; the two-suite
+const-vc / sh version exists at `plots/science-emulator/summary/sobol_windows_const-vc_const-vc-sh`); (5) heating
+magnitude and scaling vs v_conv (`const-vc-sh/sh_pairs`, panel D); (6) channel-rheology pilot comparison (8 runs:
+const-vc / sh / mu05 / shp, section 2). shp is REQUIRED for this venue, not optional.
 
 **Status of the ingredients (2026-09-29):** all four suites complete (dd100 314/324, 10 dt-cap resumes pending on
 TACC), all extracted, all emulators built and gated (driver `misc/rebuild_emulators_2026-09-29.sh`), Sobol in
@@ -102,7 +112,7 @@ design dimensions are paper 2. (Temperature-dependent channel creep, earlier "no
 
 1. Abstract first (30 min): forces the choice of central claim. First sentence = the claim in section 1.
 2. ~~Push + submit the mu05 pilot~~ DONE 2026-10-01 08:44; 5/8 analysed (`mu05_triplets`), 195 270 064 to resubmit.
-3. shp pilot: prms REBUILT 2026-10-01 with the brittle-ductile channel (`build_runs.const-vc-sh.py --shp`, 8 runs under
+3. **shp pilot -- on the critical path (required for AGU Advances, 2026-11-17).** prms REBUILT 2026-10-01 with the brittle-ductile channel (`build_runs.const-vc-sh.py --shp`, 8 runs under
    `subd-model-runs/const-vc-shp/`, README there has the per-run expectation table and recipe). Next: push
    (`LINK=const-vc-sh`), smoke-test run_100 as a 40 min batch job, feed the other seven; CHECK THE FLOW first.
    **2026-10-05: pilot INVALID as built** -- 5/8 ran to 10.5 Myr, but the shp rheology sits on ocrust phase 1 (all
